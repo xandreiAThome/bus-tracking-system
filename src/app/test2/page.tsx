@@ -15,7 +15,7 @@ const Page = () => {
 
       <div className='flex flex-col w-11/12 items-start border border-gray-300 p-4 rounded'>
         <h2 className='font-semibold mb-2'>Type:</h2>
-        <div className='flex gap-4'>
+        <div className='grid grid-cols-2 gap-2 w-full'>
           <button
             onClick={() => setSelectedType('passenger')}
             className={`border border-solid px-4 py-2 rounded ${
@@ -63,10 +63,11 @@ const Page = () => {
         </div>
       </div>
 
-      <div className='flex w-11/12 gap-4 justify-center'>
-        <button className='border border-solid px-4 py-2 rounded'>Cancel</button>
-        <button className='border border-solid px-4 py-2 rounded'>Create</button>
+      <div className='grid grid-cols-2 gap-4 w-11/12'>
+        <button className='border border-solid py-2 rounded w-full'>Cancel</button>
+        <button className='border border-solid py-2 rounded w-full'>Create</button>
       </div>
+
     </Card>
   );
 };
