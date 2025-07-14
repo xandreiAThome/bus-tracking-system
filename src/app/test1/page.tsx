@@ -46,7 +46,7 @@ const Page = () => {
       {showModal && (
         <div className="w-11/12 bg-white rounded-t-3xl shadow-lg p-6 absolute bottom-0">
           <div className="w-full flex justify-center mb-2">
-            <div className="h-1 w-24 bg-[#71AC61] rounded-full"></div>
+            <div className="h-1 w-24 bg-[#B1B1B1] rounded-full"></div>
           </div>
 
           <div className="w-full mb-4">
