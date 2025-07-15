@@ -53,7 +53,7 @@ const Page = () => {
               </div>
 
               {/* Assigned Seat */}
-              <div className={`border rounded-lg p-3 transition-colors ${selectedSeat === null ? "bg-gray-100" : "bg-white"}`}>
+              <div className="border rounded-lg p-3 transition-colors bg-white">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Assigned Seat</span>
                   <span className="text-sm text-gray-600">
@@ -61,36 +61,43 @@ const Page = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-6 gap-1 mb-3">
-                  {seats.map((seat) => (
-                    <button
-                      key={seat}
-                      onClick={() => setSelectedSeat(seat)}
-                      disabled={unavailableSeats.includes(seat)}
-                      className={`
-                        w-8 h-8 text-xs rounded border
-                        ${
-                          selectedSeat === seat
-                            ? "bg-green-500 text-white border-green-500"
-                            : unavailableSeats.includes(seat)
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-white border-gray-300 hover:border-green-400"
-                        }
-                      `}
-                    >
-                      {seat}
-                    </button>
-                  ))}
+                {/* ⬇️ Make this div relative to allow absolute overlay inside it */}
+                <div className="relative">
+                  <div className="grid grid-cols-6 gap-1 mb-3">
+                    {seats.map((seat) => (
+                      <button
+                        key={seat}
+                        onClick={() => setSelectedSeat(seat)}
+                        disabled={unavailableSeats.includes(seat)}
+                        className={`
+                          w-8 h-8 text-xs rounded border
+                          ${
+                            selectedSeat === seat
+                              ? "bg-green-500 text-white border-green-500"
+                              : unavailableSeats.includes(seat)
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-white border-gray-300 hover:border-green-400"
+                          }
+                        `}
+                      >
+                        {seat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* 🔒 Overlay only over the seat grid */}
+                  {selectedSeat === null && (
+                    <div className="absolute top-0 left-0 w-full h-full bg-gray-300/80 z-50 rounded-md pointer-events-none" />
+                  )}
                 </div>
 
-                <div className="text-center">
-                  {/* Standing Button (Toggleable) */}
+                <div className="text-center mt-2">
+                  {/* Standing Button */}
                   <button
                     onClick={() => {
                       if (selectedSeat === null) {
-                        setSelectedSeat(previousSeat)
+                        setSelectedSeat(1) // Or previousSeat if you store it
                       } else {
-                        setPreviousSeat(selectedSeat)
                         setSelectedSeat(null)
                       }
                     }}
@@ -101,7 +108,6 @@ const Page = () => {
                     Standing
                   </button>
 
-                  {/* Discount Types */}
                   <div className="flex gap-2 mt-2">
                     {["Student", "Senior", "PWD"].map((type) => (
                       <button
