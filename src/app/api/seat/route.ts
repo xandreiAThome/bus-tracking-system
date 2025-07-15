@@ -13,7 +13,7 @@ export async function GET(){
 /**
  * POST api/seat
  * 
- * Adds a product with fields matching `req`'s payload
+ * Adds a seat with fields matching `req`'s payload
  * @param {Request} req Incoming request containing the following:
  * `id`: The id of the seat
  * `order`: The order of the seat
