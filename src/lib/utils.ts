@@ -28,7 +28,7 @@ export function extractParamAsString(
  * @param idParam is the id parameter
  * @returns A valid integer number if id is valid, else a Response with Error 
  */
-export function validateIdParam(idParam: string | null): Number | Response {
+export function validateIdParam(idParam: string | null): number | Response {
   if (idParam === null) {
     return Response.json(
       { message: "Missing required parameter: id" },
