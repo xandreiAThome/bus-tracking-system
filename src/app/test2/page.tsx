@@ -20,24 +20,22 @@ const Page = () => {
   return (
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
       <h1 className="text-lg font-semibold text-center mb-3 text-[#FFFFFF]">Issue Tickets</h1>
-      <Card className="w-full max-w-md bg-white">
-        <div className="p-4">
           <Tabs value={selectedType} onValueChange={setSelectedType} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-[#71AC61]">
+            <TabsList className="grid w-full grid-cols-2 p-0 -my-2.5 bg-[#71AC61]">
               <TabsTrigger
                 value="passenger"
-                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] "
+                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none"
               >
                 Passenger
               </TabsTrigger>
               <TabsTrigger
-                value="baggage"
-                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61]"
+                value="baggage" 
+                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none"
               >
                 Baggage
               </TabsTrigger>
             </TabsList>
-
+          <div className="p-4 bg-white border rounded-b-sm">
             <TabsContent value="passenger" className="space-y-4 mt-4">
               {/* Trip Selection */}
               <div className="flex gap-4 justify-center items-center border rounded-xl">
@@ -128,6 +126,24 @@ const Page = () => {
                   </div>
                 </div>
               </div>
+              
+              {/* Pricing Section */}
+              <div className="mt-4">
+                <label className="text-sm font-medium mb-2 block">Pricing</label>
+                <Input placeholder="Input" value={price} onChange={(e) => setPrice(e.target.value)} className="mb-3" />
+                <div className="grid grid-cols-3 gap-2">
+                  {[50, 137, 222].map((amt) => (
+                    <Button
+                      key={amt}
+                      variant="outline"
+                      className="h-10 bg-transparent"
+                      onClick={() => setPrice(String(amt))}
+                    >
+                      {amt}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </TabsContent>
 
             <TabsContent value="baggage" className="space-y-4 mt-4">
@@ -206,32 +222,33 @@ const Page = () => {
                 <label className="text-sm font-medium mb-1 block">Item</label>
                 <Input placeholder="Input" />
               </div>
-            </TabsContent>
-          </Tabs>
 
-          {/* Pricing Section */}
+              {/* Pricing Section */}
           <div className="mt-4">
             <label className="text-sm font-medium mb-2 block">Pricing</label>
             <Input placeholder="Input" value={price} onChange={(e) => setPrice(e.target.value)} className="mb-3" />
             <div className="grid grid-cols-3 gap-2">
-              {[50, 137, 222].map((amt) => (
-                <Button
-                  key={amt}
-                  variant="outline"
-                  className="h-10 bg-transparent"
-                  onClick={() => setPrice(String(amt))}
-                >
-                  {amt}
-                </Button>
-              ))}
+                {[50, 137, 222].map((amt) => (
+                  <Button
+                    key={amt}
+                    variant="outline"
+                    className="h-10 bg-transparent"
+                    onClick={() => setPrice(String(amt))}
+                  >
+                    {amt}
+                  </Button>
+                ))}
+              </div>
             </div>
+            </TabsContent>
           </div>
+          </Tabs>
+
+          
 
           {/* Create Ticket Button */}
           <Button className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white">Create Ticket</Button>
         </div>
-      </Card>
-    </div>
   )
 }
 
