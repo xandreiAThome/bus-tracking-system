@@ -1,0 +1,55 @@
+### GET request
+GET http://localhost:3000/api/seat
+Accept: application/json
+
+### POST request
+POST http://localhost:3000/api/seat
+Content-Type: application/json
+
+{
+  "order": "1",
+  "bus_id": 1
+}
+
+### POST request
+POST http://localhost:3000/api/seat
+Content-Type: application/json
+
+{
+  "order": "1",
+  "bus_id": 2
+}
+
+### POST request
+POST http://localhost:3000/api/seat
+Content-Type: application/json
+
+{
+  "order": "2",
+  "bus_id": 1
+}
+
+### POST request
+POST http://localhost:3000/api/seat
+Content-Type: application/json
+
+{
+  "order": "3",
+  "bus_id": 1
+}
+
+### POST request
+POST http://localhost:3000/api/seat
+Content-Type: application/json
+
+{
+  "order": "4",
+  "bus_id": 1
+}
+
+### GET request
+GET http://localhost:3000/api/seat/3
+
+### DELETE request
+DELETE http://localhost:3000/api/seat/3
+
