@@ -61,3 +61,26 @@ export function catchDBError(err: any) {
     return Response.json({message: "Internal Server Error"}, {status: 500});
   }
 }
+
+/**
+ * Converts a string to a new formattable timestamp
+ */
+export function toSQLTimestamp(input: string): string {
+    const date = new Date(input);
+
+    if (isNaN(date.getTime())) {
+        throw new Error("Invalid date string");
+    }
+
+    // Format as YYYY-MM-DD HH:MM:SS
+    const pad = (n: number) => n.toString().padStart(2, '0');
+
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1); // months are 0-based
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
