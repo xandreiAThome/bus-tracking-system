@@ -110,3 +110,14 @@ export function validateDecimal6_2(value: string): boolean {
 
   return true;
 }
+
+/**
+ * Validates Sort Order (checks if it marches ASC or DESC)
+ */
+export function validateSortOrder(sortOrder: string | null | undefined): 'ASC' | 'DESC' {
+  const order = sortOrder?.toUpperCase();
+  if (order === 'ASC' || order === 'DESC') {
+    return order;
+  }
+  return 'ASC'; // default fallback
+}
