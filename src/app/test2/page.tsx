@@ -21,21 +21,21 @@ const Page = () => {
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
       <h1 className="text-lg font-semibold text-center mb-3 text-[#FFFFFF]">Issue Tickets</h1>
           <Tabs value={selectedType} onValueChange={setSelectedType} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 p-0 -my-2.5 bg-[#71AC61]">
+            <TabsList className="grid w-full grid-cols-2 pb-2 p-0 -my-2.5 bg-[#71AC61]">
               <TabsTrigger
                 value="passenger"
-                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none"
+                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
               >
                 Passenger
               </TabsTrigger>
               <TabsTrigger
                 value="baggage" 
-                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none"
+                className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
               >
                 Baggage
               </TabsTrigger>
             </TabsList>
-          <div className="p-4 bg-white border rounded-b-sm">
+          <div className="p-4 bg-white border rounded-sm">
             <TabsContent value="passenger" className="space-y-4 mt-4">
               {/* Trip Selection */}
               <div className="flex gap-4 justify-center items-center border rounded-xl">
@@ -100,7 +100,7 @@ const Page = () => {
                       }
                     }}
                     className={`w-full border border-solid text-sm font-medium rounded-md p-1
-                      ${selectedSeat === null ? "bg-gray-300 text-black border-gray-400" : "border-[#456A3B]"}
+                      ${selectedSeat === null ? "bg-[#71AC61] text-white border-gray-400" : "border-[#456A3B] data-[state=active]:text-white"}
                     `}
                   >
                     Standing
@@ -115,7 +115,7 @@ const Page = () => {
                           px-3 py-1 text-xs rounded border w-full
                           ${
                             selectedStanding === type
-                              ? "bg-green-500 text-white border-green-500"
+                              ? "bg-[#71AC61] text-white border-green-500"
                               : "bg-white border-gray-300 hover:border-green-400"
                           }
                         `}
@@ -247,7 +247,7 @@ const Page = () => {
           
 
           {/* Create Ticket Button */}
-          <Button className="w-full mt-6 bg-green-500 hover:bg-green-600 text-white">Create Ticket</Button>
+          <Button className="w-full mt-6 bg-[#99C68B] hover:bg-green-600 text-white">Create Ticket</Button>
         </div>
   )
 }
