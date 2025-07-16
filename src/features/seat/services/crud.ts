@@ -145,7 +145,7 @@ export async function getSeatsByBus(bus_id: number, order: string) {
     const conn = await pool.getConnection();
     try {
       const [rows] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM seat WHERE bus_id = ?",
+        `SELECT * FROM seat WHERE bus_id = ? ORDER BY \`order\` ${order}`,
         [bus_id]
       );
       return Response.json({ bus_id, seats: rows }, { status: 200 });
