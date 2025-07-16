@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import TicketCard from '@/features/tickets/components/ticketCard';
 
 const dummyTickets = [
-  {seat:4, price: 115, passenger: 'Maria Leonora Theresa', ticketNo: '#3901', dateTime: 'JUL 24 2025 12:25 PM'},
-  {seat:5, price: 115, passenger: 'Astherielle Rafael', ticketNo: '#3902', dateTime: 'JUL 24 2025 12:25 PM'},
-  {seat:6, price: 115, passenger: 'Kidlat Adlawan', ticketNo: '#3903', dateTime: 'JUL 24 2025 12:25 PM'},
-  {seat:7, price: 115, passenger: 'Kidlat Adlawan', ticketNo: '#3904', dateTime: 'JUL 24 2025 12:25 PM'},
+  {seat:4, price: 115.00, passenger: 'Maria Leonora Theresa', ticketNo: '#3901', dateTime: 'JUL 24 2025 12:25 PM'},
+  {seat:5, price: 115.00, passenger: 'Astherielle Rafael', ticketNo: '#3902', dateTime: 'JUL 24 2025 12:25 PM'},
+  {seat:6, price: 115.00, passenger: 'Kidlat Adlawan', ticketNo: '#3903', dateTime: 'JUL 24 2025 12:25 PM'},
+  {seat:7, price: 115.00, passenger: 'Kidlat Adlawan', ticketNo: '#3904', dateTime: 'JUL 24 2025 12:25 PM'},
 ]
 
 export default function TripsOverview() {

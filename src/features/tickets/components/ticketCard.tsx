@@ -14,7 +14,7 @@ export default function TicketCard(props: TripCardProps) {
     <div className='flex flex-col justify-center'>
       <Card className='flex flex-col gap-0 p-5'>
         <div className='font-semibold text-[#456A3B] text-xl'>
-          Seat {props.seat} - ₱ {props.price}
+          Seat {props.seat} - ₱ {props.price.toFixed(2)}
         </div>
 
         <div className='flex flex-row justify-between items-center'>
