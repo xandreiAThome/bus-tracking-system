@@ -1,6 +1,15 @@
-import { Card, CardHeader } from "@/components/ui/card";
+"use client";
+import { useState } from "react";
+import { Card } from '@/components/ui/card';
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 
 interface TripCardProps {
   route:string,
@@ -9,9 +18,11 @@ interface TripCardProps {
 }
 
 export default function TripCard(props: TripCardProps) {
+  const [status, setStatus] = useState("");
+
   return (
     <div className="flex flex-col justify-center">
-      <Card className='p-5'>
+      <Card className='flex flex-col gap-1 p-5'>
         {/* First Row*/}
         <div>
           <div className='flex items-center justify-between'>
@@ -45,14 +56,18 @@ export default function TripCard(props: TripCardProps) {
           </div>
         </div>
         <div>
-          <Select defaultValue='status'>
-            <SelectTrigger className='my-[-18] w-[180px] rounded-lg'>
-              <SelectValue placeholder='Status' />
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger
+              className={`
+                w-[120px] rounded-lg font-bold ${status === 'boarding' ? 'bg-[#71AC61] text-white' : ''}
+                ${status === 'delayed' ? 'bg-[#AC6161] text-white' : ''}
+              `}
+            >
+              <SelectValue>{status === "status" ? "Status" : status.charAt(0).toUpperCase() + status.slice(1)}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value='status'>Status</SelectItem>
-              <SelectItem value='boarding'>Boarding</SelectItem>
-              <SelectItem value='delayed'>Delayed</SelectItem>
+              <SelectItem value="boarding">Boarding</SelectItem>
+              <SelectItem value="delayed">Delayed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -103,7 +118,7 @@ export default function TripCard(props: TripCardProps) {
               <span className='font-bold'>15/40</span>
               <span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="1.5" stroke-linecap="round" strokeLinejoin="round"
+                     stroke="currentColor" strokeWidth="1.5" stroke-linecap="round" strokeLinejoin="round"
                      className="lucide lucide-square-arrow-out-up-right-icon lucide-square-arrow-out-up-right"><path
                   d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" /><path d="m21 3-9 9" /><path
                   d="M15 3h6v6" />
