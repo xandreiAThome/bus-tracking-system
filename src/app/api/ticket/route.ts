@@ -1,38 +1,33 @@
-import { getTicket, deleteTicket } from "@features/ticket/services/crud";
-import { validateIdParam } from "@/lib/utils";
+import { getAllTickets } from "@features/ticket/services/crud";
+import { addTicket } from "@features/ticket/services/crud";
 
 /**
- * GET /api/ticket/[id]
- *
- * Gets a ticket's information based on the dynamic `id` parameter in the URL path.
- * Example request: GET /api/ticket/123
+ * GET api/ticket
  * 
- * Route param:
- * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/123)
+ * Gets all the existing tickets
  */
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const id = validateIdParam(params.id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getTicket(id);
-  }
+export async function GET(){
+  return getAllTickets();
 }
 
 /**
- * DELETE /api/ticket/[id]
- *
- * Deletes a ticket based on the dynamic `id` parameter in the URL path.
- * Example request: DELETE /api/ticket/123
+ * POST api/ticket
  * 
- * Route param:
- * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/123)
+ * Adds a ticket with fields matching `req`'s payload
+ * @param {Request} req Incoming request containing the following:
+ * - `price` The price of the ticket
+ * - `trip_id` The id of the bus associated with the ticket
+ * - `cashier_id` The id of the bus associated with the ticket
+
  */
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const id = validateIdParam(params.id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return deleteTicket(id);
+export async function POST(req: Request) {
+  const { price, trip_id, cashier_id } = await req.json();
+
+  if (!price || !trip_id || !cashier_id) {
+    return Response.json(
+      { message: "Invalid input: Payload field/s missing" },
+      { status: 400 }
+    );
   }
+  return addTicket(price, trip_id, cashier_id);
 }

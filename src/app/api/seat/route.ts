@@ -20,13 +20,13 @@ export async function GET(){
  * `bus_id`: The id of the bus associated with the seat
  */
 export async function POST(req: Request) {
-  const { id, order, bus_id } = await req.json();
+  const { order, bus_id } = await req.json();
 
-  if (!id || !order || !bus_id) {
+  if (!order || !bus_id) {
     return Response.json(
       { message: "Invalid input: Payload field/s missing" },
       { status: 400 }
     );
   }
-  return addSeat(id, order, bus_id);
+  return addSeat(order, bus_id);
 }

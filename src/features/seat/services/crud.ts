@@ -55,17 +55,16 @@ export async function getSeat(id: number) {
 /**
  * Adds a seat to the database
  *
- * @param {number} id The id of the seat
  * @param {string} order The order of the seat
  * @param {number} bus_id The id of the bus associated with the seat
  */
-export async function addSeat(id: number, order: string, bus_id: number) {
+export async function addSeat(order: string, bus_id: number) {
   try {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO seat (id, `order`, bus_id) VALUES (?, ?, ?)",
-        [id, order, bus_id]
+        "INSERT INTO seat (`order`, bus_id) VALUES (?, ?)",
+        [order, bus_id]
       );
       if (result.affectedRows === 0) {
         return Response.json({ message: "Internal Server Error" }, { status: 500 });
