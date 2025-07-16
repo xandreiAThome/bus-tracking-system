@@ -69,7 +69,7 @@ export async function addTrip(start_time: string, end_time: string, bus_id: numb
       end_time = toSQLTimestamp(end_time)
 
       const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO trip (start_time, end_time, bus_id, src_station, dest_station) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO trip (start_time, end_time, bus_id, src_station_id, dest_station_id) VALUES (?, ?, ?, ?, ?)",
         [start_time, end_time, bus_id, src_station, dest_station]
       );
       if (result.affectedRows === 0) {
