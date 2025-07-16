@@ -114,7 +114,7 @@ export async function deleteSeat(id: number) {
 /**
  * Gets the number of seats that are associated with a bus
  *
- * @param {number} bus_id The ID of the `seat` to be deleted
+ * @param {number} bus_id The ID of the `bus`
  */
 export async function getSeatCountByBus(bus_id: number) {
   try {
@@ -126,6 +126,29 @@ export async function getSeatCountByBus(bus_id: number) {
       );
       const seatCount = rows[0]?.seatCount ?? 0;
       return Response.json({ bus_id, seatCount }, { status: 200 });
+    } finally {
+      conn.release();
+    }
+  } catch (err: any) {
+    console.error("DB Error:", err);
+    return catchDBError(err);
+  }
+}
+
+/**
+ * Gets all the seats associated with a bus
+ *
+ * @param {number} bus_id The ID of the `bus`
+ */
+export async function getSeatsByBus(bus_id: number, order: string) {
+  try {
+    const conn = await pool.getConnection();
+    try {
+      const [rows] = await conn.query<RowDataPacket[]>(
+        "SELECT * FROM seat WHERE bus_id = ?",
+        [bus_id]
+      );
+      return Response.json({ bus_id, seats: rows }, { status: 200 });
     } finally {
       conn.release();
     }
