@@ -108,13 +108,13 @@ const Page = () => {
                     Standing
                   </button>
 
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex justify-center gap-2 mt-2">
                     {["Student", "Senior", "PWD"].map((type) => (
                       <button
                         key={type}
                         onClick={() => setSelectedStanding(selectedStanding === type ? null : type)}
                         className={`
-                          px-3 py-1 text-xs rounded border
+                          px-3 py-1 text-xs rounded border w-full
                           ${
                             selectedStanding === type
                               ? "bg-green-500 text-white border-green-500"
