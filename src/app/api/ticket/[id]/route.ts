@@ -1,17 +1,20 @@
-import { getTicket, deleteTicket } from "@features/ticket/services/crud";
-import { validateIdParam } from "@/lib/utils";
+import { validateIdParam } from '@/lib/utils';
+import { deleteTicket, getTicket } from '@features/ticket/services/crud';
 
 /**
  * GET /api/ticket/[id]
  *
  * Gets a ticket's information based on the dynamic `id` parameter in the URL path.
  * Example request: GET /api/ticket/123
- * 
+ *
  * Route param:
  * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/123)
  */
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const id = validateIdParam(params.id);
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) {
     return id;
   } else {
@@ -24,12 +27,15 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
  *
  * Deletes a ticket based on the dynamic `id` parameter in the URL path.
  * Example request: DELETE /api/ticket/123
- * 
+ *
  * Route param:
  * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/123)
  */
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
-  const id = validateIdParam(params.id);
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) {
     return id;
   } else {
