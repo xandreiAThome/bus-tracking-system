@@ -66,21 +66,47 @@ export function catchDBError(err: any) {
  * Converts a string to a new formattable timestamp
  */
 export function toSQLTimestamp(input: string): string {
-    const date = new Date(input);
+  const date = new Date(input);
 
-    if (isNaN(date.getTime())) {
-        throw new Error("Invalid date string");
-    }
+  if (isNaN(date.getTime())) {
+    throw new Error("Invalid date string");
+  }
 
-    // Format as YYYY-MM-DD HH:MM:SS
-    const pad = (n: number) => n.toString().padStart(2, '0');
+  // Format as YYYY-MM-DD HH:MM:SS
+  const pad = (n: number) => n.toString().padStart(2, '0');
 
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1); // months are 0-based
-    const day = pad(date.getDate());
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1); // months are 0-based
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
 
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Validates if a string matches DECIMAL(6, 2)
+ * @param value value to be validated in string format
+ * @returns True if valid; False otherwise
+ */
+export function validateDecimal6_2(value: string): boolean {
+  const num = Number(value);
+  if (isNaN(num)) return false;
+  if (num < -9999.99 || num > 9999.99) {
+    return false;
+  }
+
+  const str = num.toString();
+  const regex = /^-?\d{1,4}(\.\d{1,2})?$/;
+  if (!regex.test(str)) {
+    return false;
+  }
+
+  const digitsOnly = str.replace('.', '').replace('-', '');
+  if (digitsOnly.length > 6) {
+    return false;
+  }
+
+  return true;
 }
