@@ -1,5 +1,5 @@
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import NextAuth from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -9,13 +9,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   pages: {
-    signIn: "/signIn",
-    signOut: "/signIn",
+    signIn: '/signIn',
+    signOut: '/signIn',
   },
   callbacks: {
     async redirect({ url, baseUrl }) {
       // If this is a sign out redirect, go to sign in page
-      if (url.includes("/signIn")) {
+      if (url.includes('/signIn')) {
         return `${baseUrl}/signIn`;
       }
       // Otherwise redirect to productListing after successful sign in

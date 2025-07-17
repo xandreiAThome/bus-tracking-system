@@ -8,9 +8,8 @@ const IssueTicketModal = () => {
       <div></div>
 
       <div></div>
-
     </div>
-  )
-}
+  );
+};
 
-export default IssueTicketModal
+export default IssueTicketModal;
