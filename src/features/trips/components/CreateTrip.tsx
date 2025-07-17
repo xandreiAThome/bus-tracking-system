@@ -8,9 +8,32 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import React, { useState } from "react";
 
 export default function CreateTripModal() {
+
+  const stations = [
+    "Manila",
+    "Quezon City",
+    "Makati",
+    "Taguig",
+    "Mandaluyong",
+    "Pasig"
+  ];
+
+  const drivers = [
+    "Mark Reyes",
+    "Anthony Cruz",
+    "Jared Thompson",
+    "Samuel Diaz",
+    "Robert Castillo",
+    "Luis Santiago",
+    "Joseph Kim",
+    "JJ Rivera"
+  ]
+
   const [hour, setHour] = useState("00");
   const [minute, setMinute] = useState("00");
   const [meridiem, setMeridiem] = useState("a.m.");
@@ -44,7 +67,7 @@ export default function CreateTripModal() {
       </DrawerTrigger>
 
       {/* bg-[#B1B1B1] */}
-      <DrawerContent className="p-6">
+      <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">
             Create Trip
@@ -52,32 +75,70 @@ export default function CreateTripModal() {
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
-        <form className="flex flex-col gap-4 px-4 pb-6">
+        <form className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1">
+        <div>
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
+              Driver
+            </Label>
+
+            <Select>
+            <SelectTrigger className="w-full justify-start px-0">
+              <SelectValue placeholder="Choose Driver" />
+            </SelectTrigger>
+              <SelectContent>
+                {drivers.map((driver) => (
+                  <SelectItem key={driver} value={driver}>{driver}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
               Source Station
-            </label>
-            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-              <option>Cashier Station</option>
-            </select>
+            </Label>
+
+            <Select>
+            <SelectTrigger className="w-full justify-start px-0">
+              <SelectValue placeholder="Choose Source" />
+            </SelectTrigger>
+              <SelectContent>
+                {stations.map((station) => (
+                  <SelectItem key={station} value={station}>{station}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
               Destination Station
-            </label>
-            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-              <option>Choose Station</option>
-            </select>
+            </Label>
+
+            <Select>
+              <SelectTrigger className="w-full justify-start px-0">
+                <SelectValue placeholder="Choose Destination"/>
+              </SelectTrigger>
+              <SelectContent>
+                {stations.map((station) => (
+                  <SelectItem key={station} value={station}>{station}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
               Bus
-            </label>
-            <select className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-              <option>Choose Bus</option>
-            </select>
+            </Label>
+            <Select>
+              <SelectTrigger className="w-full justify-start px-0">
+                <SelectValue placeholder="Choose Bus"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="station">Bus1</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
