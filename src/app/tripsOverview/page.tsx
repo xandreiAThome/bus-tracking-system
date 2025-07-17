@@ -1,8 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import TripCard from "@/features/trips/components/tripCard";
+import CreateTripModal from "@/features/trips/components/CreateTrip";
 
 const dummyTrips = [
   { route: "ALLEN → CATARMAN", time: "9:00 PM", driver: "Juan Dela Cruz" },
@@ -34,9 +34,7 @@ export default function TripsOverview() {
           </div>
         </CardContent>
         <div className="flex mt-4 justify-center">
-          <Button className="h-max w-[80%] bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-            Create Trip
-          </Button>
+          <CreateTripModal></CreateTripModal>
         </div>
       </Card>
     </div>
