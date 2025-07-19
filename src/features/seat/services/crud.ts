@@ -55,16 +55,16 @@ export async function getSeat(id: number) {
 /**
  * Adds a seat to the database
  *
- * @param {string} order The order of the seat
+ * @param {string} seat_number The seat_number of the seat
  * @param {number} bus_id The id of the bus associated with the seat
  */
-export async function addSeat(order: string, bus_id: number) {
+export async function addSeat(seat_number: string, bus_id: number) {
   try {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO seat (`order`, bus_id) VALUES (?, ?)",
-        [order, bus_id]
+        "INSERT INTO seat (seat_number, bus_id) VALUES (?, ?)",
+        [seat_number, bus_id]
       );
       if (result.affectedRows === 0) {
         return Response.json({ message: "Internal Server Error" }, { status: 500 });
@@ -139,13 +139,14 @@ export async function getSeatCountByBus(bus_id: number) {
  * Gets all the seats associated with a bus
  *
  * @param {number} bus_id The ID of the `bus`
+ * @param {string} order The order: ASC or DESC
  */
 export async function getSeatsByBus(bus_id: number, order: string) {
   try {
     const conn = await pool.getConnection();
     try {
       const [rows] = await conn.query<RowDataPacket[]>(
-        `SELECT * FROM seat WHERE bus_id = ? ORDER BY \`order\` ${order}`,
+        `SELECT * FROM seat WHERE bus_id = ? ORDER BY seat_number ${order}`,
         [bus_id]
       );
       return Response.json({ bus_id, seats: rows }, { status: 200 });

@@ -16,17 +16,17 @@ export async function GET(){
  * Adds a seat with fields matching `req`'s payload
  * @param {Request} req Incoming request containing the following:
  * `id`: The id of the seat
- * `order`: The order of the seat
+ * `seat_number`: The seat_number of the seat
  * `bus_id`: The id of the bus associated with the seat
  */
 export async function POST(req: Request) {
-  const { order, bus_id } = await req.json();
+  const { seat_number, bus_id } = await req.json();
 
-  if (!order || !bus_id) {
+  if (!seat_number || !bus_id) {
     return Response.json(
       { message: "Invalid input: Payload field/s missing" },
       { status: 400 }
     );
   }
-  return addSeat(order, bus_id);
+  return addSeat(seat_number, bus_id);
 }
