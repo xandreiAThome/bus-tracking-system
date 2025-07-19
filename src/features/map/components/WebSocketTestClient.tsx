@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import dynamic from "next/dynamic";
 import { useWebSocket } from "@/features/map/hooks";
 import {
-  ConnectionStatus,
-  ClientRegistration,
+  AutoConnect,
   LocationUpdate,
   BusSubscription,
   ServerStatus,
@@ -37,18 +36,10 @@ export default function WebSocketTestClient() {
   } = useWebSocket();
 
   // Form states
-  const [clientType, setClientType] = useState<
-    "bus_driver" | "passenger" | "admin"
-  >("passenger");
-  const [userId, setUserId] = useState("");
-  const [busId, setBusId] = useState("");
+  const [userId] = useState("admin-user");
   const [subscribeToBusId, setSubscribeToBusId] = useState("");
   const [latitude, setLatitude] = useState("14.5995");
   const [longitude, setLongitude] = useState("120.9842");
-
-  const handleRegister = () => {
-    register(clientType, userId || undefined, busId || undefined);
-  };
 
   const handleLocationUpdate = () => {
     if (!latitude || !longitude) {
@@ -113,23 +104,14 @@ export default function WebSocketTestClient() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Connection and Controls */}
+          {/* Connection Status and Controls */}
           <div className="space-y-6">
-            <ConnectionStatus
+            {/* Show connection status only */}
+            <AutoConnect
+              connect={connect}
+              register={register}
+              disconnect={disconnect}
               connected={connected}
-              onConnect={connect}
-              onDisconnect={disconnect}
-            />
-
-            <ClientRegistration
-              clientType={clientType}
-              setClientType={setClientType}
-              userId={userId}
-              setUserId={setUserId}
-              busId={busId}
-              setBusId={setBusId}
-              connected={connected}
-              onRegister={handleRegister}
             />
 
             <LocationUpdate
