@@ -22,6 +22,7 @@ import {
   SquarePen,
   Map,
 } from "lucide-react";
+import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
 
 interface TripCardProps {
   route: string;
@@ -31,6 +32,7 @@ interface TripCardProps {
 
 export default function TripCard(props: TripCardProps) {
   const [status, setStatus] = useState("boarding");
+  const [openDrawer, setOpenDrawer] = useState(false);
 
   return (
     <div className="flex flex-col justify-center">
@@ -53,8 +55,11 @@ export default function TripCard(props: TripCardProps) {
                 <AlignJustify />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem className="w-full">
-                  <Link href={"issuedTickets"}>Issued Tickets</Link>
+                <DropdownMenuItem
+                  onSelect={() => setOpenDrawer(true)}
+                  className="w-full justify-center"
+                >
+                  Issued Tickets
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -112,6 +117,11 @@ export default function TripCard(props: TripCardProps) {
           </div>
         </div>
       </Card>
+
+      <IssuedTicketsModal
+        openDrawer={openDrawer}
+        setOpenDrawer={setOpenDrawer}
+      ></IssuedTicketsModal>
     </div>
   );
 }
