@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import TripCard from "@/features/trips/components/tripCard";
 import CreateTripModal from "@/features/trips/components/CreateTrip";
 
@@ -30,9 +30,9 @@ export default function TripsOverview() {
             ))}
           </div>
         </CardContent>
-        <div className="flex mt-4 justify-center">
-          <CreateTripModal></CreateTripModal>
-        </div>
+          <div className="flex mt-4 justify-center">
+            <CreateTripModal/>
+          </div>
       </Card>
     </div>
   );
