@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import TicketCard from "@/features/trips/components/ticketCard";
+import TicketCard from "@/features/ticket/components/ticketCard";
 
 const dummyTickets = [
   {
