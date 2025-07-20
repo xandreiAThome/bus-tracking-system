@@ -1,0 +1,20 @@
+### GET request
+GET http://localhost:3000/api/ticket
+Accept: application/json
+
+### POST request
+POST http://localhost:3000/api/ticket
+Content-Type: application/json
+
+{
+  "price": "1",
+  "trip_id": 2,
+  "cashier_id": 1
+}
+
+### GET request
+GET http://localhost:3000/api/ticket/2
+
+### DELETE request
+DELETE http://localhost:3000/api/ticket/3
+
