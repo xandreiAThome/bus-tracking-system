@@ -3,16 +3,16 @@ import { addTrip } from "@features/trip/services/crud";
 
 /**
  * GET api/trip
- * 
+ *
  * Gets all the existing trips
  */
-export async function GET(){
+export async function GET() {
   return getAllTrips();
 }
 
 /**
  * POST api/trip
- * 
+ *
  * Adds a trip with fields matching `req`'s payload
  * @param {Request} req Incoming request containing the following:
  * - `start_time` start time in ISO format "YYYY-MM-DDTHH:MM:SSZ"
@@ -22,7 +22,8 @@ export async function GET(){
  * - `dest_station` The id of the destination station
  */
 export async function POST(req: Request) {
-  const { start_time, end_time, bus_id, src_station, dest_station } = await req.json();
+  const { start_time, end_time, bus_id, src_station, dest_station } =
+    await req.json();
 
   if (!start_time || !end_time || !bus_id || !src_station || !dest_station) {
     return Response.json(

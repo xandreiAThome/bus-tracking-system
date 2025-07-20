@@ -3,24 +3,24 @@ import { catchDBError } from "@/lib/utils";
 import { RowDataPacket } from "mysql2";
 import { ResultSetHeader } from "mysql2";
 
-export async function getAllSeats(){
-  try{
+export async function getAllSeats() {
+  try {
     const conn = await pool.getConnection();
-    try{
-      const [seats] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM seat"
-      );
-      if(!seats){
-        return Response.json({message: "No available seats"}, {status: 404});
+    try {
+      const [seats] = await conn.query<RowDataPacket[]>("SELECT * FROM seat");
+      if (!seats) {
+        return Response.json(
+          { message: "No available seats" },
+          { status: 404 }
+        );
       }
-      return Response.json({seats}, {status: 200});
-    } finally{
+      return Response.json({ seats }, { status: 200 });
+    } finally {
       conn.release();
     }
-
-  } catch(err){
+  } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({message: "Internal Server Error"}, {status: 500});
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -40,9 +40,9 @@ export async function getSeat(id: number) {
       );
       const seat = seats[0];
       if (!seat) {
-        return Response.json( { message: "seat not found" }, { status: 404 });
+        return Response.json({ message: "seat not found" }, { status: 404 });
       }
-      return Response.json({seat}, { status: 200 });
+      return Response.json({ seat }, { status: 200 });
     } finally {
       conn.release();
     }
@@ -67,9 +67,15 @@ export async function addSeat(seat_number: string, bus_id: number) {
         [seat_number, bus_id]
       );
       if (result.affectedRows === 0) {
-        return Response.json({ message: "Internal Server Error" }, { status: 500 });
+        return Response.json(
+          { message: "Internal Server Error" },
+          { status: 500 }
+        );
       }
-      return Response.json({message: "Seat created successfully" }, { status: 201 });
+      return Response.json(
+        { message: "Seat created successfully" },
+        { status: 201 }
+      );
     } finally {
       conn.release();
     }

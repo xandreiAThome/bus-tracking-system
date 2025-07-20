@@ -3,10 +3,10 @@ import { addTicket } from "@features/ticket/services/crud";
 
 /**
  * GET api/ticket
- * 
+ *
  * Gets all the existing tickets
  */
-export async function GET(){
+export async function GET() {
   return getAllTickets();
 }
 

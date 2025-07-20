@@ -26,7 +26,7 @@ export function extractParamAsString(
 /**
  * Validates the ID parameter of a route.
  * @param idParam is the id parameter
- * @returns A valid integer number if id is valid, else a Response with Error 
+ * @returns A valid integer number if id is valid, else a Response with Error
  */
 export function validateIdParam(idParam: string | null): number | Response {
   if (idParam === null) {
@@ -52,13 +52,19 @@ export function validateIdParam(idParam: string | null): number | Response {
  */
 export function catchDBError(err: any) {
   if (err.code === "ER_DUP_ENTRY") {
-    return Response.json({message: "Duplicate Entry Error"}, {status: 409});
+    return Response.json({ message: "Duplicate Entry Error" }, { status: 409 });
   } else if (err.code === "ER_NO_REFERENCED_ROW_2") {
-    return Response.json({message: "Related Record Not Found"}, {status: 400});
+    return Response.json(
+      { message: "Related Record Not Found" },
+      { status: 400 }
+    );
   } else if (err.code === "ER_ROW_IS_REFERENCED_2") {
-    return Response.json({message: "Row is currently referenced"}, {status: 409});
+    return Response.json(
+      { message: "Row is currently referenced" },
+      { status: 409 }
+    );
   } else {
-    return Response.json({message: "Internal Server Error"}, {status: 500});
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -73,7 +79,7 @@ export function toSQLTimestamp(input: string): string {
   }
 
   // Format as YYYY-MM-DD HH:MM:SS
-  const pad = (n: number) => n.toString().padStart(2, '0');
+  const pad = (n: number) => n.toString().padStart(2, "0");
 
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1); // months are 0-based
@@ -103,7 +109,7 @@ export function validateDecimal6_2(value: string): boolean {
     return false;
   }
 
-  const digitsOnly = str.replace('.', '').replace('-', '');
+  const digitsOnly = str.replace(".", "").replace("-", "");
   if (digitsOnly.length > 6) {
     return false;
   }
@@ -114,10 +120,12 @@ export function validateDecimal6_2(value: string): boolean {
 /**
  * Validates Sort Order (checks if it marches ASC or DESC)
  */
-export function validateSortOrder(sortOrder: string | null | undefined): 'ASC' | 'DESC' {
+export function validateSortOrder(
+  sortOrder: string | null | undefined
+): "ASC" | "DESC" {
   const order = sortOrder?.toUpperCase();
-  if (order === 'ASC' || order === 'DESC') {
+  if (order === "ASC" || order === "DESC") {
     return order;
   }
-  return 'ASC'; // default fallback
+  return "ASC"; // default fallback
 }

@@ -4,24 +4,26 @@ import { validateDecimal6_2 } from "@/lib/utils";
 import { RowDataPacket } from "mysql2";
 import { ResultSetHeader } from "mysql2";
 
-export async function getAllTickets(){
-  try{
+export async function getAllTickets() {
+  try {
     const conn = await pool.getConnection();
-    try{
+    try {
       const [tickets] = await conn.query<RowDataPacket[]>(
         "SELECT * FROM ticket"
       );
-      if(!tickets){
-        return Response.json({message: "No available tickets"}, {status: 404});
+      if (!tickets) {
+        return Response.json(
+          { message: "No available tickets" },
+          { status: 404 }
+        );
       }
-      return Response.json({tickets}, {status: 200});
-    } finally{
+      return Response.json({ tickets }, { status: 200 });
+    } finally {
       conn.release();
     }
-
-  } catch(err){
+  } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({message: "Internal Server Error"}, {status: 500});
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -41,9 +43,9 @@ export async function getTicket(id: number) {
       );
       const ticket = tickets[0];
       if (!ticket) {
-        return Response.json( { message: "ticket not found" }, { status: 404 });
+        return Response.json({ message: "ticket not found" }, { status: 404 });
       }
-      return Response.json({ticket}, { status: 200 });
+      return Response.json({ ticket }, { status: 200 });
     } finally {
       conn.release();
     }
@@ -60,7 +62,11 @@ export async function getTicket(id: number) {
  * @param {number} trip_id The id of the bus associated with the ticket
  * @param {number} cashier_id The id of the bus associated with the ticket
  */
-export async function addTicket(price: string, trip_id: number, cashier_id: number) {
+export async function addTicket(
+  price: string,
+  trip_id: number,
+  cashier_id: number
+) {
   try {
     const conn = await pool.getConnection();
     try {
@@ -72,9 +78,15 @@ export async function addTicket(price: string, trip_id: number, cashier_id: numb
         [price, trip_id, cashier_id]
       );
       if (result.affectedRows === 0) {
-        return Response.json({ message: "Internal Server Error" }, { status: 500 });
+        return Response.json(
+          { message: "Internal Server Error" },
+          { status: 500 }
+        );
       }
-      return Response.json({message: "Ticket created successfully" }, { status: 201 });
+      return Response.json(
+        { message: "Ticket created successfully" },
+        { status: 201 }
+      );
     } finally {
       conn.release();
     }

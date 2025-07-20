@@ -3,16 +3,16 @@ import { addSeat } from "@features/seat/services/crud";
 
 /**
  * GET api/seats
- * 
+ *
  * Gets all the existing seats
  */
-export async function GET(){
+export async function GET() {
   return getAllSeats();
 }
 
 /**
  * POST api/seat
- * 
+ *
  * Adds a seat with fields matching `req`'s payload
  * @param {Request} req Incoming request containing the following:
  * `id`: The id of the seat

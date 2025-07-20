@@ -3,24 +3,24 @@ import { catchDBError, toSQLTimestamp } from "@/lib/utils";
 import { RowDataPacket } from "mysql2";
 import { ResultSetHeader } from "mysql2";
 
-export async function getAllTrips(){
-  try{
+export async function getAllTrips() {
+  try {
     const conn = await pool.getConnection();
-    try{
-      const [trips] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM trip"
-      );
-      if(!trips){
-        return Response.json({message: "No available trips"}, {status: 404});
+    try {
+      const [trips] = await conn.query<RowDataPacket[]>("SELECT * FROM trip");
+      if (!trips) {
+        return Response.json(
+          { message: "No available trips" },
+          { status: 404 }
+        );
       }
-      return Response.json({trips}, {status: 200});
-    } finally{
+      return Response.json({ trips }, { status: 200 });
+    } finally {
       conn.release();
     }
-
-  } catch(err){
+  } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({message: "Internal Server Error"}, {status: 500});
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -40,9 +40,9 @@ export async function getTrip(id: number) {
       );
       const trip = trips[0];
       if (!trip) {
-        return Response.json( { message: "trip not found" }, { status: 404 });
+        return Response.json({ message: "trip not found" }, { status: 404 });
       }
-      return Response.json({trip}, { status: 200 });
+      return Response.json({ trip }, { status: 200 });
     } finally {
       conn.release();
     }
@@ -61,21 +61,33 @@ export async function getTrip(id: number) {
  * @param {number} src_station The id of the destination station
  * @param {number} dest_station The id of the destination station
  */
-export async function addTrip(start_time: string, end_time: string, bus_id: number, src_station: number, dest_station: number) {
+export async function addTrip(
+  start_time: string,
+  end_time: string,
+  bus_id: number,
+  src_station: number,
+  dest_station: number
+) {
   try {
     const conn = await pool.getConnection();
     try {
-      start_time = toSQLTimestamp(start_time)
-      end_time = toSQLTimestamp(end_time)
+      start_time = toSQLTimestamp(start_time);
+      end_time = toSQLTimestamp(end_time);
 
       const [result] = await conn.execute<ResultSetHeader>(
         "INSERT INTO trip (start_time, end_time, bus_id, src_station_id, dest_station_id) VALUES (?, ?, ?, ?, ?)",
         [start_time, end_time, bus_id, src_station, dest_station]
       );
       if (result.affectedRows === 0) {
-        return Response.json({ message: "Internal Server Error" }, { status: 500 });
+        return Response.json(
+          { message: "Internal Server Error" },
+          { status: 500 }
+        );
       }
-      return Response.json({message: "Trip created successfully" }, { status: 201 });
+      return Response.json(
+        { message: "Trip created successfully" },
+        { status: 201 }
+      );
     } finally {
       conn.release();
     }

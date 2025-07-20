@@ -1,5 +1,5 @@
-import { validateIdParam } from '@/lib/utils';
-import { deleteSeat, getSeat } from '@features/seat/services/crud';
+import { validateIdParam } from "@/lib/utils";
+import { deleteSeat, getSeat } from "@features/seat/services/crud";
 
 /**
  * GET /api/seat/[id]
