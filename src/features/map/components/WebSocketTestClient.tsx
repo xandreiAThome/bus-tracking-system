@@ -111,7 +111,11 @@ export default function WebSocketTestClient() {
               connect={connect}
               register={register}
               disconnect={disconnect}
+              subscribe={subscribe}
               connected={connected}
+              clientInfo={clientInfo}
+              busId={"1"}
+              userId={userId}
             />
 
             <LocationUpdate

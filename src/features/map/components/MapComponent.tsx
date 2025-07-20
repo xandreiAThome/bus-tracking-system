@@ -11,7 +11,7 @@ interface MapComponentProps {
 const MapComponent = ({ locations, center, zoom }: MapComponentProps) => {
   const mapStyles = {
     width: "100%",
-    height: "500px",
+    height: "524px",
   };
 
   const mapCenter = {
@@ -107,10 +107,13 @@ const MapComponent = ({ locations, center, zoom }: MapComponentProps) => {
                 url: isBus
                   ? "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%232563EB' stroke='%23fff' stroke-width='2' d='M4 6h16v10H4z'/%3E%3Ccircle cx='7' cy='18' r='2' fill='%23374151'/%3E%3Ccircle cx='17' cy='18' r='2' fill='%23374151'/%3E%3Cpath fill='%23fff' d='M6 8h4v4H6zM14 8h4v4h-4z'/%3E%3C/svg%3E"
                   : "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%2310B981' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E",
-                scaledSize: new window.google.maps.Size(
-                  isBus ? 24 : 20,
-                  isBus ? 24 : 20
-                ),
+                scaledSize:
+                  typeof window !== "undefined" && window.google?.maps?.Size
+                    ? new window.google.maps.Size(
+                        isBus ? 24 : 20,
+                        isBus ? 24 : 20
+                      )
+                    : undefined,
               }}
             />
           );

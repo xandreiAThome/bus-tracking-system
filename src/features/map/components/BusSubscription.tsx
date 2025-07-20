@@ -26,7 +26,9 @@ export function BusSubscription({
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="subscribeToBusId">Subscribe to Bus ID</Label>
+          <Label htmlFor="subscribeToBusId" className="pb-1">
+            Subscribe to Bus ID
+          </Label>
           <Input
             id="subscribeToBusId"
             value={subscribeToBusId}
