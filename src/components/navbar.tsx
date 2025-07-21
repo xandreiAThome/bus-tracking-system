@@ -6,7 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-export default function NavBar() {
+export default function NavBar({
+  handleSignOut,
+}: {
+  handleSignOut: (formData: FormData) => void | Promise<void>;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   return (
@@ -30,6 +34,11 @@ export default function NavBar() {
             <House />
             Home
           </Link>
+          <form action={handleSignOut}>
+            <button type="submit" className="w-full text-left">
+              Log Out
+            </button>
+          </form>
         </SheetContent>
       </Sheet>
     </header>
