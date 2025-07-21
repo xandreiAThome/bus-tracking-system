@@ -1,0 +1,31 @@
+### Get all stations
+GET http://localhost:3000/api/station
+Accept: application/json
+
+###
+
+### Create a new station
+POST http://localhost:3000/api/station
+Content-Type: application/json
+
+{
+  "name": "Terminal A"
+}
+
+###
+
+### Get a station by ID (replace `1` with actual ID)
+GET http://localhost:3000/api/station/1
+Accept: application/json
+
+###
+
+### Get a station by name (URL-encoded if needed)
+GET http://localhost:3000/api/station/name/Terminal%20A
+Accept: application/json
+
+###
+
+### Delete a station by ID (replace `1` with actual ID)
+DELETE http://localhost:3000/api/station/2
+Accept: application/json
