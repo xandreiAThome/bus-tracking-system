@@ -64,7 +64,7 @@ export function AutoConnect({
   useEffect(() => {
     // Register when connection is established
     if (connected) {
-      register("admin", userId);
+      register("passenger", userId);
       subscribe(busId, userId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
