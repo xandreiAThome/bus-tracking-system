@@ -21,6 +21,7 @@ const MapComponent = dynamic(
 export default function WebSocketWrapper({ busId }: { busId: string }) {
   const {
     connected,
+    connecting,
     locationUpdates,
     clientInfo,
     connect,
@@ -63,6 +64,7 @@ export default function WebSocketWrapper({ busId }: { busId: string }) {
               register={register}
               disconnect={disconnect}
               connected={connected}
+              connecting={connecting}
               clientInfo={clientInfo}
               busId={busId}
               subscribe={subscribe}

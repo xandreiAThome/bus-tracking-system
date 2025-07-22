@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type {
   LocationData,
   ClientInfo,
@@ -10,6 +10,7 @@ import type {
 export interface UseWebSocketReturn {
   // Connection state
   connected: boolean;
+  connecting: boolean;
   ws: WebSocket | null;
 
   // Data state
@@ -43,6 +44,7 @@ export interface UseWebSocketReturn {
 export function useWebSocket(): UseWebSocketReturn {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
   const [locationUpdates, setLocationUpdates] = useState<LocationBroadcast[]>(
     []
@@ -56,6 +58,13 @@ export function useWebSocket(): UseWebSocketReturn {
     activeBuses: [],
     clients: [],
   });
+
+  // Simple connection management
+  const lastRegistrationRef = useRef<{
+    clientType: "bus_driver" | "passenger" | "admin";
+    userId?: string;
+    busId?: string;
+  } | null>(null);
 
   const addMessage = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -75,18 +84,44 @@ export function useWebSocket(): UseWebSocketReturn {
   );
 
   const connect = useCallback(() => {
+    if (connecting || connected) {
+      return; // Prevent multiple connection attempts
+    }
+
+    setConnecting(true);
+
     try {
       const wsServer = process.env.NEXT_PUBLIC_WEBSOCKET_SERVER;
       if (!wsServer) {
         addMessage("WebSocket server URL is not defined.");
+        setConnecting(false);
         return;
       }
+
       const websocket = new WebSocket(wsServer);
 
       websocket.onopen = () => {
         setConnected(true);
+        setConnecting(false);
         setWs(websocket);
         addMessage("Connected to WebSocket server");
+
+        // Re-register if we have previous registration info
+        if (lastRegistrationRef.current) {
+          const { clientType, userId, busId } = lastRegistrationRef.current;
+          setTimeout(() => {
+            const message = {
+              type: "register" as const,
+              clientType,
+              userId: userId || undefined,
+              busId: clientType === "bus_driver" && busId ? busId : undefined,
+            };
+            if (websocket.readyState === WebSocket.OPEN) {
+              websocket.send(JSON.stringify(message));
+              addMessage(`Re-registered as ${clientType}`);
+            }
+          }, 100); // Small delay to ensure connection is stable
+        }
       };
 
       websocket.onmessage = event => {
@@ -124,17 +159,20 @@ export function useWebSocket(): UseWebSocketReturn {
 
       websocket.onclose = () => {
         setConnected(false);
+        setConnecting(false);
         setWs(null);
         addMessage("Disconnected from WebSocket server");
       };
 
-      websocket.onerror = error => {
-        addMessage(`WebSocket error: ${error}`);
+      websocket.onerror = () => {
+        setConnecting(false);
+        addMessage("WebSocket connection error");
       };
     } catch (error) {
+      setConnecting(false);
       addMessage(`Connection failed: ${error}`);
     }
-  }, [addMessage]);
+  }, [addMessage, connecting, connected]);
 
   const disconnect = useCallback(() => {
     if (ws) {
@@ -148,6 +186,9 @@ export function useWebSocket(): UseWebSocketReturn {
       userId?: string,
       busId?: string
     ) => {
+      // Store registration info for auto re-registration after reconnection
+      lastRegistrationRef.current = { clientType, userId, busId };
+
       const message: ClientMessage = {
         type: "register",
         clientType,
@@ -202,6 +243,7 @@ export function useWebSocket(): UseWebSocketReturn {
   return {
     // Connection state
     connected,
+    connecting,
     ws,
 
     // Data state

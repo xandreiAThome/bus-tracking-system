@@ -1,33 +1,24 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useWebSocket } from "@/features/map/hooks/useWebSocket";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  MapPin,
-  Navigation,
-  Users,
-  Wifi,
-  WifiOff,
-  Play,
-  Square,
-} from "lucide-react";
+import ConnectionStatus from "./ConnectionStatus";
+import BroadcastControls from "./BroadcastControls";
+import CurrentLocationDisplay from "./CurrentLocationDisplay";
+import DashboardTabs from "./DashboardTabs";
 
 interface GPSBroadcastClientProps {
   userEmail: string;
   userName: string;
+  busId: string;
 }
 
 export default function GPSBroadcastClient({
   userEmail,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   userName,
+  busId,
 }: GPSBroadcastClientProps) {
-  const [busId, setBusId] = useState<string>("");
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isBroadcasting, setIsBroadcasting] = useState<boolean>(false);
   const [currentLocation, setCurrentLocation] = useState<{
@@ -36,15 +27,22 @@ export default function GPSBroadcastClient({
     accuracy: number;
   } | null>(null);
   const [locationError, setLocationError] = useState<string>("");
+  const [broadcastCount, setBroadcastCount] = useState<number>(0);
 
   const watchIdRef = useRef<number | null>(null);
   const broadcastIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isManuallyStoppedRef = useRef<boolean>(false);
+  const currentLocationRef = useRef<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  } | null>(null);
 
   const {
     connected,
+    connecting,
     clientInfo,
     messages,
-    locationUpdates,
     connect,
     disconnect,
     register,
@@ -59,21 +57,52 @@ export default function GPSBroadcastClient({
     connect();
 
     return () => {
-      stopBroadcasting();
+      stopBroadcasting(true);
       disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRegister = () => {
-    if (!busId.trim()) {
-      alert("Please enter a Bus ID");
-      return;
+  useEffect(() => {
+    // Auto-register and start broadcasting when connected
+    if (connected && !isRegistered) {
+      register("bus_driver", userId, busId);
+      setIsRegistered(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, isRegistered]);
 
-    register("bus_driver", userId, busId.trim());
-    setIsRegistered(true);
-  };
+  useEffect(() => {
+    // Auto-start broadcasting when connected and registered (unless manually stopped)
+    // This handles both initial connection and reconnection scenarios
+    if (
+      connected &&
+      isRegistered &&
+      !isBroadcasting &&
+      !isManuallyStoppedRef.current
+    ) {
+      if (broadcastCount > 0) {
+        console.log("Restarting GPS broadcast after reconnection...");
+      } else {
+        console.log("Auto-starting GPS broadcast...");
+      }
+      startBroadcasting();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, isRegistered, isBroadcasting]);
+
+  useEffect(() => {
+    // Stop broadcasting immediately when disconnected
+    if (!connected && isBroadcasting) {
+      console.log("Connection lost, stopping broadcast immediately...");
+      setIsBroadcasting(false);
+      stopLocationTracking();
+      if (broadcastIntervalRef.current) {
+        clearInterval(broadcastIntervalRef.current);
+        broadcastIntervalRef.current = null;
+      }
+    }
+  }, [connected, isBroadcasting]);
 
   const getCurrentLocation = (): Promise<GeolocationPosition> => {
     return new Promise((resolve, reject) => {
@@ -82,11 +111,27 @@ export default function GPSBroadcastClient({
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 60000, // 1 minute
-      });
+      // Try with lower accuracy first for better reliability
+      navigator.geolocation.getCurrentPosition(
+        resolve,
+        error => {
+          console.warn(
+            "Lower accuracy location failed, trying high accuracy:",
+            error
+          );
+          // Fallback to high accuracy if low accuracy fails
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 20000, // 20 seconds for high accuracy
+            maximumAge: 300000, // 5 minutes
+          });
+        },
+        {
+          enableHighAccuracy: false, // Less accurate but faster
+          timeout: 15000, // Increased to 15 seconds
+          maximumAge: 300000, // 5 minutes - allow older cached location
+        }
+      );
     });
   };
 
@@ -97,9 +142,9 @@ export default function GPSBroadcastClient({
     }
 
     const options = {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 30000, // 30 seconds
+      enableHighAccuracy: false, // Less accurate but more reliable
+      timeout: 15000, // 15 seconds
+      maximumAge: 60000, // 1 minute
     };
 
     const watchId = navigator.geolocation.watchPosition(
@@ -111,12 +156,8 @@ export default function GPSBroadcastClient({
         };
 
         setCurrentLocation(location);
+        currentLocationRef.current = location; // Also update the ref
         setLocationError("");
-
-        // Send location update immediately when location changes
-        if (connected && isRegistered && isBroadcasting) {
-          sendLocationUpdate(location.latitude, location.longitude, userId);
-        }
       },
       error => {
         setLocationError(error.message);
@@ -133,6 +174,7 @@ export default function GPSBroadcastClient({
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+    currentLocationRef.current = null; // Clear the location ref
   };
 
   const startBroadcasting = async () => {
@@ -140,6 +182,9 @@ export default function GPSBroadcastClient({
       alert("Please connect and register first");
       return;
     }
+
+    // Reset manual stop flag when starting broadcasting
+    isManuallyStoppedRef.current = false;
 
     try {
       // Get initial location
@@ -151,33 +196,58 @@ export default function GPSBroadcastClient({
       };
 
       setCurrentLocation(location);
+      currentLocationRef.current = location; // Also update the ref
       setIsBroadcasting(true);
 
       // Send initial location
       sendLocationUpdate(location.latitude, location.longitude, userId);
+      setBroadcastCount(prev => prev + 1);
+      console.log("Initial location sent:", location);
 
       // Start continuous location tracking
       startLocationTracking();
 
-      // Set up periodic broadcasting (every 2 seconds as backup)
+      // Set up periodic broadcasting (every 5 seconds)
+      // Use the ref which will always have the latest location
       broadcastIntervalRef.current = setInterval(() => {
-        if (currentLocation && connected && isRegistered) {
+        if (connected && isRegistered && currentLocationRef.current) {
           sendLocationUpdate(
-            currentLocation.latitude,
-            currentLocation.longitude,
+            currentLocationRef.current.latitude,
+            currentLocationRef.current.longitude,
             userId
           );
+          setBroadcastCount(prev => prev + 1);
+          console.log("Periodic location sent:", currentLocationRef.current);
+        } else {
+          // Stop broadcasting if not connected or not registered
+          console.log(
+            "Connection lost or not registered, stopping broadcast..."
+          );
+          clearInterval(broadcastIntervalRef.current!);
+          broadcastIntervalRef.current = null;
+          setIsBroadcasting(false);
+          stopLocationTracking();
         }
-      }, 2000);
+      }, 5000); // 5 seconds interval
     } catch (error) {
-      setLocationError(`Failed to get location: ${error.message}`);
+      const errorMessage =
+        typeof error === "object" && error !== null && "message" in error
+          ? (error as { message: string }).message
+          : String(error);
+      setLocationError(`Failed to get location: ${errorMessage}`);
       console.error("Location error:", error);
     }
   };
 
-  const stopBroadcasting = () => {
+  const stopBroadcasting = (resetCount: boolean = true) => {
     setIsBroadcasting(false);
     stopLocationTracking();
+
+    if (resetCount) {
+      setBroadcastCount(0);
+      // Set manual stop flag only when manually stopping (resetCount = true)
+      isManuallyStoppedRef.current = true;
+    }
 
     if (broadcastIntervalRef.current) {
       clearInterval(broadcastIntervalRef.current);
@@ -185,266 +255,43 @@ export default function GPSBroadcastClient({
     }
   };
 
-  const formatCoordinate = (coord: number, precision: number = 6): string => {
-    return coord.toFixed(precision);
-  };
-
   return (
     <div className="space-y-6">
       {/* Connection Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {connected ? (
-              <Wifi className="w-5 h-5 text-green-500" />
-            ) : (
-              <WifiOff className="w-5 h-5 text-red-500" />
-            )}
-            Connection Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <span
-              className={`font-medium ${connected ? "text-green-600" : "text-red-600"}`}
-            >
-              {connected ? "Connected" : "Disconnected"}
-            </span>
-            {connected && (
-              <div className="text-sm text-gray-600">
-                <Users className="w-4 h-4 inline mr-1" />
-                {clientInfo.clientCount} clients •{" "}
-                {clientInfo.activeBuses.length} active buses
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Bus Registration */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Bus Registration</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="busId">Bus ID</Label>
-            <Input
-              id="busId"
-              value={busId}
-              onChange={e => setBusId(e.target.value)}
-              placeholder="Enter your bus ID (e.g., BUS-001)"
-              disabled={isRegistered}
-            />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={handleRegister}
-              disabled={!connected || isRegistered || !busId.trim()}
-            >
-              {isRegistered ? "Registered" : "Register as Driver"}
-            </Button>
-
-            {isRegistered && (
-              <span className="text-sm text-green-600 font-medium">
-                ✓ Registered as driver for {busId}
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <ConnectionStatus
+        connected={connected}
+        connecting={connecting}
+        clientInfo={clientInfo}
+        onConnect={connect}
+      />
 
       {/* GPS Broadcasting Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Navigation className="w-5 h-5" />
-            GPS Broadcasting
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={startBroadcasting}
-              disabled={!connected || !isRegistered || isBroadcasting}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Start Broadcasting
-            </Button>
-
-            <Button
-              onClick={stopBroadcasting}
-              disabled={!isBroadcasting}
-              variant="destructive"
-            >
-              <Square className="w-4 h-4 mr-2" />
-              Stop Broadcasting
-            </Button>
-          </div>
-
-          {isBroadcasting && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-green-700 font-medium mb-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                Broadcasting Location
-              </div>
-              <div className="text-sm text-green-600">
-                Your location is being broadcast to passengers tracking Bus{" "}
-                {busId}
-              </div>
-            </div>
-          )}
-
-          {locationError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-              <strong>Location Error:</strong> {locationError}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <BroadcastControls
+        connected={connected}
+        connecting={connecting}
+        isRegistered={isRegistered}
+        isBroadcasting={isBroadcasting}
+        broadcastCount={broadcastCount}
+        isManuallyStoppedRef={isManuallyStoppedRef}
+        locationError={locationError}
+        onStartBroadcasting={startBroadcasting}
+        onStopBroadcasting={() => stopBroadcasting(true)}
+      />
 
       {/* Current Location Display */}
-      {currentLocation && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Current Location
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div>
-                <span className="font-medium">Latitude:</span>
-                <div className="font-mono">
-                  {formatCoordinate(currentLocation.latitude)}
-                </div>
-              </div>
-              <div>
-                <span className="font-medium">Longitude:</span>
-                <div className="font-mono">
-                  {formatCoordinate(currentLocation.longitude)}
-                </div>
-              </div>
-              <div>
-                <span className="font-medium">Accuracy:</span>
-                <div>{currentLocation.accuracy.toFixed(1)}m</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <CurrentLocationDisplay
+        currentLocation={currentLocation}
+        busId={busId}
+        userId={userId}
+      />
 
       {/* Dashboard Tabs */}
-      <Tabs defaultValue="status" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="status">Status</TabsTrigger>
-          <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="status" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {clientInfo.clientCount}
-                  </div>
-                  <div className="text-sm text-gray-600">Total Clients</div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {clientInfo.activeBuses.length}
-                  </div>
-                  <div className="text-sm text-gray-600">Active Buses</div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {locationUpdates.length}
-                  </div>
-                  <div className="text-sm text-gray-600">Location Updates</div>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <div
-                    className={`text-2xl font-bold ${isBroadcasting ? "text-green-600" : "text-gray-400"}`}
-                  >
-                    {isBroadcasting ? "ON" : "OFF"}
-                  </div>
-                  <div className="text-sm text-gray-600">Broadcasting</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="clients" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Connected Clients</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {clientInfo.clients.length > 0 ? (
-                <div className="space-y-2">
-                  {clientInfo.clients.map((client, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <div className="font-medium">
-                          {client.userId || "Unknown"}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {client.type}{" "}
-                          {client.busId && `• Bus: ${client.busId}`}
-                        </div>
-                      </div>
-                      <div
-                        className={`w-3 h-3 rounded-full ${client.connected ? "bg-green-500" : "bg-gray-300"}`}
-                      ></div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 py-8">
-                  No clients connected
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="logs" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Messages</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                {messages.slice(-10).map((message, index) => (
-                  <div
-                    key={index}
-                    className="text-sm bg-gray-50 p-2 rounded font-mono"
-                  >
-                    {message}
-                  </div>
-                ))}
-                {messages.length === 0 && (
-                  <div className="text-center text-gray-500 py-8">
-                    No messages yet
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <DashboardTabs
+        clientInfo={clientInfo}
+        broadcastCount={broadcastCount}
+        isBroadcasting={isBroadcasting}
+        messages={messages}
+      />
     </div>
   );
 }
