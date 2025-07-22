@@ -100,7 +100,17 @@ export function useWebSocket(): UseWebSocketReturn {
 
       const websocket = new WebSocket(wsServer);
 
+      // --- Connection timeout workaround ---
+      const connectionTimeout = setTimeout(() => {
+        if (websocket.readyState !== WebSocket.OPEN) {
+          addMessage("WebSocket connection timed out.");
+          websocket.close();
+          setConnecting(false);
+        }
+      }, 5000); // 5 seconds timeout
+
       websocket.onopen = () => {
+        clearTimeout(connectionTimeout); // <--- here
         setConnected(true);
         setConnecting(false);
         setWs(websocket);

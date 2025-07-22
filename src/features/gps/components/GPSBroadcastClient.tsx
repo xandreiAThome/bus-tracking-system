@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useWebSocket } from "@/features/map/hooks/useWebSocket";
 import ConnectionStatus from "./ConnectionStatus";
 import BroadcastControls from "./BroadcastControls";
@@ -28,6 +28,11 @@ export default function GPSBroadcastClient({
   } | null>(null);
   const [locationError, setLocationError] = useState<string>("");
   const [broadcastCount, setBroadcastCount] = useState<number>(0);
+  const [reconnectionAttempts, setReconnectionAttempts] = useState(0);
+  const [reconnectionFailed, setReconnectionFailed] = useState(false);
+  const maxReconnectionAttempts = 10;
+  const reconnectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [hasTriedInitialConnect, setHasTriedInitialConnect] = useState(false);
 
   const watchIdRef = useRef<number | null>(null);
   const broadcastIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -255,14 +260,80 @@ export default function GPSBroadcastClient({
     }
   };
 
+  // Try to reconnect with exponential backoff
+  const tryReconnect = useCallback(() => {
+    if (reconnectionAttempts >= maxReconnectionAttempts) {
+      setReconnectionFailed(true);
+      return;
+    }
+    const delay = Math.min(1000 * Math.pow(2, reconnectionAttempts), 30000);
+    reconnectionTimeoutRef.current = setTimeout(() => {
+      setReconnectionAttempts(prev => prev + 1);
+      connect();
+    }, delay);
+  }, [reconnectionAttempts, connect]);
+
+  // Retry handler for the button
+  const handleRetry = useCallback(() => {
+    setReconnectionAttempts(0);
+    setReconnectionFailed(false);
+    if (reconnectionTimeoutRef.current) {
+      clearTimeout(reconnectionTimeoutRef.current);
+      reconnectionTimeoutRef.current = null;
+    }
+    connect();
+  }, [connect]);
+
+  // On mount, try to connect
+  useEffect(() => {
+    connect();
+    setHasTriedInitialConnect(true);
+    return () => {
+      if (reconnectionTimeoutRef.current)
+        clearTimeout(reconnectionTimeoutRef.current);
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  // Watch for connection loss or failed initial connect
+  useEffect(() => {
+    if (
+      !connected &&
+      hasTriedInitialConnect &&
+      !connecting &&
+      !reconnectionFailed
+    ) {
+      if (reconnectionAttempts < maxReconnectionAttempts) {
+        tryReconnect();
+      } else {
+        setReconnectionFailed(true);
+      }
+    }
+    if (connected) {
+      setReconnectionAttempts(0);
+      setReconnectionFailed(false);
+    }
+    // eslint-disable-next-line
+  }, [
+    connected,
+    connecting,
+    hasTriedInitialConnect,
+    reconnectionAttempts,
+    reconnectionFailed,
+    tryReconnect,
+  ]);
+
   return (
     <div className="space-y-6">
-      {/* Connection Status */}
       <ConnectionStatus
         connected={connected}
         connecting={connecting}
         clientInfo={clientInfo}
         onConnect={connect}
+        reconnectionAttempts={reconnectionAttempts}
+        maxReconnectionAttempts={maxReconnectionAttempts}
+        reconnectionFailed={reconnectionFailed}
+        onRetryConnection={handleRetry}
       />
 
       {/* GPS Broadcasting Controls */}

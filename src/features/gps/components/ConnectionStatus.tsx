@@ -10,15 +10,24 @@ interface ConnectionStatusProps {
   clientInfo: {
     clientCount: number;
     activeBuses: string[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    clients?: any[];
   };
   onConnect: () => void;
+  reconnectionAttempts?: number;
+  maxReconnectionAttempts?: number;
+  reconnectionFailed?: boolean;
+  onRetryConnection?: () => void;
 }
 
 export default function ConnectionStatus({
   connected,
   connecting,
   clientInfo,
-  onConnect,
+  reconnectionAttempts = 0,
+  maxReconnectionAttempts = 10,
+  reconnectionFailed = false,
+  onRetryConnection,
 }: ConnectionStatusProps) {
   return (
     <Card>
@@ -40,14 +49,22 @@ export default function ConnectionStatus({
                 ? "text-green-600"
                 : connecting
                   ? "text-blue-600"
-                  : "text-red-600"
+                  : reconnectionFailed
+                    ? "text-red-600"
+                    : reconnectionAttempts > 0
+                      ? "text-orange-600"
+                      : "text-red-600"
             }`}
           >
             {connected
               ? "Connected"
               : connecting
                 ? "Connecting..."
-                : "Disconnected"}
+                : reconnectionFailed
+                  ? "Connection Failed"
+                  : reconnectionAttempts > 0
+                    ? `Reconnecting... (${reconnectionAttempts}/${maxReconnectionAttempts})`
+                    : "Disconnected"}
           </span>
           <div className="flex items-center gap-4">
             {connected && (
@@ -57,22 +74,36 @@ export default function ConnectionStatus({
                 {clientInfo.activeBuses.length} active buses
               </div>
             )}
-            {!connected && !connecting && (
-              <Button
-                onClick={onConnect}
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Wifi className="w-4 h-4" />
-                Connect
-              </Button>
-            )}
+            {!connected &&
+              !connecting &&
+              reconnectionAttempts >= maxReconnectionAttempts && (
+                <Button
+                  onClick={onRetryConnection}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Wifi className="w-4 h-4" />
+                  Retry
+                </Button>
+              )}
           </div>
         </div>
         {connecting && (
           <div className="mt-2 text-sm text-gray-600">
             Establishing connection to server...
+          </div>
+        )}
+        {reconnectionAttempts > 0 && !connected && !reconnectionFailed && (
+          <div className="mt-2 text-xs text-orange-600">
+            Attempting to reconnect... ({reconnectionAttempts}/
+            {maxReconnectionAttempts})
+          </div>
+        )}
+        {reconnectionFailed && (
+          <div className="mt-2 text-xs text-red-600">
+            Failed to connect after {maxReconnectionAttempts} attempts. Please
+            check your connection and try again.
           </div>
         )}
       </CardContent>
