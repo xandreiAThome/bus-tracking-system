@@ -9,18 +9,23 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import React, { useState } from "react";
 
 export default function CreateTripModal() {
-
   const stations = [
-    "Manila",
-    "Quezon City",
-    "Makati",
-    "Taguig",
-    "Mandaluyong",
-    "Pasig"
+    { id: "1", name: "Manila" },
+    { id: "2", name: "Quezon City" },
+    { id: "3", name: "Makati" },
+    { id: "4", name: "Taguig" },
+    { id: "5", name: "Mandaluyong" },
+    { id: "6", name: "Pasig" },
   ];
 
   const drivers = [
@@ -31,8 +36,19 @@ export default function CreateTripModal() {
     "Robert Castillo",
     "Luis Santiago",
     "Joseph Kim",
-    "JJ Rivera"
-  ]
+    "JJ Rivera",
+  ];
+
+  const buses = [
+    { id: "1", name: "Bus1" },
+    { id: "2", name: "Bus2" },
+    { id: "3", name: "Bus3" },
+  ];
+
+  const [driver, setDriver] = useState("");
+  const [source, setSource] = useState("");
+  const [destination, setDestination] = useState("");
+  const [bus, setBus] = useState("");
 
   const [hour, setHour] = useState("00");
   const [minute, setMinute] = useState("00");
@@ -58,6 +74,58 @@ export default function CreateTripModal() {
     setMinute(newMinute.toString().padStart(2, "0"));
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    const today = new Date();
+    const [year, month, day] = [
+      today.getFullYear(),
+      (today.getMonth() + 1).toString().padStart(2, "0"),
+      today.getDate().toString().padStart(2, "0"),
+    ];
+  
+    let h = parseInt(hour);
+    if (meridiem === "p.m." && h < 12) h += 12;
+    if (meridiem === "a.m." && h === 12) h = 0;
+  
+    const date = new Date(`${year}-${month}-${day}T${h.toString().padStart(2, "0")}:${minute.padStart(2, "0")}:00Z`);
+  
+    const start_time = date.toISOString();
+    const end_time = new Date(date.getTime() + 60 * 60 * 1000).toISOString(); // +1 hour
+  
+    const payload = {
+      start_time,
+      end_time,
+      bus_id: parseInt(bus),
+      src_station: parseInt(source),
+      dest_station: parseInt(destination),
+    };
+  
+    console.log("Trip payload to be submitted:", payload);
+  
+    try {
+      const res = await fetch("/api/trip", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("Failed to create trip:", errorData);
+        alert("Error: Failed to create trip");
+      } else {
+        alert("Trip created successfully!");
+      }
+    } catch (err) {
+      console.error("Network error:", err);
+      alert("Network error occurred.");
+    }
+  };
+  
+
   return (
     <Drawer>
       <DrawerTrigger asChild>
@@ -66,7 +134,6 @@ export default function CreateTripModal() {
         </Button>
       </DrawerTrigger>
 
-      {/* bg-[#B1B1B1] */}
       <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">
@@ -75,89 +142,99 @@ export default function CreateTripModal() {
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
-        <form className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1">
-        <div>
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1"
+        >
+          {/* Driver */}
+          <div>
             <Label className="block text-sm font-medium text-gray-700 mb-1">
               Driver
             </Label>
-
-            <Select>
-            <SelectTrigger className="w-full justify-start px-0">
-              <SelectValue placeholder="Choose Driver" />
-            </SelectTrigger>
+            <Select onValueChange={setDriver}>
+              <SelectTrigger className="w-full justify-start px-0">
+                <SelectValue placeholder="Choose Driver" />
+              </SelectTrigger>
               <SelectContent>
                 {drivers.map((driver) => (
-                  <SelectItem key={driver} value={driver}>{driver}</SelectItem>
+                  <SelectItem key={driver} value={driver}>
+                    {driver}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Source Station */}
           <div>
             <Label className="block text-sm font-medium text-gray-700 mb-1">
               Source Station
             </Label>
-
-            <Select>
-            <SelectTrigger className="w-full justify-start px-0">
-              <SelectValue placeholder="Choose Source" />
-            </SelectTrigger>
+            <Select onValueChange={setSource}>
+              <SelectTrigger className="w-full justify-start px-0">
+                <SelectValue placeholder="Choose Source" />
+              </SelectTrigger>
               <SelectContent>
                 {stations.map((station) => (
-                  <SelectItem key={station} value={station}>{station}</SelectItem>
+                  <SelectItem key={station.id} value={station.id}>
+                    {station.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Destination Station */}
           <div>
             <Label className="block text-sm font-medium text-gray-700 mb-1">
               Destination Station
             </Label>
-
-            <Select>
+            <Select onValueChange={setDestination}>
               <SelectTrigger className="w-full justify-start px-0">
-                <SelectValue placeholder="Choose Destination"/>
+                <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
                 {stations.map((station) => (
-                  <SelectItem key={station} value={station}>{station}</SelectItem>
+                  <SelectItem key={station.id} value={station.id}>
+                    {station.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Bus */}
           <div>
             <Label className="block text-sm font-medium text-gray-700 mb-1">
               Bus
             </Label>
-            <Select>
+            <Select onValueChange={setBus}>
               <SelectTrigger className="w-full justify-start px-0">
-                <SelectValue placeholder="Choose Bus"/>
+                <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="station">Bus1</SelectItem>
+                {buses.map((bus) => (
+                  <SelectItem key={bus.id} value={bus.id}>
+                    {bus.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Time Picker */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Time
             </label>
             <div className="flex items-center gap-2">
-              {/* Hour */}
               <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementHour}
-                  className="text-lg px-2"
-                >
+                <button type="button" onClick={decrementHour} className="text-lg px-2">
                   -
                 </button>
                 <input
                   value={hour}
-                  onChange={e => {
+                  onChange={(e) => {
                     const val = e.target.value;
                     if (/^\d{0,2}$/.test(val)) setHour(val);
                   }}
@@ -171,29 +248,20 @@ export default function CreateTripModal() {
                   }}
                   className="w-10 text-center outline-none"
                 />
-                <button
-                  type="button"
-                  onClick={incrementHour}
-                  className="text-lg px-2"
-                >
+                <button type="button" onClick={incrementHour} className="text-lg px-2">
                   +
                 </button>
               </div>
 
               <span className="text-xl">:</span>
 
-              {/* Minute */}
               <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementMinute}
-                  className="text-lg px-2"
-                >
+                <button type="button" onClick={decrementMinute} className="text-lg px-2">
                   -
                 </button>
                 <input
                   value={minute}
-                  onChange={e => {
+                  onChange={(e) => {
                     const val = e.target.value;
                     if (/^\d{0,2}$/.test(val)) setMinute(val);
                   }}
@@ -207,19 +275,14 @@ export default function CreateTripModal() {
                   }}
                   className="w-10 text-center outline-none"
                 />
-                <button
-                  type="button"
-                  onClick={incrementMinute}
-                  className="text-lg px-2"
-                >
+                <button type="button" onClick={incrementMinute} className="text-lg px-2">
                   +
                 </button>
               </div>
 
-              {/* Meridiem */}
               <select
                 value={meridiem}
-                onChange={e => setMeridiem(e.target.value)}
+                onChange={(e) => setMeridiem(e.target.value)}
                 className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm"
               >
                 <option value="a.m.">a.m.</option>
