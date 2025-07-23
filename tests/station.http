@@ -9,7 +9,7 @@ POST http://localhost:3000/api/station
 Content-Type: application/json
 
 {
-  "name": "Terminal A"
+  "name": "Terminal B"
 }
 
 ###
@@ -27,5 +27,5 @@ Accept: application/json
 ###
 
 ### Delete a station by ID (replace `1` with actual ID)
-DELETE http://localhost:3000/api/station/2
+DELETE http://localhost:3000/api/station/5
 Accept: application/json
