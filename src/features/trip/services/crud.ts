@@ -128,3 +128,56 @@ export async function deleteTrip(id: number) {
     return catchDBError(err);
   }
 }
+
+/**
+ * Updates an existing trip in the database
+ *
+ * @param {number} id The ID of the trip to be updated
+ * @param {string} start_time start time in ISO format "YYYY-MM-DDTHH:MM:SSZ"
+ * @param {string} end_time end time in ISO format "YYYY-MM-DDTHH:MM:SSZ"
+ * @param {number} bus_id The ID of the bus associated with the trip
+ * @param {number} src_station The ID of the source station
+ * @param {number} dest_station The ID of the destination station
+ */
+export async function editTrip(
+  id: number,
+  start_time: string,
+  end_time: string,
+  bus_id: number,
+  src_station: number,
+  dest_station: number
+) {
+  try {
+    const conn = await pool.getConnection();
+    try {
+      start_time = toSQLTimestamp(start_time);
+      end_time = toSQLTimestamp(end_time);
+
+      const [result] = await conn.execute<ResultSetHeader>(
+        `UPDATE trip 
+         SET start_time = ?, end_time = ?, bus_id = ?, src_station_id = ?, dest_station_id = ? 
+         WHERE id = ?`,
+        [start_time, end_time, bus_id, src_station, dest_station, id]
+      );
+
+      if (result.affectedRows === 0) {
+        return Response.json(
+          { message: `Trip with id ${id} not found or no changes made` },
+          { status: 404 }
+        );
+      }
+
+      return Response.json(
+        { message: `Trip with id ${id} updated successfully` },
+        { status: 200 }
+      );
+    } finally {
+      conn.release();
+    }
+  } catch (err: any) {
+    console.error("DB Error:", err);
+    return catchDBError(err);
+  }
+}
+
+

@@ -23,6 +23,7 @@ import {
   Map,
 } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
+import EditTripModal from "./EditTrip";
 
 interface TripCardProps {
   route: string;
@@ -97,9 +98,13 @@ export default function TripCard(props: TripCardProps) {
             <Link href={"/map/1"}>
               <Map />
             </Link>
-            <button>
-              <SquarePen />
-            </button>
+            <EditTripModal trip={{
+              id: 0,
+              bus_id: 0,
+              src_station: 0,
+              dest_station: 0,
+              start_time: ""
+            }}/>
           </div>
 
           {/* Right Side:  */}

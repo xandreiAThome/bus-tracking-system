@@ -1,5 +1,5 @@
 import { validateIdParam } from "@/lib/utils";
-import { deleteTrip, getTrip } from "@features/trip/services/crud";
+import { deleteTrip, editTrip, getTrip } from "@features/trip/services/crud";
 
 /**
  * GET /api/trip/[id]
@@ -40,5 +40,62 @@ export async function DELETE(
     return id;
   } else {
     return deleteTrip(id);
+  }
+}
+
+
+/**
+ * PATCH /api/trip/[id]
+ *
+ * Edits an existing trip.
+ * Expected JSON body: {
+ *   start_time: string (ISO),
+ *   end_time: string (ISO),
+ *   bus_id: number,
+ *   src_station: number,
+ *   dest_station: number
+ * }
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = validateIdParam((await params).id);
+  if (id instanceof Response) {
+    return id;
+  }
+
+  try {
+    const body = await req.json();
+    const { start_time, end_time, bus_id, src_station, dest_station } = body;
+
+    // Basic validation
+    if (
+      !start_time ||
+      !end_time ||
+      !bus_id ||
+      !src_station ||
+      !dest_station
+    ) {
+      return Response.json(
+        { message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    return await editTrip(
+      id,
+      start_time,
+      end_time,
+      bus_id,
+      src_station,
+      dest_station
+    );
+  } catch (err) {
+    console.error("PATCH /api/trip/[id] error:", err);
+    return Response.json(
+      { message: "Invalid request body or internal error" },
+      { status: 500 }
+    );
   }
 }
