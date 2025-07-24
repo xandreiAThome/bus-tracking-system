@@ -13,7 +13,7 @@ async function handleSignOut() {
   await signOut({ redirectTo: "/signOut" });
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -30,8 +30,7 @@ export default async function RootLayout({
 
   return (
     <div>
-      <NavBar handleSignOut={handleSignOut}></NavBar>
-
+      <NavBar handleSignOut={handleSignOut} />
       {children}
     </div>
   );
