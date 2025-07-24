@@ -9,18 +9,23 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import React, { useState } from "react";
 
 export default function CreateTripModal() {
-
   const stations = [
     "Manila",
     "Quezon City",
     "Makati",
     "Taguig",
     "Mandaluyong",
-    "Pasig"
+    "Pasig",
   ];
 
   const drivers = [
@@ -31,8 +36,8 @@ export default function CreateTripModal() {
     "Robert Castillo",
     "Luis Santiago",
     "Joseph Kim",
-    "JJ Rivera"
-  ]
+    "JJ Rivera",
+  ];
 
   const [hour, setHour] = useState("00");
   const [minute, setMinute] = useState("00");
@@ -76,18 +81,20 @@ export default function CreateTripModal() {
         </DrawerHeader>
 
         <form className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1">
-        <div>
+          <div>
             <Label className="block text-sm font-medium text-gray-700 mb-1">
               Driver
             </Label>
 
             <Select>
-            <SelectTrigger className="w-full justify-start px-0">
-              <SelectValue placeholder="Choose Driver" />
-            </SelectTrigger>
+              <SelectTrigger className="w-full justify-start px-0">
+                <SelectValue placeholder="Choose Driver" />
+              </SelectTrigger>
               <SelectContent>
-                {drivers.map((driver) => (
-                  <SelectItem key={driver} value={driver}>{driver}</SelectItem>
+                {drivers.map(driver => (
+                  <SelectItem key={driver} value={driver}>
+                    {driver}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -99,12 +106,14 @@ export default function CreateTripModal() {
             </Label>
 
             <Select>
-            <SelectTrigger className="w-full justify-start px-0">
-              <SelectValue placeholder="Choose Source" />
-            </SelectTrigger>
+              <SelectTrigger className="w-full justify-start px-0">
+                <SelectValue placeholder="Choose Source" />
+              </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
-                  <SelectItem key={station} value={station}>{station}</SelectItem>
+                {stations.map(station => (
+                  <SelectItem key={station} value={station}>
+                    {station}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -117,11 +126,13 @@ export default function CreateTripModal() {
 
             <Select>
               <SelectTrigger className="w-full justify-start px-0">
-                <SelectValue placeholder="Choose Destination"/>
+                <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
-                  <SelectItem key={station} value={station}>{station}</SelectItem>
+                {stations.map(station => (
+                  <SelectItem key={station} value={station}>
+                    {station}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -133,7 +144,7 @@ export default function CreateTripModal() {
             </Label>
             <Select>
               <SelectTrigger className="w-full justify-start px-0">
-                <SelectValue placeholder="Choose Bus"/>
+                <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="station">Bus1</SelectItem>
