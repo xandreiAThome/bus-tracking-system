@@ -1,13 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TripCard from "@/features/trips/components/tripCard";
 import CreateTripModal from "@/features/trips/components/CreateTrip";
+import { auth } from "@/features/auth/services/auth";
+import { redirect } from "next/navigation";
 
 const dummyTrips = [
   { route: "ALLEN → CATARMAN", time: "9:00 PM", driver: "Juan Dela Cruz" },
   { route: "MANILA → DAVAO", time: "9:00 PM", driver: "Rage Del Fiero" },
 ];
 
-export default function TripsOverview() {
+export default async function TripsOverview() {
+  // const session = await auth();
+
+  // if (!session?.user) {
+  //   redirect("/");
+  // }
+
   return (
     <div className="h-full flex items-start justify-center p-5">
       <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5 ">

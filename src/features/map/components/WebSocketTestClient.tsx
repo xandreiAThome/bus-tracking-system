@@ -23,6 +23,7 @@ const MapComponent = dynamic(
 export default function WebSocketTestClient() {
   const {
     connected,
+    connecting,
     messages,
     locationUpdates,
     clientInfo,
@@ -113,6 +114,7 @@ export default function WebSocketTestClient() {
               disconnect={disconnect}
               subscribe={subscribe}
               connected={connected}
+              connecting={connecting}
               clientInfo={clientInfo}
               busId={"1"}
               userId={userId}
