@@ -1,4 +1,4 @@
-import { signIn } from "@/features/auth/services/auth";
+import { signIn } from "../services/auth";
 
 export default function SignInForm() {
   return (
