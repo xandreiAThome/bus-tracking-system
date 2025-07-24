@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@/generated/prisma";
 
 const prisma = new PrismaClient();
 
@@ -46,16 +46,19 @@ export async function addTrip(
   end_time: string,
   bus_id: number,
   src_station: number,
-  dest_station: number
+  dest_station: number,
+  driver_id: number // ← add this
 ) {
   try {
     const newTrip = await prisma.trip.create({
       data: {
-        start_time: new Date(start_time),
-        end_time: new Date(end_time),
+        start_time: start_time ? new Date(start_time) : null,
+        end_time: end_time ? new Date(end_time) : null,
         bus_id,
         src_station_id: src_station,
         dest_station_id: dest_station,
+        driver_id, // ← required by your schema
+        // status: "..." // optional if you want to set a default
       },
     });
 
