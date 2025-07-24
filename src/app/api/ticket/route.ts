@@ -22,6 +22,17 @@ export async function GET() {
  * - `trip_id` The id of the bus associated with the ticket
  * - `cashier_id` The id of the bus associated with the ticket
  * - `ticket_type` The type of ticket; can be "passenger" or "baggage"
+ * 
+ * extra fields for passenger
+ * - `passenger_name` set empty string if none
+ * - `discount` senior | pwd | student | NULL
+ * 
+ * extra fields for baggage
+ * - `sender_no`
+ * - `dispatcher_no`
+ * - `sender_name`
+ * - `receiver_name`
+ * - `item`
 
  */
 export async function POST(req: Request) {

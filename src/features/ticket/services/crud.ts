@@ -103,7 +103,6 @@ export async function addTicket(
  * @param {number} id The ID of the `ticket` to be deleted
  */
 export async function deleteTicket(id: number) {
-  /**TODO: Also Delete the associated passenger/baggage ticket */
   try {
     const conn = await pool.getConnection();
     try {
