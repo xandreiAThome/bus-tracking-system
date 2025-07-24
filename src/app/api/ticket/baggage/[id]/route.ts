@@ -35,12 +35,12 @@ export async function GET(
 
 /**
  * PUT /api/ticket/baggage/[id]
- * 
+ *
  * Updates the base ticket and associated baggage_ticket
- * 
+ *
  * Route param:
  * - id: ticket ID (e.g. /api/ticket/baggage/123)
- * 
+ *
  * Body payload:
  * - price (string)
  * - trip_id (number)

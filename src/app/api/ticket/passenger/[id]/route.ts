@@ -35,12 +35,12 @@ export async function GET(
 
 /**
  * PUT /api/ticket/passenger/[id]
- * 
+ *
  * Updates the base ticket and associated passenger_ticket
- * 
+ *
  * Route param:
  * - id: ticket ID (e.g. /api/ticket/passenger/123)
- * 
+ *
  * Body payload:
  * - price (string)
  * - trip_id (number)
@@ -59,14 +59,8 @@ export async function PUT(
   }
 
   const payload = await req.json();
-  const {
-    price,
-    trip_id,
-    cashier_id,
-    ticket_type,
-    passenger_name,
-    discount,
-  } = payload;
+  const { price, trip_id, cashier_id, ticket_type, passenger_name, discount } =
+    payload;
 
   if (!price || !trip_id || !cashier_id || !ticket_type) {
     return Response.json(

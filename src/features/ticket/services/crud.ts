@@ -85,9 +85,7 @@ export async function addTicket(
         );
       }
       return Response.json(
-        { message: "Ticket created successfully",
-          id: result.insertId,
-        },
+        { message: "Ticket created successfully", id: result.insertId },
         { status: 201 }
       );
     } finally {
@@ -105,12 +103,16 @@ export async function addTicket(
  * @param {number} id The ID of the `ticket` to be deleted
  */
 export async function deleteTicket(id: number) {
-  /**TODO: Also Delete the associated passenger/baggage ticket */ 
+  /**TODO: Also Delete the associated passenger/baggage ticket */
   try {
     const conn = await pool.getConnection();
     try {
-      await conn.execute("DELETE FROM passenger_ticket WHERE ticket_id = ?", [id]);
-      await conn.execute("DELETE FROM baggage_ticket WHERE ticket_id = ?", [id]);
+      await conn.execute("DELETE FROM passenger_ticket WHERE ticket_id = ?", [
+        id,
+      ]);
+      await conn.execute("DELETE FROM baggage_ticket WHERE ticket_id = ?", [
+        id,
+      ]);
       const [result] = await conn.execute<ResultSetHeader>(
         "DELETE FROM ticket WHERE id = ?",
         [id]
@@ -196,12 +198,17 @@ export async function createPassengerTicket(
   discount: string | null
 ) {
   try {
-    const newTicketResponse = await addTicket(price, trip_id, cashier_id, ticket_type)
+    const newTicketResponse = await addTicket(
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type
+    );
     if (newTicketResponse.status !== 201) {
       return newTicketResponse;
     }
-    const newTicketData = await newTicketResponse.json()
-    return addPassengerTicket(newTicketData.id, passenger_name, discount)
+    const newTicketData = await newTicketResponse.json();
+    return addPassengerTicket(newTicketData.id, passenger_name, discount);
   } catch (err) {
     console.error("DB Error:", err);
     return catchDBError(err);
@@ -278,12 +285,24 @@ export async function createBaggageTicket(
   item: string
 ) {
   try {
-    const newTicketResponse = await addTicket(price, trip_id, cashier_id, ticket_type)
+    const newTicketResponse = await addTicket(
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type
+    );
     if (newTicketResponse.status !== 201) {
       return newTicketResponse;
     }
-    const newTicketData = await newTicketResponse.json()
-    return addBaggageTicket(newTicketData.id, sender_no, dispatcher_no, sender_name, receiver_name, item)
+    const newTicketData = await newTicketResponse.json();
+    return addBaggageTicket(
+      newTicketData.id,
+      sender_no,
+      dispatcher_no,
+      sender_name,
+      receiver_name,
+      item
+    );
   } catch (err) {
     console.error("DB Error:", err);
     return catchDBError(err);
@@ -429,7 +448,13 @@ export async function putPassengerTicket(
   discount: string | null
 ) {
   try {
-    const ticketResponse = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
+    const ticketResponse = await updateTicket(
+      id,
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type
+    );
     if (ticketResponse.status !== 200) {
       return ticketResponse;
     }
@@ -454,12 +479,25 @@ export async function putBaggageTicket(
   item: string
 ) {
   try {
-    const ticketResponse = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
+    const ticketResponse = await updateTicket(
+      id,
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type
+    );
     if (ticketResponse.status !== 200) {
       return ticketResponse;
     }
 
-    return await updateBaggageTicket(id, sender_no, dispatcher_no, sender_name, receiver_name, item);
+    return await updateBaggageTicket(
+      id,
+      sender_no,
+      dispatcher_no,
+      sender_name,
+      receiver_name,
+      item
+    );
   } catch (err) {
     console.error("DB Error:", err);
     return catchDBError(err);
