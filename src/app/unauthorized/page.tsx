@@ -9,7 +9,7 @@ export default function Unauthorzed() {
     <main className="flex gap-6 flex-col min-w-full justify-center items-center h-full relative">
       <button
         onClick={handleSignOut}
-        className="text-lg font-bold absolute right-5 top-5"
+        className="text-lg font-bold absolute right-5 top-5 cursor-pointer bg-green-800 text-white rounded-lg px-4 py-2"
       >
         Log Out
       </button>
