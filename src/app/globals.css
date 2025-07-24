@@ -120,3 +120,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Leaflet map styles */
+.leaflet-container {
+  @apply relative z-0;
+}
+
+.leaflet-popup-content-wrapper {
+  @apply rounded-lg;
+}
+
+.leaflet-popup-content {
+  @apply text-sm;
+}
+
+/* Fix for Leaflet images not loading properly in Next.js */
+.leaflet-default-icon-path {
+  background-image: url("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png");
+}
