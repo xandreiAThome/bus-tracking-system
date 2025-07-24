@@ -63,6 +63,13 @@ export function catchDBError(err: any) {
       { message: "Row is currently referenced" },
       { status: 409 }
     );
+  } else if (
+    err.code === "WARN_DATA_TRUNCATED"
+  ) {
+    return Response.json(
+      { message: "Data truncation error: Invalid or too long data, possibly invalid ENUM value" },
+      { status: 400 }
+    );
   } else {
     return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
