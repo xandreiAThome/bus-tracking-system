@@ -18,8 +18,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div>
-      <NavBar handleSignOut={handleSignOut} />
+    <div className="h-full">
+      <NavBar handleSignOut={handleSignOut}></NavBar>
+
       {children}
     </div>
   );
