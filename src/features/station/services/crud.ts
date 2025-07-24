@@ -9,7 +9,9 @@ export async function getAllStations() {
   try {
     const conn = await pool.getConnection();
     try {
-      const [stations] = await conn.query<RowDataPacket[]>("SELECT * FROM station");
+      const [stations] = await conn.query<RowDataPacket[]>(
+        "SELECT * FROM station"
+      );
       if (!stations || stations.length === 0) {
         return Response.json({ message: "No stations found" }, { status: 404 });
       }
@@ -85,9 +87,15 @@ export async function addStation(name: string) {
         [name]
       );
       if (result.affectedRows === 0) {
-        return Response.json({ message: "Failed to create station" }, { status: 500 });
+        return Response.json(
+          { message: "Failed to create station" },
+          { status: 500 }
+        );
       }
-      return Response.json({ message: "Station created successfully" }, { status: 201 });
+      return Response.json(
+        { message: "Station created successfully" },
+        { status: 201 }
+      );
     } finally {
       conn.release();
     }

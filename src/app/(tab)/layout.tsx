@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import NavBar from "@/components/navbar";
-import { signOut } from "@/features/auth/services/auth";
+import { auth, signOut } from "@/features/auth/services/auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,6 +18,16 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/");
+  }
+
+  if (session?.user?.role === "user") {
+    redirect("/unauthorized");
+  }
+
   return (
     <div>
       <NavBar handleSignOut={handleSignOut}></NavBar>
