@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/drawer";
 import TicketCard from "./ticketCard";
 import { Dispatch, SetStateAction } from "react";
-import { getAllTickets } from '@features/ticket/services/crud';
+import { getAllTicketsFromTrip } from '@features/ticket/services/refactorCrud';
 
 const dummyTickets = [
   {
@@ -40,14 +40,18 @@ const dummyTickets = [
   },
 ];
 
+interface IssuedTicketsModalProps {
+  openDrawer: boolean;
+  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
+  tripID: number;
+}
+
 export default function IssuedTicketsModal({
   openDrawer,
   setOpenDrawer,
-}: {
-  openDrawer: boolean;
-  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
-}) {
-  const tickets = getAllTickets()
+  tripID,
+}: IssuedTicketsModalProps) {
+  const tickets = getAllTicketsFromTrip(tripID);
   return (
     <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
       <DrawerContent className="w-[90%] mx-auto p-5">

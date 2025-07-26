@@ -134,6 +134,7 @@ export default function TripCard(props: TripCardProps) {
       <IssuedTicketsModal
         openDrawer={openDrawer}
         setOpenDrawer={setOpenDrawer}
+        tripID={props.id}
       ></IssuedTicketsModal>
     </div>
   );
