@@ -60,10 +60,12 @@ export async function deleteTicket(id: number) {
     await prisma.passenger_ticket.deleteMany({ where: { ticket_id: id } });
     await prisma.baggage_ticket.deleteMany({ where: { ticket_id: id } });
 
-    const ticket = await prisma.ticket.delete({ where: { id } });
+    const deleted = await prisma.ticket.delete({ where: { id } });
 
     return Response.json(
-      { message: `Ticket with id ${ticket.id} deleted successfully` },
+      { message: `Ticket deleted successfully`,
+        id: deleted.id
+      },
       { status: 200 }
     );
   } catch (err) {
@@ -76,7 +78,7 @@ export async function addPassengerTicket(
   discount: string | null
 ) {
   try {
-    await prisma.passenger_ticket.create({
+    const created = await prisma.passenger_ticket.create({
       data: {
         ticket_id,
         passenger_name,
@@ -85,7 +87,9 @@ export async function addPassengerTicket(
     });
 
     return Response.json(
-      { message: "Passenger ticket created successfully" },
+      { message: "Passenger ticket created successfully",
+        created
+      },
       { status: 201 }
     );
   } catch (err) {
@@ -150,7 +154,7 @@ export async function addBaggageTicket(
   item: string
 ) {
   try {
-    await prisma.baggage_ticket.create({
+    const created = await prisma.baggage_ticket.create({
       data: {
         ticket_id,
         sender_no: String(sender_no),
@@ -162,7 +166,9 @@ export async function addBaggageTicket(
     });
 
     return Response.json(
-      { message: "Baggage ticket created successfully" },
+      { message: "Baggage ticket created successfully",
+        created
+      },
       { status: 201 }
     );
   } catch (err) {
