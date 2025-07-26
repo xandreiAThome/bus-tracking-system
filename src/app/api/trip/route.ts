@@ -20,9 +20,10 @@ export async function GET() {
  * - `bus_id` The id of the bus associated with the trip
  * - `src_station` The id of the destination station
  * - `dest_station` The id of the destination station
+ * - ` driver_id` The id of the driver
  */
 export async function POST(req: Request) {
-  const { start_time, end_time, bus_id, src_station, dest_station } =
+  const { start_time, end_time, bus_id, src_station, dest_station, driver_id } =
     await req.json();
 
   if (!start_time || !end_time || !bus_id || !src_station || !dest_station) {
@@ -31,5 +32,5 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  return addTrip(start_time, end_time, bus_id, src_station, dest_station);
+  return addTrip(start_time, end_time, bus_id, src_station, dest_station, driver_id);
 }

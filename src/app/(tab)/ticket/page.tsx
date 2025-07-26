@@ -26,11 +26,7 @@ const Page = () => {
       <h1 className="text-lg font-semibold text-center mb-3 text-[#FFFFFF]">
         Issue Tickets
       </h1>
-      <Tabs
-        value={selectedType}
-        onValueChange={setSelectedType}
-        className="w-full"
-      >
+      <Tabs value={selectedType} onValueChange={setSelectedType}>
         <TabsList className="grid w-full grid-cols-2 pb-2 p-0 -my-2.5 bg-[#71AC61]">
           <TabsTrigger
             value="passenger"
@@ -45,8 +41,9 @@ const Page = () => {
             Baggage
           </TabsTrigger>
         </TabsList>
-        <div className="p-4 bg-white border rounded-sm">
-          <TabsContent value="passenger" className="space-y-4 mt-4">
+
+        <TabsContent value="passenger" className="space-y-4 mt-4">
+          <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
             {/* Trip Selection */}
             <div className="flex gap-4 justify-center items-center border rounded-xl">
               <label className="text-sm font-medium ml-5 mr-10">Trip</label>
@@ -165,9 +162,11 @@ const Page = () => {
                 ))}
               </div>
             </div>
-          </TabsContent>
+          </div>
+        </TabsContent>
 
-          <TabsContent value="baggage" className="space-y-4 mt-4">
+        <TabsContent value="baggage" className="space-y-4 mt-4">
+          <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
             {/* Trip Selection */}
             <div>
               <label className="text-sm font-medium mb-1 block">Trip</label>
@@ -276,12 +275,12 @@ const Page = () => {
                 ))}
               </div>
             </div>
-          </TabsContent>
-        </div>
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Create Ticket Button */}
-      <Button className="w-full mt-6 bg-[#99C68B] hover:bg-green-600 text-white">
+      <Button className="w-[400px] mt-6 bg-green-800 font-bold cursor-pointer hover:bg-green-600 text-white">
         Create Ticket
       </Button>
     </div>
