@@ -30,14 +30,10 @@ export default function CreateTripModal() {
   ];
 
   const drivers = [
-    "Mark Reyes",
-    "Anthony Cruz",
-    "Jared Thompson",
-    "Samuel Diaz",
-    "Robert Castillo",
-    "Luis Santiago",
-    "Joseph Kim",
-    "JJ Rivera",
+    {id: "1", name: "Mark Reyes"},
+    {id: "2", name: "Anthony Cruz"},
+    {id: "3", name: "Jared Thompson"},
+    {id: "4", name: "Samuel Diaz"},
   ];
 
   const buses = [
@@ -110,7 +106,7 @@ export default function CreateTripModal() {
       bus_id: parseInt(bus),
       src_station: parseInt(source),
       dest_station: parseInt(destination),
-      driver_name: driver,
+      driver_id: parseInt(driver)
     };
 
     console.log("Trip payload to be submitted:", payload);
@@ -173,8 +169,8 @@ export default function CreateTripModal() {
               </SelectTrigger>
               <SelectContent>
                 {drivers.map((driver) => (
-                  <SelectItem key={driver} value={driver}>
-                    {driver}
+                  <SelectItem key={driver.id} value={driver.id}>
+                    {driver.name}
                   </SelectItem>
                 ))}
               </SelectContent>

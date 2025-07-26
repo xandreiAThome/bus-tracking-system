@@ -47,20 +47,20 @@ export async function addTrip(
   bus_id: number,
   src_station: number,
   dest_station: number,
-  driver_id: number // ← add this
+  driver_id: number
 ) {
   try {
     const newTrip = await prisma.trip.create({
       data: {
         start_time: start_time ? new Date(start_time) : null,
         end_time: end_time ? new Date(end_time) : null,
-        bus_id,
-        src_station_id: src_station,
-        dest_station_id: dest_station,
-        driver_id, // ← required by your schema
-        // status: "..." // optional if you want to set a default
+        bus: { connect: { id: bus_id } },
+        driver: { connect: { id: driver_id } },
+        station_trip_dest_station_idTostation: { connect: { id: dest_station } },
+        station_trip_src_station_idTostation: { connect: { id: src_station } },
+        // status: ... if you want to set it
       },
-    });
+    });    
 
     return Response.json(
       { message: "Trip created successfully", trip: newTrip },
@@ -71,6 +71,7 @@ export async function addTrip(
     return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
+
 
 /**
  * Deletes a trip by ID
