@@ -1,38 +1,35 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SquarePen, User } from "lucide-react";
+import { ShoppingBag, SquarePen } from "lucide-react";
 
-interface TripCardProps {
-  seat: number;
-  price: number;
-  passenger: string;
-  ticketNo: string;
-  dateTime: string;
-}
-
-interface TicketCardProps {
+interface BaggageCardProps {
   id: number;
+  num: number;
+  sender_no: string;
+  dispatcher_no: string;
+  sender_name: string;
+  receiver_name: string;
+  item: string;
+  ticket_id: string;
   price: number;
-  trip: number;
-  cashier: number;
-  type: string;
+  timeDate: string;
 }
 
-export default function TicketCard(props: TripCardProps) {
+export default function BaggageCard(props: BaggageCardProps) {
   return (
     <div className="flex flex-col justify-center">
       <Card className="flex flex-col gap-0 p-5">
         <div className="font-semibold text-[#456A3B] text-xl">
-          Seat {props.seat} - ₱ {props.price.toFixed(2)}
+          Baggage #{props.num} - ₱ {props.price.toFixed(2)}
         </div>
 
         <div className="flex flex-row justify-between items-center">
           <div className="flex flex-row gap-1">
             {/*Left Side*/}
             <button>
-              <User />
+              <ShoppingBag />
             </button>
-            <span className="text-[#525252] text-lg">{props.passenger}</span>
+            <span className="text-[#525252] font-medium text-lg">{props.item}</span>
           </div>
           <div className="flex flex-row items-center gap-2">
             {/*Right Side*/}
@@ -42,9 +39,9 @@ export default function TicketCard(props: TripCardProps) {
             </Button>
           </div>
         </div>
-
-        <div className="text-[#456A3B] text-sm mt-1">
-          {props.ticketNo} - {props.dateTime}
+        <div className="text-[#525252] -mt-2">{props.sender_name}</div>
+        <div className="text-[#456A3B] text-sm mt-2">
+          #{props.ticket_id} - {props.timeDate}
         </div>
       </Card>
     </div>
