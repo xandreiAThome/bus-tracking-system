@@ -23,16 +23,24 @@ import {
   Map,
 } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
+import { getStation } from '@features/station/services/crud';
 
 interface TripCardProps {
-  route: string;
-  time: string;
-  driver: string;
+  id: number;
+  start: string;
+  end: string;
+  dst: number;
+  src: number;
+  bus: number;
+  driver: number;
+  status: string;
 }
 
 export default function TripCard(props: TripCardProps) {
   const [status, setStatus] = useState("boarding");
   const [openDrawer, setOpenDrawer] = useState(false);
+  const dest = getStation(props.dst);
+  const source = getStation(props.src);
 
   return (
     <div className="flex flex-col justify-center">
@@ -43,9 +51,9 @@ export default function TripCard(props: TripCardProps) {
             {/* Left Side: Place and Time */}
             <div className="flex gap-2">
               <span className="font-semibold text-[#456A3B]">
-                {props.route}
+                {source.name} → {dest.name}
               </span>
-              <span>{props.time}</span>
+              <span>{props.start}</span>
             </div>
 
             {/* Right Side: Ellipsis Button */}
@@ -65,6 +73,9 @@ export default function TripCard(props: TripCardProps) {
             </DropdownMenu>
           </div>
         </div>
+        <div className="text-[#456A3B]">
+          {props.driver} - #{props.bus}
+        </div>
         <div>
           <Select
             value={status}
@@ -73,8 +84,9 @@ export default function TripCard(props: TripCardProps) {
           >
             <SelectTrigger
               className={`
-                w-[120px] rounded-lg font-bold ${status === "boarding" ? "bg-[#71AC61] text-white" : ""}
-                ${status === "delayed" ? "bg-[#AC6161] text-white" : ""}
+                w-[120px] rounded-lg font-bold ${status === "boarding" ? "bg-[#AC6161] text-white" : ""}
+                ${status === "transit" ? "bg-[#EFA54A] text-white" : ""}
+                ${status === "complete" ? "bg-[#71AC61] text-white" : ""}
               `}
             >
               <SelectValue>
@@ -85,16 +97,16 @@ export default function TripCard(props: TripCardProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="boarding">Boarding</SelectItem>
-              <SelectItem value="delayed">Delayed</SelectItem>
+              <SelectItem value="transit">Transit</SelectItem>
+              <SelectItem value="complete">Complete</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="text-[#456A3B]">{props.driver}</div>
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
           <div className="flex gap-2">
             {/* TEMPORARY, CHANGE TO THE BUS ID OF THE TRIP WHEN INTEGRATED TO THE BACKEND */}
-            <Link href={"/map/1"}>
+            <Link href={props.bus}>
               <Map />
             </Link>
             <button>

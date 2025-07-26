@@ -10,6 +10,14 @@ interface TripCardProps {
   dateTime: string;
 }
 
+interface TicketCardProps {
+  id: number;
+  price: number;
+  trip: number;
+  cashier: number;
+  type: string;
+}
+
 export default function TicketCard(props: TripCardProps) {
   return (
     <div className="flex flex-col justify-center">

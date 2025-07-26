@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/drawer";
 import TicketCard from "./ticketCard";
 import { Dispatch, SetStateAction } from "react";
+import { getAllTickets } from '@features/ticket/services/crud';
 
 const dummyTickets = [
   {
@@ -46,6 +47,7 @@ export default function IssuedTicketsModal({
   openDrawer: boolean;
   setOpenDrawer: Dispatch<SetStateAction<boolean>>;
 }) {
+  const tickets = getAllTickets()
   return (
     <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
       <DrawerContent className="w-[90%] mx-auto p-5">
