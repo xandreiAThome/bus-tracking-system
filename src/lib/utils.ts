@@ -190,10 +190,10 @@ export function validateDecimal6_2(value: string): boolean {
  */
 export function validateSortOrder(
   sortOrder: string | null | undefined
-): "ASC" | "DESC" {
-  const order = sortOrder?.toUpperCase();
-  if (order === "ASC" || order === "DESC") {
+): "asc" | "desc" {
+  const order = sortOrder?.toLowerCase();
+  if (order === "asc" || order === "desc") {
     return order;
   }
-  return "ASC"; // default fallback
+  return "asc"; // default fallback
 }

@@ -18,7 +18,7 @@ export async function getSeat(id: number) {
   try {
     const seat = await prisma.seat.findUnique({ where: { id } });
     if (!seat) {
-      return Response.json({ message: "seat not found" }, { status: 404 });
+      return Response.json({ message: `Seat with id: ${id} not found` }, { status: 404 });
     }
     return Response.json({ seat }, { status: 200 });
   } catch (err) {
@@ -29,13 +29,13 @@ export async function getSeat(id: number) {
 
 export async function addSeat(seat_number: string, bus_id: number) {
   try {
-    await prisma.seat.create({
+    const created = await prisma.seat.create({
       data: {
         seat_number,
         bus_id,
       },
     });
-    return Response.json({ message: "Seat created successfully" }, { status: 201 });
+    return Response.json({ message: "Seat created successfully", created }, { status: 201 });
   } catch (err: any) {
     console.error("Prisma Error:", err);
     return catchDBError(err);
@@ -46,13 +46,15 @@ export async function deleteSeat(id: number) {
   try {
     const deleted = await prisma.seat.delete({ where: { id } });
     return Response.json(
-      { message: `Seat with id ${deleted.id} deleted successfully` },
+      { message: `Seat deleted successfully`,
+        id:  deleted.id
+      },
       { status: 200 }
     );
   } catch (err: any) {
     if (err.code === "P2025") {
       return Response.json(
-        { message: `Seat with id ${id} not found` },
+        { message: `Seat with id: ${id} not found` },
         { status: 404 }
       );
     }
@@ -64,7 +66,7 @@ export async function deleteSeat(id: number) {
 export async function getSeatCountByBus(bus_id: number) {
   try {
     const seatCount = await prisma.seat.count({ where: { bus_id } });
-    return Response.json({ bus_id, seatCount }, { status: 200 });
+    return Response.json({ bus_id, seat_count: `${seatCount}` }, { status: 200 });
   } catch (err: any) {
     console.error("Prisma Error:", err);
     return catchDBError(err);
