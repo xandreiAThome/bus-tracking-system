@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const { start_time, end_time, bus_id, src_station, dest_station, driver_id } =
     await req.json();
 
-  if (!start_time || !end_time || !bus_id || !src_station || !dest_station) {
+  if (!start_time || !end_time || !bus_id || !src_station || !dest_station || !driver_id) {
     return Response.json(
       { message: "Invalid input: Payload field/s missing" },
       { status: 400 }

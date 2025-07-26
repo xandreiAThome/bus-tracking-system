@@ -1,5 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  PrismaClientKnownRequestError,
+  PrismaClientValidationError,
+} from "@prisma/client/runtime/library";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -51,6 +55,62 @@ export function validateIdParam(idParam: string | null): number | Response {
  * @returns An HTTP Error Response
  */
 export function catchDBError(err: any) {
+  const errorName = err?.constructor?.name;
+  console.error("DB Error:", err, err?.constructor?.name);
+  // Match Prisma known request errors by constructor name
+  if (errorName === "PrismaClientKnownRequestError") {
+    switch (err.code) {
+      case "P2002":
+        return Response.json(
+          { message: "Duplicate Entry Error (unique constraint failed)." },
+          { status: 409 }
+        );
+      case "P2003":
+        const message = err.message.toLowerCase();
+        if (message.includes("delete") || message.includes("foreign key constraint failed on delete")) {
+          return Response.json(
+            { message: "Delete failed: related records exist and prevent deletion." },
+            { status: 409 }
+          );
+        } else if (message.includes("insert") || message.includes("update") || message.includes("create")) {
+          return Response.json(
+            { message: "Operation failed: referenced foreign key does not exist." },
+            { status: 400 }
+          );
+        } else {
+          // fallback generic message
+          return Response.json(
+            { message: "Foreign key constraint violated." },
+            { status: 400 }
+          );
+        }
+      case "P2025":
+        return Response.json(
+          { message: "Record not found." },
+          { status: 404 }
+        );
+      case "P2025":
+      case "P2001":
+        return Response.json({ message: "Record not found." }, { status: 404 });
+      case "P2011":
+        return Response.json({ message: "Missing required field." }, { status: 400 });
+      default:
+        return Response.json(
+          { message: "Database error occurred." },
+          { status: 500 }
+        );
+    }
+  }
+
+  // Match Prisma validation errors by constructor name
+  if (errorName === "PrismaClientValidationError") {
+    return Response.json(
+      { message: "Validation error: Invalid input data" },
+      { status: 400 }
+    );
+  }
+
+  // SQL Errors
   if (err.code === "ER_DUP_ENTRY") {
     return Response.json({ message: "Duplicate Entry Error" }, { status: 409 });
   } else if (err.code === "ER_NO_REFERENCED_ROW_2") {

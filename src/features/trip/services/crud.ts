@@ -1,6 +1,6 @@
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
+import { catchDBError } from "@/lib/utils";
 
-const prisma = new PrismaClient();
 
 /**
  * Gets all trips
@@ -14,7 +14,7 @@ export async function getAllTrips() {
     return Response.json({ trips }, { status: 200 });
   } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);;
   }
 }
 
@@ -34,7 +34,7 @@ export async function getTrip(id: number) {
     return Response.json({ trip }, { status: 200 });
   } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);;
   }
 }
 
@@ -68,7 +68,7 @@ export async function addTrip(
     );
   } catch (err: any) {
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);;
   }
 }
 
@@ -96,6 +96,6 @@ export async function deleteTrip(id: number) {
     }
 
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);;
   }
 }

@@ -63,7 +63,7 @@ model driver {
 
 model passenger_ticket {
   id             Int                        @id @default(autoincrement())
-  passenger_name String                     @db.VarChar(100)
+  passenger_name String?                    @db.VarChar(100)
   discount       passenger_ticket_discount?
   ticket_id      Int
   ticket         ticket                     @relation(fields: [ticket_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_passenger_ticket_ticket1")

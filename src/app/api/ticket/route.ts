@@ -1,5 +1,5 @@
-import { getAllTickets} from "@features/ticket/services/refactorCrud";
 import {
+  getAllTickets,
   createPassengerTicket,
   createBaggageTicket,
 } from "@features/ticket/services/crud";
