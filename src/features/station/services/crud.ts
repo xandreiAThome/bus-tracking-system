@@ -56,11 +56,13 @@ export async function getStationByName(name: string) {
  */
 export async function addStation(name: string) {
   try {
-    await prisma.station.create({
+    const created = await prisma.station.create({
       data: { name },
     });
     return Response.json(
-      { message: "Station created successfully" },
+      { message: "Station created successfully",
+        created
+      },
       { status: 201 }
     );
   } catch (err: any) {
@@ -74,15 +76,17 @@ export async function addStation(name: string) {
  */
 export async function deleteStation(id: number) {
   try {
-    await prisma.station.delete({ where: { id } });
+    const deleted = await prisma.station.delete({ where: { id } });
     return Response.json(
-      { message: `Station with id ${id} deleted successfully` },
+      { message: `Station deleted successfully`,
+        id: deleted.id
+      },
       { status: 200 }
     );
   } catch (err: any) {
     if (err.code === "P2025") {
       return Response.json(
-        { message: `Station with id ${id} not found` },
+        { message: `Station with id: ${id} not found` },
         { status: 404 }
       );
     }

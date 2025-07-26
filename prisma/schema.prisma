@@ -84,7 +84,7 @@ model seat {
 
 model station {
   id                                 Int       @id @default(autoincrement())
-  name                               String    @db.VarChar(45)
+  name                               String    @db.VarChar(45) @unique
   bus                                bus[]
   cashier                            cashier[]
   trip_trip_dest_station_idTostation trip[]    @relation("trip_dest_station_idTostation")
