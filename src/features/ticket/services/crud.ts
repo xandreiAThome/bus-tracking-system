@@ -313,3 +313,39 @@ export async function putBaggageTicket(
     item
   );
 }
+
+export async function getAllPassengerTickets() {
+  try {
+    const passengerTickets = await prisma.passenger_ticket.findMany();
+    if (!passengerTickets || passengerTickets.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No passenger tickets found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Response(
+      JSON.stringify({ passengerTickets }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    return catchDBError(err);
+  }
+}
+
+export async function getAllBaggageTickets() {
+  try {
+    const baggageTickets = await prisma.baggage_ticket.findMany();
+    if (!baggageTickets || baggageTickets.length === 0) {
+      return new Response(
+        JSON.stringify({ message: "No baggage tickets found" }),
+        { status: 404, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    return new Response(
+      JSON.stringify({ baggageTickets }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    return catchDBError(err);
+  }
+}
