@@ -43,13 +43,13 @@ export default function BusesTab() {
   const [newBus, setNewBus] = useState({
     plate_number: "",
     station_id: -1,
-    capacity: 0,
+    capacity: "",
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editBus, setEditBus] = useState({
     plate_number: "",
     station_id: -1,
-    capacity: 0,
+    capacity: "",
   });
 
   const fetchBuses = () => {
@@ -80,15 +80,20 @@ export default function BusesTab() {
   }, []);
 
   const handleAdd = async () => {
-    if (!newBus.plate_number || newBus.station_id === -1 || !newBus.capacity)
+    if (
+      !newBus.plate_number ||
+      newBus.station_id === -1 ||
+      newBus.capacity === "" ||
+      isNaN(Number(newBus.capacity))
+    )
       return;
     setAdding(true);
     await fetch("/api/bus", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newBus),
+      body: JSON.stringify({ ...newBus, capacity: Number(newBus.capacity) }),
     });
-    setNewBus({ plate_number: "", station_id: -1, capacity: 0 });
+    setNewBus({ plate_number: "", station_id: -1, capacity: "" });
     setAdding(false);
     fetchBuses();
   };
@@ -105,18 +110,19 @@ export default function BusesTab() {
     setEditBus({
       plate_number: bus.plate_number,
       station_id: bus.station_id,
-      capacity: bus.capacity,
+      capacity: String(bus.capacity),
     });
   };
 
   const handleEditSave = async (id: number) => {
+    if (editBus.capacity === "" || isNaN(Number(editBus.capacity))) return;
     await fetch(`/api/bus/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editBus),
+      body: JSON.stringify({ ...editBus, capacity: Number(editBus.capacity) }),
     });
     setEditingId(null);
-    setEditBus({ plate_number: "", station_id: -1, capacity: 0 });
+    setEditBus({ plate_number: "", station_id: -1, capacity: "" });
     fetchBuses();
   };
 
@@ -181,7 +187,7 @@ export default function BusesTab() {
                         onChange={e =>
                           setEditBus(s => ({
                             ...s,
-                            capacity: Number(e.target.value),
+                            capacity: e.target.value,
                           }))
                         }
                       />
@@ -283,9 +289,7 @@ export default function BusesTab() {
           className="border rounded px-2 py-1"
           placeholder="Capacity"
           value={newBus.capacity}
-          onChange={e =>
-            setNewBus(s => ({ ...s, capacity: Number(e.target.value) }))
-          }
+          onChange={e => setNewBus(s => ({ ...s, capacity: e.target.value }))}
         />
         <Button
           onClick={handleAdd}
@@ -293,7 +297,8 @@ export default function BusesTab() {
             adding ||
             !newBus.plate_number ||
             newBus.station_id === -1 ||
-            !newBus.capacity
+            newBus.capacity === "" ||
+            isNaN(Number(newBus.capacity))
           }
         >
           {adding ? "Adding..." : "Add Bus"}
