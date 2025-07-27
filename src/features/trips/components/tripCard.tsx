@@ -25,94 +25,123 @@ import {
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
 
 interface TripCardProps {
+  tripId: number;
   route: string;
   time: string;
   driver: string;
+  status?: string; // Added optional status prop
+  onStatusChange?: (newStatus: string) => void; // Callback for status updates
 }
 
-export default function TripCard(props: TripCardProps) {
-  const [status, setStatus] = useState("boarding");
+export default function TripCard({ 
+  tripId, 
+  route, 
+  time, 
+  driver,
+  status: propStatus = "boarding",
+  onStatusChange
+}: TripCardProps) {
+  const [localStatus, setLocalStatus] = useState(propStatus);
   const [openDrawer, setOpenDrawer] = useState(false);
+
+  // Sync with prop changes
+  const status = onStatusChange ? propStatus : localStatus;
+
+  const handleStatusChange = (newStatus: string) => {
+    if (onStatusChange) {
+      onStatusChange(newStatus);
+    } else {
+      setLocalStatus(newStatus);
+    }
+  };
 
   return (
     <div className="flex flex-col justify-center">
-      <Card className="flex flex-col gap-1 p-5">
-        {/* First Row*/}
-        <div>
-          <div className="flex items-center justify-between">
-            {/* Left Side: Place and Time */}
-            <div className="flex gap-2">
-              <span className="font-semibold text-[#456A3B]">
-                {props.route}
-              </span>
-              <span>{props.time}</span>
-            </div>
-
-            {/* Right Side: Ellipsis Button */}
-
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <AlignJustify />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  onSelect={() => setOpenDrawer(true)}
-                  className="w-full justify-center"
-                >
-                  Issued Tickets
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+      <Card className="flex flex-col gap-3 p-5">
+        {/* Route and Time */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-[#456A3B]">
+              {route}
+            </span>
+            <span className="text-sm text-gray-600">{time}</span>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                aria-label="Trip options"
+                className="p-1 rounded hover:bg-gray-100"
+              >
+                <AlignJustify className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={() => setOpenDrawer(true)}
+                className="w-full justify-center"
+              >
+                Issued Tickets
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
+
+        {/* Status Selector */}
         <div>
           <Select
             value={status}
-            onValueChange={setStatus}
-            defaultValue="boarding"
+            onValueChange={handleStatusChange}
+            defaultValue={propStatus}
           >
             <SelectTrigger
               className={`
                 w-[120px] rounded-lg font-bold ${status === "boarding" ? "bg-[#71AC61] text-white" : ""}
                 ${status === "delayed" ? "bg-[#AC6161] text-white" : ""}
               `}
+              aria-label="Trip status"
             >
               <SelectValue>
-                {status === "status"
-                  ? "Status"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="boarding">Boarding</SelectItem>
               <SelectItem value="delayed">Delayed</SelectItem>
+              {/* Consider adding more statuses if needed */}
             </SelectContent>
           </Select>
         </div>
-        <div className="text-[#456A3B]">{props.driver}</div>
+
+        {/* Driver Info */}
+        <div className="text-[#456A3B] text-sm">{driver}</div>
+
+        {/* Action Buttons */}
         <div className="flex items-end justify-between">
-          {/* Left Side: Place and Time */}
           <div className="flex gap-2">
-            {/* TEMPORARY, CHANGE TO THE BUS ID OF THE TRIP WHEN INTEGRATED TO THE BACKEND */}
-            <Link href={"/map/1"}>
-              <Map />
+            <Link href={`/map/${tripId}`} aria-label="View on map">
+              <button className="p-1 rounded hover:bg-gray-100">
+                <Map className="h-5 w-5" />
+              </button>
             </Link>
-            <button>
-              <SquarePen />
+            <button 
+              aria-label="Edit trip"
+              className="p-1 rounded hover:bg-gray-100"
+            >
+              <SquarePen className="h-5 w-5" />
             </button>
           </div>
-
-          {/* Right Side:  */}
-          <div className="flex flex-col items-end">
-            <div className="flex flex-row gap-1 justify-end items-baseline">
+          
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1">
               <span className="font-bold">15/40</span>
-              <span>
-                <SquareArrowOutUpRight />
-              </span>
+              <SquareArrowOutUpRight className="h-4 w-4" />
             </div>
-            <Link href={"ticket"}>
-              <Button className="bg-[#456A3B] hover:bg-[#32442D] font-semibold">
-                issue ticket
+            <Link href={`/ticket/${tripId}`} passHref>
+              <Button 
+                className="bg-[#456A3B] hover:bg-[#32442D] font-semibold"
+                aria-label="Issue ticket"
+              >
+                Issue Ticket
               </Button>
             </Link>
           </div>
@@ -122,7 +151,8 @@ export default function TripCard(props: TripCardProps) {
       <IssuedTicketsModal
         openDrawer={openDrawer}
         setOpenDrawer={setOpenDrawer}
-      ></IssuedTicketsModal>
+        tripId={tripId} // Pass tripId to the modal
+      />
     </div>
   );
 }

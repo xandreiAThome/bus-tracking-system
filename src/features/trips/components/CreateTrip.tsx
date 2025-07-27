@@ -37,15 +37,21 @@ interface TripPayload {
   start_time: string;
   end_time: string;
   bus_id: number;
-  src_station_id: number;
-  dest_station_id: number;
+  src_station: number;
+  dest_station: number;
   driver_id: number;
 }
 
-export default function CreateTripModal() {
+interface CreateTripModalProps {
+  onTripCreated?: () => void;
+}
+
+
+export default function CreateTripModal({ onTripCreated }: CreateTripModalProps) {
   const [stations, setStations] = useState<Station[]>([]);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     driver: "",
@@ -139,11 +145,13 @@ export default function CreateTripModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const { driver, bus, source, destination, hour, minute, meridiem } = formData;
 
     if (!driver || !bus || !source || !destination) {
       alert("Please fill in all required fields.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -168,8 +176,8 @@ export default function CreateTripModal() {
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         bus_id: parseInt(bus),
-        src_station_id: parseInt(source),
-        dest_station_id: parseInt(destination),
+        src_station: parseInt(source),
+        dest_station: parseInt(destination),
         driver_id: parseInt(driver)
       };
 
@@ -186,7 +194,6 @@ export default function CreateTripModal() {
         throw new Error(errorData.message || "Failed to create trip");
       }
 
-      alert("Trip created successfully!");
       // Reset form
       setFormData({
         driver: "",
@@ -197,9 +204,18 @@ export default function CreateTripModal() {
         minute: "00",
         meridiem: "a.m."
       });
+
+      // Execute callback if provided
+      if (onTripCreated) {
+        onTripCreated();
+      }
+
+      alert("Trip created successfully!");
     } catch (err) {
       console.error("Error:", err);
       alert(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -303,7 +319,7 @@ export default function CreateTripModal() {
               </SelectTrigger>
               <SelectContent>
                 {buses.map(bus => (
-                  <SelectItem key={bus.id} value={bus.id}>
+                  <SelectItem key={bus.id} value={String(bus.id)}>
                     {bus.plate_number}
                   </SelectItem>
                 ))}

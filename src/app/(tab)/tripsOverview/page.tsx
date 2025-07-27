@@ -1,25 +1,33 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import TripCard from "@/features/trips/components/tripCard";
 import CreateTripModal from "@/features/trips/components/CreateTrip";
-import { auth } from "@/features/auth/services/auth";
-import { redirect } from "next/navigation";
+import TripsList from "@/features/trips/components/tripList";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-const dummyTrips = [
-  { route: "ALLEN → CATARMAN", time: "9:00 PM", driver: "Juan Dela Cruz" },
-  { route: "MANILA → DAVAO", time: "9:00 PM", driver: "Rage Del Fiero" },
-];
+export default function TripsOverview() {
+  // const { data: session, status } = useSession();
+  // const router = useRouter();
 
-export default async function TripsOverview() {
-  const session = await auth();
+  // useEffect(() => {
+  //   if (status === "authenticated" && session?.user?.role === "driver") {
+  //     router.push("/map/1");
+  //   }
+  // }, [status, session, router]);
 
-  console.log(session?.user?.role);
-  if (session?.user?.role === "driver") {
-    redirect("/map/1");
-  }
+  // if (status === "loading") {
+  //   return (
+  //     <div className="h-full flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#456A3B]"></div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="h-full flex items-start justify-center p-5">
-      <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5 ">
+      <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5">
         <CardHeader className="border-b border-gray-300">
           <div className="flex flex-col items-center">
             <CardTitle className="mt-2 font-extrabold text-[#456A3B]">
@@ -28,19 +36,10 @@ export default async function TripsOverview() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 mt-4">
-          <div className="flex flex-col overflow-y-auto gap-y-4">
-            {dummyTrips.map((trip, index) => (
-              <TripCard
-                key={index}
-                route={trip.route}
-                time={trip.time}
-                driver={trip.driver}
-              />
-            ))}
-          </div>
+          <TripsList />
         </CardContent>
-        <div className="flex mt-4 justify-center">
-          <CreateTripModal />
+        <div className="flex mt-4 justify-center pb-4">
+          <CreateTripModal onTripCreated={() => window.location.reload()} />
         </div>
       </Card>
     </div>
