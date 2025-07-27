@@ -31,7 +31,7 @@ interface Driver {
 
 interface Bus {
   id: string;
-  name: string;
+  plate_number: string;
 }
 
 interface Trip {

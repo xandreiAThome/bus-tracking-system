@@ -28,6 +28,18 @@ interface Station {
   name: string;
 }
 
+interface Seat {
+  id: number;
+  seat_number: string;
+  bus_id: number;
+  status: string;
+}
+
+interface Bus {
+  id: string;
+  plate_number: string;
+}
+
 const Page = () => {
   // Common state
   const [price, setPrice] = useState("");
@@ -46,16 +58,28 @@ const Page = () => {
   const [receiverName, setReceiverName] = useState("");
   const [item, setItem] = useState("");
 
-  const leftSeats = Array.from({ length: 12 }, (_, i) => i + 1); 
-  const rightSeats = Array.from({ length: 12 }, (_, i) => i + 13);
-  const backSeats = Array.from({ length: 5}, (_, i) => i + 25);
-  const unavailableSeats = [5, 12, 18, 25, 31];
-
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [unavailableSeats, setUnavailableSeats] = useState<number[]>([]);
+  
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const [stations, setStations] = useState([]);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedBus, setSelectedBus] = useState<string>("");
+  const [buses, setBuses] = useState<Bus[]>([]);
 
+  const dummyCashiers = [
+    { id: 1, name: "JJ1"},
+    { id: 2, name: "JJ2"},
+    { id: 3, name: "JJ3"}
+  ]
+
+  // Hardcoded seat numbers (1-29)
+  const leftSeats = Array.from({ length: 12 }, (_, i) => i + 1); 
+  const rightSeats = Array.from({ length: 12 }, (_, i) => i + 13);
+  const backSeats = Array.from({ length: 5 }, (_, i) => i + 25);
+
+  // Fetches all the trips
   useEffect(() => {
     const fetchTrips = async () => {
       setIsLoading(true);
@@ -82,6 +106,7 @@ const Page = () => {
     fetchTrips();
   }, []);
 
+  // Fetches all the stations
   useEffect(() => {
     const fetchStations = async () => {
       const response = await fetch('/api/station');
@@ -91,15 +116,55 @@ const Page = () => {
     fetchStations();
   }, []);
 
-  // Dummy cashiers
-  const dummyCashiers = [
-    { id: 1, name: "JJ1" },
-    { id: 2, name: "JJ2" },
-    { id: 3, name: "JJ3" },
-  ];
+  // Fetches all buses
+  useEffect(() => {
+    const fetchBuses = async () => {
+      const response = await fetch('/api/bus');
+      const data = await response.json();
+      setBuses(data.buses || data);
+    };
+    fetchBuses();
+  }, []);
+
+  // Fetches seats when bus is selected
+  useEffect(() => {
+    const fetchBusSeats = async () => {
+      if (!selectedBus) return;
+      
+      try {
+        const response = await fetch(`/api/bus/${selectedBus}/seats`);
+        const data = await response.json();
+        
+        setSeats(data.seats || data);
+        
+        // Get unavailable seat IDs
+        const unavailable = (data.seats || data)
+          .filter((seat: Seat) => seat.status === 'occupied')
+          .map((seat: Seat) => seat.id);
+        setUnavailableSeats(unavailable);
+      } catch (error) {
+        console.error("Error fetching seats:", error);
+      }
+    };
+  
+    fetchBusSeats();
+  }, [selectedBus]);
+
+  // Maps seat numbers to their database IDs
+  const getSeatIdByNumber = (seatNumber: number): number | null => {
+    const seat = seats.find(s => parseInt(s.seat_number.replace(/\D/g, '')) === seatNumber);
+    return seat?.id || null;
+  };
+
+  // Gets seat number from ID
+  const getSeatNumberById = (seatId: number): number | null => {
+    const seat = seats.find(s => s.id === seatId);
+    return seat ? parseInt(seat.seat_number.replace(/\D/g, '')) : null;
+  };
 
   const handleSeatSelect = (seatNumber: number) => {
-    setSelectedSeat(seatNumber);
+    const seatId = getSeatIdByNumber(seatNumber);
+    if (seatId) setSelectedSeat(seatId);
   };
 
   const handleBaggageSubmit = () => {
@@ -127,26 +192,72 @@ const Page = () => {
     .catch(error => console.error("Error:", error));
   };
 
-  const handlePassengerSubmit = () => {
+  const handlePassengerSubmit = async () => {
+    if (!selectedSeat) {
+      alert("Please select a seat first");
+      return;
+    }
+  
+    const seatNumber = getSeatNumberById(selectedSeat);
+    
     const payload = {
       price,
       trip_id: Number(selectedTrip),
       cashier_id: Number(selectedCashier),
       ticket_type: "passenger",
-      passenger_name: "John Doe", 
-      seat_number: selectedSeat
+      passenger_name: "John Doe",
+      seat_id: selectedSeat,
+      seat_number: seatNumber?.toString()
     };
-
-    console.log("Submitting passenger ticket:", payload);
-    
-    fetch('/api/ticket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => alert("Passenger Ticket successfully created"))
-    .catch(error => console.error("Error:", error));
+  
+    try {
+      console.log("Creating ticket with payload:", payload);
+      
+      // First create the ticket
+      const ticketResponse = await fetch('/api/ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+  
+      const ticketData = await ticketResponse.json();
+      console.log("Ticket response:", ticketData);
+  
+      if (!ticketResponse.ok) {
+        throw new Error(ticketData.message || "Failed to create ticket");
+      }
+  
+      console.log("Updating seat status for seat ID:", selectedSeat);
+      
+      // Then update the seat status to occupied
+      const seatResponse = await fetch(`/api/seat/${selectedSeat}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: "occupied" })
+      });
+  
+      const seatData = await seatResponse.json();
+      console.log("Seat update response:", seatData);
+  
+      if (!seatResponse.ok) {
+        throw new Error(seatData.message || "Ticket created but failed to update seat status");
+      }
+  
+      // Update local state to reflect the occupied seat
+      setUnavailableSeats(prev => [...prev, selectedSeat]);
+      setSelectedSeat(null); // Clear selection
+      
+      alert("Passenger Ticket successfully created");
+    } catch (error) {
+      console.error("Error details:", {
+        error,
+        payload,
+        selectedSeat,
+        selectedTrip,
+        selectedCashier
+      });
+      alert(error instanceof Error ? error.message : "An error occurred while creating ticket");
+    }
   };
 
   const formatTripDisplay = (trip: Trip, stations: Station[]) => {
@@ -166,11 +277,11 @@ const Page = () => {
 
   return (
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
-      <h1 className="text-lg font-semibold text-center mb-3 text-[#FFFFFF]">
+      <h1 className="text-lg font-semibold text-center mt-5 text-[#FFFFFF]">
         Issue Tickets
       </h1>
       <Tabs value={selectedType} onValueChange={setSelectedType}>
-        <TabsList className="grid w-full grid-cols-2 pb-2 p-0 -my-2.5 bg-[#71AC61]">
+        <TabsList className="grid w-full grid-cols-2 pb-2 p-0 -my-1.5 bg-[#71AC61] -mb-5.5 mt-4">
           <TabsTrigger
             value="passenger"
             className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
@@ -234,24 +345,25 @@ const Page = () => {
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-sm font-medium">Assigned Seat</span>
                   <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600 w-full">{selectedSeat === null ? "Standing" : `Seat #${selectedSeat}`}</span>
-                  <Select 
-                    value={selectedCashier}
-                    onValueChange={setSelectedCashier}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Bus" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {dummyCashiers.map((cashier) => (
-                        <SelectItem key={cashier.id} value={cashier.id.toString()}>
-                          {cashier.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    <span className="text-sm text-gray-600 w-full">
+                      {selectedSeat === null ? "Standing" : `Seat ${getSeatNumberById(selectedSeat)}`}
+                    </span>
+                    <Select 
+                      value={selectedBus}
+                      onValueChange={setSelectedBus}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select Bus" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {buses.map((bus) => (
+                          <SelectItem key={bus.id} value={bus.id.toString()}>
+                            {bus.plate_number}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-
                 </div>
 
                 {/* Bus layout */}
@@ -262,45 +374,56 @@ const Page = () => {
                     <div className="w-full flex flex-col justify-center items-center">
                       {/* Front seats: left and right columns */}
                       <div className="grid grid-cols-2 gap-12 justify-center mb-5">
-                        {/* Right Seats (1-4) */}
+                        {/* Left Seats */}
                         <div className="grid grid-cols-2 gap-4">
-                          {leftSeats.map((seat) => (
-                            <SeatButton
-                              key={seat}
-                              seatNumber={seat}
-                              isSelected={selectedSeat === seat}
-                              isUnavailable={unavailableSeats.includes(seat)}
-                              onSeatSelect={handleSeatSelect}
-                            />
-                          ))}
-
+                          {leftSeats.map((seatNumber) => {
+                            const seatId = getSeatIdByNumber(seatNumber);
+                            const isUnavailable = seatId ? unavailableSeats.includes(seatId) : false;
+                            return (
+                              <SeatButton
+                                key={seatNumber}
+                                seatNumber={seatNumber}
+                                isSelected={selectedSeat === seatId}
+                                isUnavailable={isUnavailable}
+                                onSeatSelect={() => !isUnavailable && handleSeatSelect(seatNumber)}
+                              />
+                            );
+                          })}
                         </div>
                         
-                        {/* Left Seats (5-6) */}
+                        {/* Right Seats */}
                         <div className="grid grid-cols-2 gap-4">
-                          {rightSeats.map((seat) => (
-                            <SeatButton
-                              key={seat}
-                              seatNumber={seat}
-                              isSelected={selectedSeat === seat}
-                              isUnavailable={unavailableSeats.includes(seat)}
-                              onSeatSelect={handleSeatSelect}
-                            />
-                          ))}
+                          {rightSeats.map((seatNumber) => {
+                            const seatId = getSeatIdByNumber(seatNumber);
+                            const isUnavailable = seatId ? unavailableSeats.includes(seatId) : false;
+                            return (
+                              <SeatButton
+                                key={seatNumber}
+                                seatNumber={seatNumber}
+                                isSelected={selectedSeat === seatId}
+                                isUnavailable={isUnavailable}
+                                onSeatSelect={() => !isUnavailable && handleSeatSelect(seatNumber)}
+                              />
+                            );
+                          })}
                         </div>
                       </div>
 
-                      {/* Back seats: 25-29 */}
+                      {/* Back seats */}
                       <div className="grid grid-cols-5 gap-2 justify-center pt-4 border-t">
-                        {backSeats.map((seat) => (
-                          <SeatButton
-                            key={seat}
-                            seatNumber={seat}
-                            isSelected={selectedSeat === seat}
-                            isUnavailable={unavailableSeats.includes(seat)}
-                            onSeatSelect={handleSeatSelect}
-                          />
-                        ))}
+                        {backSeats.map((seatNumber) => {
+                          const seatId = getSeatIdByNumber(seatNumber);
+                          const isUnavailable = seatId ? unavailableSeats.includes(seatId) : false;
+                          return (
+                            <SeatButton
+                              key={seatNumber}
+                              seatNumber={seatNumber}
+                              isSelected={selectedSeat === seatId}
+                              isUnavailable={isUnavailable}
+                              onSeatSelect={() => !isUnavailable && handleSeatSelect(seatNumber)}
+                            />
+                          );
+                        })}
                       </div>
                     </div>
 
@@ -316,7 +439,7 @@ const Page = () => {
                 {/* Standing and passenger type selection */}
                 <div className="text-center mt-2">
                   <button
-                    onClick={() => setSelectedSeat(selectedSeat === null ? 1 : null)}
+                    onClick={() => setSelectedSeat(selectedSeat === null ? getSeatIdByNumber(1) || null : null)}
                     className={`w-full border border-solid text-sm font-medium rounded-md p-1 ${
                       selectedSeat === null ? "bg-[#71AC61] text-white border-gray-400" : "border-[#456A3B]"
                     }`}
