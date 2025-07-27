@@ -9,6 +9,22 @@ import { deleteTrip, getTrip } from "@features/trip/services/crud";
  *
  * Route param:
  * - id (string): trip ID passed as part of the URL (e.g., /api/trip/123)
+ *
+ * @returns {Response} 200 - Returns JSON with trip data:
+ * {
+ *   trip: {
+ *     id: number,
+ *     start_time: string,
+ *     end_time: string,
+ *     bus_id: number,
+ *     driver_id: number,
+ *     src_station: number,
+ *     dest_station: number,
+ *     // other fields
+ *   }
+ * }
+ * @returns {Response} 404 - If trip with given id is not found.
+ * @returns {Response} 500 - Internal server/database error.
  */
 export async function GET(
   req: Request,
@@ -30,6 +46,15 @@ export async function GET(
  *
  * Route param:
  * - id (string): trip ID passed as part of the URL (e.g., /api/trip/123)
+ *
+ * @returns {Response} 200 - Trip deleted successfully with message and deleted id:
+ * {
+ *   message: "Trip deleted successfully",
+ *   id: number
+ * }
+ * @returns {Response} 404 - If trip with given id is not found.
+ * @returns {Response} 409 - If trip cannot be deleted due to it being a related record.
+ * @returns {Response} 500 - Internal server/database error.
  */
 export async function DELETE(
   req: Request,

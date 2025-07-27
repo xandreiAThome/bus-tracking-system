@@ -5,11 +5,31 @@ import { putPassengerTicket } from "@features/ticket/services/crud";
 /**
  * GET /api/ticket/passenger/[id]
  *
- * Gets passenger ticket information based on the dynamic `id` parameter (ticket_id).
- * Example request: GET /api/ticket/passenger/123
+ * Retrieves passenger ticket information based on the dynamic `id` parameter (ticket_id).
  *
  * Route param:
- * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/passenger/123)
+ * - id (string): Ticket ID (e.g., /api/ticket/passenger/123)
+ *
+ * Example request:
+ * GET /api/ticket/passenger/123
+ *
+ * @param {Request} req - Incoming request object.
+ * @param {Object} params - URL parameters object containing:
+ *   @param {string} id - The ticket ID to retrieve passenger ticket info for.
+ *
+ * @returns {Response} 200 OK - Returns a JSON object with passenger ticket data:
+ * {
+ *   "passengerTicket": {
+ *     "id": number,
+ *     "passenger_name": string,
+ *     "discount": string | null,
+ *     "ticket_id": number
+ *   }
+ * }
+ *
+ * @returns {Response} 400 Bad Request - If `id` is invalid.
+ * @returns {Response} 404 Not Found - If no passenger ticket exists for the given ticket ID.
+ * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function GET(
   req: Request,
@@ -36,18 +56,37 @@ export async function GET(
 /**
  * PUT /api/ticket/passenger/[id]
  *
- * Updates the base ticket and associated passenger_ticket
+ * Updates the base ticket and associated passenger_ticket by `id`.
  *
  * Route param:
- * - id: ticket ID (e.g. /api/ticket/passenger/123)
+ * - id (string): Ticket ID (e.g., /api/ticket/passenger/123)
  *
  * Body payload:
- * - price (string)
- * - trip_id (number)
- * - cashier_id (number)
- * - ticket_type (string, should be "passenger")
- * - passenger_name (string)
- * - discount (string | null)
+ * - price (string): Ticket price
+ * - trip_id (number): Associated trip ID
+ * - cashier_id (number): Cashier ID
+ * - ticket_type (string): Should be "passenger"
+ * - passenger_name (string): Name of the passenger
+ * - discount (string | null): Discount applied (optional)
+ *
+ * Example request body:
+ * {
+ *   "price": "50.00",
+ *   "trip_id": 5,
+ *   "cashier_id": 2,
+ *   "ticket_type": "passenger",
+ *   "passenger_name": "Alice Johnson",
+ *   "discount": "student"
+ * }
+ *
+ * @param {Request} req - Incoming request object.
+ * @param {Object} params - URL parameters object containing:
+ *   @param {string} id - The ticket ID to update.
+ *
+ * @returns {Response} 200 OK - Returns confirmation message on successful update.
+ * @returns {Response} 400 Bad Request - If required fields are missing or invalid.
+ * @returns {Response} 404 Not Found - If the passenger ticket with the given ID does not exist.
+ * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function PUT(
   req: Request,
