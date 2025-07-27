@@ -233,7 +233,25 @@ const Page = () => {
             <div className="border rounded-lg p-3 transition-colors bg-white mb-4">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-sm font-medium">Assigned Seat</span>
-                  <span className="text-sm text-gray-600">{selectedSeat === null ? "Standing" : `Seat #${selectedSeat}`}</span>
+                  <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 w-full">{selectedSeat === null ? "Standing" : `Seat #${selectedSeat}`}</span>
+                  <Select 
+                    value={selectedCashier}
+                    onValueChange={setSelectedCashier}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Bus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dummyCashiers.map((cashier) => (
+                        <SelectItem key={cashier.id} value={cashier.id.toString()}>
+                          {cashier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  </div>
+
                 </div>
 
                 {/* Bus layout */}
