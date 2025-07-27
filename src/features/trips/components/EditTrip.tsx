@@ -16,74 +16,87 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import React, { useState, useEffect } from "react";
 
-interface Station {
-  id: number;
-  name: string;
+interface EditTripModalProps {
+  tripId: number;
+  onSuccess?: () => void;
 }
 
-interface Driver {
-  id: string;
-  name: string;
-}
+export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps) {
+  const stations = [
+    { id: "1", name: "Manila" },
+    { id: "2", name: "Quezon City" },
+    { id: "3", name: "Makati" },
+    { id: "4", name: "Taguig" },
+    { id: "5", name: "Mandaluyong" },
+    { id: "6", name: "Pasig" },
+  ];
 
-interface Bus {
-  id: string;
-  name: string;
-}
-
-export default function CreateTripModal() {
-  const [stations, setStations] = useState<Station[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const [driver, setDriver] = useState("");
-  const [source, setSource] = useState("");
-  const [destination, setDestination] = useState("");
-  const [bus, setBus] = useState("");
-
-  const [hour, setHour] = useState("00");
-  const [minute, setMinute] = useState("00");
-  const [meridiem, setMeridiem] = useState<"a.m." | "p.m.">("a.m.");
-
-  const drivers: Driver[] = [
+  const drivers = [
     { id: "1", name: "Mark Reyes" },
     { id: "2", name: "Anthony Cruz" },
     { id: "3", name: "Jared Thompson" },
     { id: "4", name: "Samuel Diaz" },
   ];
 
-  const buses: Bus[] = [
+  const buses = [
     { id: "1", name: "Bus1" },
     { id: "2", name: "Bus2" },
     { id: "3", name: "Bus3" },
   ];
 
+  const [driver, setDriver] = useState("");
+  const [source, setSource] = useState("");
+  const [destination, setDestination] = useState("");
+  const [bus, setBus] = useState("");
+  const [hour, setHour] = useState("00");
+  const [minute, setMinute] = useState("00");
+  const [meridiem, setMeridiem] = useState("a.m.");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch trip data when component mounts
   useEffect(() => {
-    const fetchStations = async () => {
-      setIsLoading(true);
-
+    const fetchTripData = async () => {
       try {
-        const response = await fetch('/api/station', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
+        const response = await fetch(`/api/trip/${tripId}`);
         if (!response.ok) {
-          throw new Error(`status: ${response.status}`);
+          throw new Error('Failed to fetch trip data');
         }
+        const trip = await response.json();
+        
+        // Set form fields with trip data
+        setDriver(trip.driver_id.toString());
+        setBus(trip.bus_id.toString());
+        setSource(trip.src_station.toString());
+        setDestination(trip.dest_station.toString());
 
-        const data = await response.json();
-        setStations(data.stations || data);
-      } catch (err) {
-        console.error("Fetch error:", err);
+        // Parse the start_time
+        if (trip.start_time) {
+          const date = new Date(trip.start_time);
+          let hours = date.getHours();
+          const minutes = date.getMinutes();
+          
+          // Convert to 12-hour format
+          const isPM = hours >= 12;
+          if (isPM && hours > 12) hours -= 12;
+          if (!isPM && hours === 0) hours = 12;
+
+          setHour(hours.toString().padStart(2, "0"));
+          setMinute(minutes.toString().padStart(2, "0"));
+          setMeridiem(isPM ? "p.m." : "a.m.");
+        }
+      } catch (error) {
+        console.error("Error fetching trip data:", error);
+        alert("Failed to load trip data");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchStations();
-  }, []);
+    fetchTripData();
+  }, [tripId]);
 
   const incrementHour = () => {
     const newHour = (parseInt(hour) + 1) % 12 || 12;
@@ -138,16 +151,14 @@ export default function CreateTripModal() {
       start_time,
       end_time,
       bus_id: parseInt(bus),
-      src_station_id: parseInt(source),  // Fixed to match your API expectation
-      dest_station_id: parseInt(destination),  // Fixed to match your API expectation
+      src_station: parseInt(source),
+      dest_station: parseInt(destination),
       driver_id: parseInt(driver)
     };
 
-    console.log("Trip payload to be submitted:", payload);
-
     try {
-      const res = await fetch("/api/trip", {
-        method: "POST",
+      const res = await fetch(`/api/trip/${tripId}`, {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -156,18 +167,11 @@ export default function CreateTripModal() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        console.error("Failed to create trip:", errorData);
-        alert(`Error: ${errorData.message || "Failed to create trip"}`);
+        console.error("Failed to update trip:", errorData);
+        alert(`Error: ${errorData.message || "Failed to update trip"}`);
       } else {
-        alert("Trip created successfully!");
-        // Reset form
-        setDriver("");
-        setBus("");
-        setSource("");
-        setDestination("");
-        setHour("00");
-        setMinute("00");
-        setMeridiem("a.m.");
+        alert("Trip updated successfully!");
+        if (onSuccess) onSuccess();
       }
     } catch (err) {
       console.error("Network error:", err);
@@ -177,8 +181,8 @@ export default function CreateTripModal() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-4">
-        Loading stations...
+      <div className="flex justify-center items-center h-32">
+        <p>Loading trip data...</p>
       </div>
     );
   }
@@ -187,13 +191,13 @@ export default function CreateTripModal() {
     <Drawer>
       <DrawerTrigger asChild>
         <Button className="h-max bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-          Create Trip
+          Edit Trip
         </Button>
       </DrawerTrigger>
 
       <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
         <DrawerHeader>
-          <DrawerTitle className="text-center text-[#71AC61]">Create Trip</DrawerTitle>
+          <DrawerTitle className="text-center text-[#71AC61]">Edit Trip</DrawerTitle>
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
@@ -227,7 +231,7 @@ export default function CreateTripModal() {
               </SelectTrigger>
               <SelectContent>
                 {stations.map((station) => (
-                  <SelectItem key={station.id} value={station.id.toString()}>
+                  <SelectItem key={station.id} value={station.id}>
                     {station.name}
                   </SelectItem>
                 ))}
@@ -246,7 +250,7 @@ export default function CreateTripModal() {
               </SelectTrigger>
               <SelectContent>
                 {stations.map((station) => (
-                  <SelectItem key={station.id} value={station.id.toString()}>
+                  <SelectItem key={station.id} value={station.id}>
                     {station.name}
                   </SelectItem>
                 ))}
@@ -276,12 +280,7 @@ export default function CreateTripModal() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
             <div className="flex items-center gap-2">
               <div className="flex items-center border px-2 rounded">
-                <button 
-                  type="button" 
-                  onClick={decrementHour} 
-                  className="text-lg px-2"
-                  aria-label="Decrease hour"
-                >
+                <button type="button" onClick={decrementHour} className="text-lg px-2">
                   -
                 </button>
                 <input
@@ -299,14 +298,8 @@ export default function CreateTripModal() {
                     );
                   }}
                   className="w-10 text-center outline-none"
-                  aria-label="Hour"
                 />
-                <button 
-                  type="button" 
-                  onClick={incrementHour} 
-                  className="text-lg px-2"
-                  aria-label="Increase hour"
-                >
+                <button type="button" onClick={incrementHour} className="text-lg px-2">
                   +
                 </button>
               </div>
@@ -314,12 +307,7 @@ export default function CreateTripModal() {
               <span className="text-xl">:</span>
 
               <div className="flex items-center border px-2 rounded">
-                <button 
-                  type="button" 
-                  onClick={decrementMinute} 
-                  className="text-lg px-2"
-                  aria-label="Decrease minute"
-                >
+                <button type="button" onClick={decrementMinute} className="text-lg px-2">
                   -
                 </button>
                 <input
@@ -337,23 +325,16 @@ export default function CreateTripModal() {
                     );
                   }}
                   className="w-10 text-center outline-none"
-                  aria-label="Minute"
                 />
-                <button 
-                  type="button" 
-                  onClick={incrementMinute} 
-                  className="text-lg px-2"
-                  aria-label="Increase minute"
-                >
+                <button type="button" onClick={incrementMinute} className="text-lg px-2">
                   +
                 </button>
               </div>
 
               <select
                 value={meridiem}
-                onChange={(e) => setMeridiem(e.target.value as "a.m." | "p.m.")}
+                onChange={(e) => setMeridiem(e.target.value)}
                 className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm"
-                aria-label="AM/PM"
               >
                 <option value="a.m.">a.m.</option>
                 <option value="p.m.">p.m.</option>
@@ -365,7 +346,7 @@ export default function CreateTripModal() {
             type="submit"
             className="bg-[#71AC61] text-white py-2 rounded mt-4 hover:brightness-110 transition"
           >
-            Create New Trip
+            Update Trip
           </button>
         </form>
       </DrawerContent>

@@ -99,3 +99,62 @@ export async function deleteTrip(id: number) {
     return catchDBError(err);;
   }
 }
+
+/**
+ * Updates a trip by ID with provided fields
+ */
+export async function editTrip(
+  id: number,
+  data: {
+    start_time?: string;
+    end_time?: string;
+    bus_id?: number;
+    src_station?: number;
+    dest_station?: number;
+    driver_id?: number;
+  }
+) {
+  try {
+    const updateData: any = {};
+    
+    if (data.start_time !== undefined) {
+      updateData.start_time = data.start_time ? new Date(data.start_time) : null;
+    }
+    if (data.end_time !== undefined) {
+      updateData.end_time = data.end_time ? new Date(data.end_time) : null;
+    }
+    if (data.bus_id !== undefined) {
+      updateData.bus = { connect: { id: data.bus_id } };
+    }
+    if (data.driver_id !== undefined) {
+      updateData.driver = { connect: { id: data.driver_id } };
+    }
+    if (data.src_station !== undefined) {
+      updateData.station_trip_src_station_idTostation = { connect: { id: data.src_station } };
+    }
+    if (data.dest_station !== undefined) {
+      updateData.station_trip_dest_station_idTostation = { connect: { id: data.dest_station } };
+    }
+
+    const updated = await prisma.trip.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return Response.json(
+      { message: "Trip updated successfully", updated },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    if (err.code === "P2025") {
+      // Prisma "Record not found" error
+      return Response.json(
+        { message: `Trip with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+
+    console.error("DB Error:", err);
+    return catchDBError(err);
+  }
+}
