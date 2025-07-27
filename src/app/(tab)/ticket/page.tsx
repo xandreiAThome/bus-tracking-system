@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import SeatButton from "@/features/ticket/components/SeatButton"
 import { useState } from "react";
 
 const Page = () => {
@@ -17,10 +18,10 @@ const Page = () => {
   const [selectedType, setSelectedType] = useState("passenger");
   
   // Passenger state
-  const [selectedSeat, setSelectedSeat] = useState<number | null>(1);
-  const [previousSeat, setPreviousSeat] = useState<number | null>(1);
+  const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [selectedStanding, setSelectedStanding] = useState<string | null>(null);
 
+  
   // Baggage state
   const [selectedTrip, setSelectedTrip] = useState("");
   const [selectedCashier, setSelectedCashier] = useState("");
@@ -30,7 +31,9 @@ const Page = () => {
   const [receiverName, setReceiverName] = useState("");
   const [item, setItem] = useState("");
 
-  const seats = Array.from({ length: 36 }, (_, i) => i + 1);
+  const leftSeats = Array.from({ length: 12 }, (_, i) => i + 1); 
+  const rightSeats = Array.from({ length: 12 }, (_, i) => i + 13);
+  const backSeats = Array.from({ length: 5}, (_, i) => i + 25)
   const unavailableSeats = [5, 12, 18, 25, 31];
 
 
@@ -46,6 +49,12 @@ const Page = () => {
     { id: 2, name: "Taguig -> Pasig" },
     { id: 3, name: "Makati -> Ortigas" },
   ];
+
+  // Handles seat selecting
+  const handleSeatSelect = (seatNumber: number) => {
+    setSelectedSeat(seatNumber)
+  }
+
 
   const handleBaggageSubmit = () => {
     const payload = {
@@ -73,6 +82,8 @@ const Page = () => {
     .catch(error => console.error("Error:", error));
   };
 
+
+
   return (
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
       <h1 className="text-lg font-semibold text-center mb-3 text-[#FFFFFF]">
@@ -97,93 +108,109 @@ const Page = () => {
         <TabsContent value="passenger" className="space-y-4 mt-4">
           <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
             {/* Trip Selection */}
-            <div className="flex gap-4 justify-center items-center border rounded-xl">
+            <div className="flex gap-4 justify-center items-center border rounded-xl mb-2">
               <label className="text-sm font-medium ml-5 mr-10">Trip</label>
-              <Select defaultValue="allen-catarman">
+              <Select>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue placeholder="Select trip"/>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="allen-catarman">
-                    ALLEN → CATARMAN
-                  </SelectItem>
+                  {dummyTrips.map((trip) => (
+                    <SelectItem key={trip.id} value={trip.id.toString()}>
+                      {trip.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
             {/* Assigned Seat */}
-            <div className="border rounded-lg p-3 transition-colors bg-white">
-              <div className="flex justify-between items-center mb-2">
+            <div className="border rounded-lg p-3 transition-colors bg-white mb-4">
+              <div className="flex justify-between items-center mb-4">
                 <span className="text-sm font-medium">Assigned Seat</span>
-                <span className="text-sm text-gray-600">
-                  {selectedSeat === null ? "Standing" : `Seat #${selectedSeat}`}
-                </span>
+                <span className="text-sm text-gray-600">{selectedSeat === null ? "Standing" : `Seat #${selectedSeat}`}</span>
               </div>
 
-              {/* ⬇️ Make this div relative to allow absolute overlay inside it */}
+              {/* Bus layout */}
               <div className="relative">
-                <div className="grid grid-cols-6 gap-1 mb-3">
-                  {seats.map(seat => (
-                    <button
-                      key={seat}
-                      onClick={() => setSelectedSeat(seat)}
-                      disabled={unavailableSeats.includes(seat)}
-                      className={`
-                          w-8 h-8 text-xs rounded border
-                          ${
-                            selectedSeat === seat
-                              ? "bg-green-500 text-white border-green-500"
-                              : unavailableSeats.includes(seat)
-                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                                : "bg-white border-gray-300 hover:border-green-400"
-                          }
-                        `}
-                    >
-                      {seat}
-                    </button>
-                  ))}
+                <div className="p-6 border rounded bg-gray-50">
+                  <div className="text-center text-xs font-medium mb-4 text-gray-600">AMOEC TRANSPORT</div>
+
+                  <div className="w-full flex flex-col justify-center items-center">
+                    {/* Front seats: left and right columns */}
+                    <div className="grid grid-cols-2 gap-12 justify-center mb-5">
+                      {/* Right Seats (1-4) */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {leftSeats.map((seat) => (
+                          <SeatButton
+                            key={seat}
+                            seatNumber={seat}
+                            isSelected={selectedSeat === seat}
+                            isUnavailable={unavailableSeats.includes(seat)}
+                            onSeatSelect={handleSeatSelect}
+                          />
+                        ))}
+
+                      </div>
+                      
+                      {/* Left Seats (5-6) */}
+                      <div className="grid grid-cols-2 gap-4">
+                        {rightSeats.map((seat) => (
+                          <SeatButton
+                            key={seat}
+                            seatNumber={seat}
+                            isSelected={selectedSeat === seat}
+                            isUnavailable={unavailableSeats.includes(seat)}
+                            onSeatSelect={handleSeatSelect}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Back seats: 25-29 */}
+                    <div className="grid grid-cols-5 gap-2 justify-center pt-4 border-t">
+                      {backSeats.map((seat) => (
+                        <SeatButton
+                          key={seat}
+                          seatNumber={seat}
+                          isSelected={selectedSeat === seat}
+                          isUnavailable={unavailableSeats.includes(seat)}
+                          onSeatSelect={handleSeatSelect}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="text-center text-xs mt-4 text-gray-600">ALLEN - CATARMAN & V.V</div>
                 </div>
 
-                {/* 🔒 Overlay only over the seat grid */}
+                {/* Overlay when standing is selected */}
                 {selectedSeat === null && (
                   <div className="absolute top-0 left-0 w-full h-full bg-gray-300/80 z-50 rounded-md pointer-events-none" />
                 )}
               </div>
 
+              {/* Standing and passenger type selection */}
               <div className="text-center mt-2">
-                {/* Standing Button */}
                 <button
-                  onClick={() => {
-                    if (selectedSeat === null) {
-                      setSelectedSeat(1); // Or previousSeat if you store it
-                    } else {
-                      setSelectedSeat(null);
-                    }
-                  }}
-                  className={`w-full border border-solid text-sm font-medium rounded-md p-1
-                      ${selectedSeat === null ? "bg-[#71AC61] text-white border-gray-400" : "border-[#456A3B] data-[state=active]:text-white"}
-                    `}
+                  onClick={() => setSelectedSeat(selectedSeat === null ? 1 : null)}
+                  className={`w-full border border-solid text-sm font-medium rounded-md p-1 ${
+                    selectedSeat === null ? "bg-[#71AC61] text-white border-gray-400" : "border-[#456A3B]"
+                  }`}
                 >
                   Standing
                 </button>
 
                 <div className="flex justify-center gap-2 mt-2">
-                  {["Student", "Senior", "PWD"].map(type => (
+                  {["Student", "Senior", "PWD"].map((type) => (
                     <button
                       key={type}
-                      onClick={() =>
-                        setSelectedStanding(
-                          selectedStanding === type ? null : type
-                        )
-                      }
-                      className={`
-                          px-3 py-1 text-xs rounded border w-full
-                          ${
-                            selectedStanding === type
-                              ? "bg-[#71AC61] text-white border-green-500"
-                              : "bg-white border-gray-300 hover:border-green-400"
-                          }
-                        `}
+                      onClick={() => setSelectedStanding(selectedStanding === type ? null : type)}
+                      className={`px-3 py-1 text-xs rounded border w-full ${
+                        selectedStanding === type
+                          ? "bg-[#71AC61] text-white border-green-500"
+                          : "bg-white border-gray-300 hover:border-green-400"
+                      }`}
                     >
                       {type}
                     </button>
