@@ -60,9 +60,7 @@ export async function addStation(name: string) {
       data: { name },
     });
     return Response.json(
-      { message: "Station created successfully",
-        created
-      },
+      { message: "Station created successfully", created },
       { status: 201 }
     );
   } catch (err: any) {
@@ -78,9 +76,7 @@ export async function deleteStation(id: number) {
   try {
     const deleted = await prisma.station.delete({ where: { id } });
     return Response.json(
-      { message: `Station deleted successfully`,
-        id: deleted.id
-      },
+      { message: `Station deleted successfully`, id: deleted.id },
       { status: 200 }
     );
   } catch (err: any) {

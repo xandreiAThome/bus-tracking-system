@@ -10,11 +10,12 @@ const dummyTrips = [
 ];
 
 export default async function TripsOverview() {
-  // const session = await auth();
+  const session = await auth();
 
-  // if (!session?.user) {
-  //   redirect("/");
-  // }
+  console.log(session?.user?.role);
+  if (session?.user?.role === "driver") {
+    redirect("/map/1");
+  }
 
   return (
     <div className="h-full flex items-start justify-center p-5">
