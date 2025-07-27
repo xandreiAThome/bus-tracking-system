@@ -1,7 +1,7 @@
 // bus-tracking-system-main/src/app/api/bus/route.ts
 
-import {getAllBuses} from "@/features/bus/services/crud";
-import {addBus} from "@/features/bus/services/crud";
+import { getAllBuses } from "@/features/bus/services/crud";
+import { addBus } from "@/features/bus/services/crud";
 
 /**
  * GET /api/bus
@@ -9,7 +9,7 @@ import {addBus} from "@/features/bus/services/crud";
  * Returns all buses in the system.
  */
 export async function GET() {
-  return getAllBuses()
+  return getAllBuses();
 }
 
 /**
@@ -20,25 +20,19 @@ export async function GET() {
  * {
  *   plate_number: string,
  *   station_id: number,
- *   capacity: number,
- *   driver_id: number
+ *   capacity: number
  * }
  */
 export async function POST(req: Request) {
-  const { plate_number, station_id, capacity, driver_id } = await req.json()
+  const { plate_number, station_id, capacity } = await req.json();
 
   // basic validation
-  if (
-    !plate_number ||
-    station_id == null ||
-    capacity == null ||
-    driver_id == null
-  ) {
+  if (!plate_number || station_id == null || capacity == null) {
     return Response.json(
       { message: "Invalid input: one or more fields are missing" },
       { status: 400 }
-    )
+    );
   }
 
-  return addBus(plate_number, station_id, capacity, driver_id)
+  return addBus(plate_number, station_id, capacity);
 }

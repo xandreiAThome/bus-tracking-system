@@ -1,5 +1,9 @@
-import { validateIdParam } from '@/lib/utils'
-import { getDriver, deleteDriver, editDriver } from '@/features/driver/services/crud'
+import { validateIdParam } from "@/lib/utils";
+import {
+  getDriver,
+  deleteDriver,
+  editDriver,
+} from "@/features/driver/services/crud";
 
 /**
  * GET /api/driver/[id]
@@ -10,9 +14,9 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = validateIdParam(params.id)
-  if (id instanceof Response) return id
-  return getDriver(id)
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) return id;
+  return getDriver(id);
 }
 
 /**
@@ -24,9 +28,9 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = validateIdParam(params.id)
-  if (id instanceof Response) return id
-  return deleteDriver(id)
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) return id;
+  return deleteDriver(id);
 }
 
 /**
@@ -44,25 +48,25 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = validateIdParam(params.id)
-  if (id instanceof Response) return id
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) return id;
 
   try {
-    const { first_name, last_name, user_id } = await req.json()
+    const { first_name, last_name, user_id } = await req.json();
 
     if (!first_name || !last_name || user_id == null) {
       return Response.json(
-        { message: 'Missing required fields' },
+        { message: "Missing required fields" },
         { status: 400 }
-      )
+      );
     }
 
-    return editDriver(id, first_name, last_name, user_id)
+    return editDriver(id, first_name, last_name, user_id);
   } catch (err) {
-    console.error('PATCH /api/driver/[id] error:', err)
+    console.error("PATCH /api/driver/[id] error:", err);
     return Response.json(
-      { message: 'Invalid request body or internal error' },
+      { message: "Invalid request body or internal error" },
       { status: 500 }
-    )
+    );
   }
 }

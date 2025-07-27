@@ -1,11 +1,7 @@
 // bus-tracking-system-main/src/app/api/bus/[id]/route.ts
 
-import { validateIdParam } from "@/lib/utils"
-import {
-  getBusByID,
-  deleteBus,
-  editBus,
-} from "@/features/bus/services/crud"
+import { validateIdParam } from "@/lib/utils";
+import { getBusByID, deleteBus, editBus } from "@/features/bus/services/crud";
 
 /**
  * GET /api/bus/[id]
@@ -16,9 +12,9 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = validateIdParam(params.id)
-  if (id instanceof Response) return id
-  return getBusByID(id)
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) return id;
+  return getBusByID(id);
 }
 
 /**
@@ -30,9 +26,9 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = validateIdParam(params.id)
-  if (id instanceof Response) return id
-  return deleteBus(id)
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) return id;
+  return deleteBus(id);
 }
 
 /**
@@ -44,38 +40,39 @@ export async function DELETE(
  *   plate_number: string,
  *   station_id: number,
  *   capacity: number,
- *   driver_id: number
  * }
  */
 export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const id = validateIdParam(params.id)
-  if (id instanceof Response) return id
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) return id;
 
   try {
-    const { plate_number, station_id, capacity, driver_id } =
-      await req.json()
-
+    const body = await req.json();
+    const { plate_number, station_id, capacity } = body;
+    // Only allow update if at least one field is present
     if (
-      !plate_number ||
-      station_id == null ||
-      capacity == null ||
-      driver_id == null
+      plate_number === undefined &&
+      station_id === undefined &&
+      capacity === undefined
     ) {
       return Response.json(
-        { message: "Missing required fields" },
+        {
+          message:
+            "At least one field (plate_number, station_id, capacity) must be provided",
+        },
         { status: 400 }
-      )
+      );
     }
 
-    return editBus(id, plate_number, station_id, capacity, driver_id)
+    return editBus(id, { plate_number, station_id, capacity });
   } catch (err) {
-    console.error("PATCH /api/bus/[id] error:", err)
+    console.error("PATCH /api/bus/[id] error:", err);
     return Response.json(
       { message: "Invalid request body or internal error" },
       { status: 500 }
-    )
+    );
   }
 }

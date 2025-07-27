@@ -1,5 +1,5 @@
-import { getAllDrivers } from '@/features/driver/services/crud';
-import { addDriver } from '@/features/driver/services/crud';
+import { getAllDrivers } from "@/features/driver/services/crud";
+import { addDriver } from "@/features/driver/services/crud";
 
 /**
  * GET /api/driver
@@ -7,7 +7,7 @@ import { addDriver } from '@/features/driver/services/crud';
  * Returns all drivers in the system.
  */
 export async function GET() {
-  return getAllDrivers()
+  return getAllDrivers();
 }
 
 /**
@@ -22,14 +22,14 @@ export async function GET() {
  * }
  */
 export async function POST(req: Request) {
-  const { first_name, last_name, user_id } = await req.json()
+  const { first_name, last_name, user_id } = await req.json();
 
   if (!first_name || !last_name || user_id == null) {
     return Response.json(
-      { message: 'Invalid input: one or more fields are missing' },
+      { message: "Invalid input: one or more fields are missing" },
       { status: 400 }
-    )
+    );
   }
 
-  return addDriver(first_name, last_name, user_id)
+  return addDriver(first_name, last_name, user_id);
 }

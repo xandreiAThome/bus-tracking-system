@@ -1,6 +1,6 @@
-import pool from '@/lib/db';
-import { catchDBError } from '@/lib/utils';
-import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import pool from "@/lib/db";
+import { catchDBError } from "@/lib/utils";
+import { RowDataPacket, ResultSetHeader } from "mysql2";
 
 /**
  * Get all buses from the database.
@@ -9,10 +9,10 @@ export async function getAllBuses() {
   try {
     const conn = await pool.getConnection();
     try {
-      const [buses] = await conn.query<RowDataPacket[]>('SELECT * FROM bus');
+      const [buses] = await conn.query<RowDataPacket[]>("SELECT * FROM bus");
 
       if (!buses || buses.length === 0) {
-        return Response.json({ message: 'No buses found' }, { status: 404 });
+        return Response.json({ message: "No buses found" }, { status: 404 });
       }
 
       return Response.json({ buses }, { status: 200 });
@@ -20,8 +20,8 @@ export async function getAllBuses() {
       conn.release();
     }
   } catch (err) {
-    console.error('DB Error:', err);
-    return Response.json({ message: 'Internal Server Error' }, { status: 500 });
+    console.error("DB Error:", err);
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -34,7 +34,7 @@ export async function getBusByID(id: number) {
     const conn = await pool.getConnection();
     try {
       const [buses] = await conn.query<RowDataPacket[]>(
-        'SELECT * FROM bus WHERE id = ?',
+        "SELECT * FROM bus WHERE id = ?",
         [id]
       );
       const bus = buses[0];
@@ -51,7 +51,7 @@ export async function getBusByID(id: number) {
       conn.release();
     }
   } catch (err) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
@@ -61,38 +61,36 @@ export async function getBusByID(id: number) {
  * @param plate_number - Plate number
  * @param station_id - Station ID
  * @param capacity - Seating capacity
- * @param driver_id - Driver ID
  */
 export async function addBus(
   plate_number: string,
   station_id: number,
-  capacity: number,
-  driver_id: number
+  capacity: number
 ) {
   try {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        'INSERT INTO bus (plate_number, station_id, capacity, driver_id) VALUES (?, ?, ?, ?)',
-        [plate_number, station_id, capacity, driver_id]
+        "INSERT INTO bus (plate_number, station_id, capacity) VALUES (?, ?, ?)",
+        [plate_number, station_id, capacity]
       );
 
       if (result.affectedRows === 0) {
         return Response.json(
-          { message: 'Failed to create bus' },
+          { message: "Failed to create bus" },
           { status: 500 }
         );
       }
 
       return Response.json(
-        { message: 'Bus created successfully' },
+        { message: "Bus created successfully" },
         { status: 201 }
       );
     } finally {
       conn.release();
     }
   } catch (err: any) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
@@ -103,21 +101,39 @@ export async function addBus(
  * @param plate_number - Plate number
  * @param station_id - Station ID
  * @param capacity - Seating capacity
- * @param driver_id - Driver ID
  */
 export async function editBus(
   id: number,
-  plate_number: string,
-  station_id: number,
-  capacity: number,
-  driver_id: number
+  fields: { plate_number?: string; station_id?: number; capacity?: number }
 ) {
   try {
     const conn = await pool.getConnection();
     try {
+      // Build dynamic SQL and values
+      const updates = [];
+      const values = [];
+      if (fields.plate_number !== undefined) {
+        updates.push("plate_number = ?");
+        values.push(fields.plate_number);
+      }
+      if (fields.station_id !== undefined) {
+        updates.push("station_id = ?");
+        values.push(fields.station_id);
+      }
+      if (fields.capacity !== undefined) {
+        updates.push("capacity = ?");
+        values.push(fields.capacity);
+      }
+      if (updates.length === 0) {
+        return Response.json(
+          { message: "No fields to update" },
+          { status: 400 }
+        );
+      }
+      values.push(id);
       const [result] = await conn.execute<ResultSetHeader>(
-        `UPDATE bus SET plate_number = ?, station_id = ?, capacity = ?, driver_id = ? WHERE id = ?`,
-        [plate_number, station_id, capacity, driver_id, id]
+        `UPDATE bus SET ${updates.join(", ")} WHERE id = ?`,
+        values
       );
 
       if (result.affectedRows === 0) {
@@ -135,7 +151,7 @@ export async function editBus(
       conn.release();
     }
   } catch (err: any) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
@@ -149,7 +165,7 @@ export async function deleteBus(id: number) {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        'DELETE FROM bus WHERE id = ?',
+        "DELETE FROM bus WHERE id = ?",
         [id]
       );
 
@@ -168,7 +184,7 @@ export async function deleteBus(id: number) {
       conn.release();
     }
   } catch (err: any) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }

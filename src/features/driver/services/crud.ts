@@ -1,6 +1,6 @@
-import pool from '@/lib/db';
-import { catchDBError } from '@/lib/utils';
-import { RowDataPacket, ResultSetHeader } from 'mysql2';
+import pool from "@/lib/db";
+import { catchDBError } from "@/lib/utils";
+import { RowDataPacket, ResultSetHeader } from "mysql2";
 
 /**
  * Get all drivers from the database.
@@ -10,11 +10,11 @@ export async function getAllDrivers() {
     const conn = await pool.getConnection();
     try {
       const [drivers] = await conn.query<RowDataPacket[]>(
-        'SELECT * FROM driver'
+        "SELECT * FROM driver"
       );
 
       if (!drivers || drivers.length === 0) {
-        return Response.json({ message: 'No drivers found' }, { status: 404 });
+        return Response.json({ message: "No drivers found" }, { status: 404 });
       }
 
       return Response.json({ drivers }, { status: 200 });
@@ -22,8 +22,8 @@ export async function getAllDrivers() {
       conn.release();
     }
   } catch (err) {
-    console.error('DB Error:', err);
-    return Response.json({ message: 'Internal Server Error' }, { status: 500 });
+    console.error("DB Error:", err);
+    return Response.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -36,7 +36,7 @@ export async function getDriver(id: number) {
     const conn = await pool.getConnection();
     try {
       const [drivers] = await conn.query<RowDataPacket[]>(
-        'SELECT * FROM driver WHERE driverID = ?',
+        "SELECT * FROM driver WHERE driverID = ?",
         [id]
       );
       const driver = drivers[0];
@@ -53,7 +53,7 @@ export async function getDriver(id: number) {
       conn.release();
     }
   } catch (err) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
@@ -73,26 +73,26 @@ export async function addDriver(
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        'INSERT INTO driver (first_name, last_name, user_id) VALUES (?, ?, ?)',
+        "INSERT INTO driver (first_name, last_name, user_id) VALUES (?, ?, ?)",
         [first_name, last_name, user_id]
       );
 
       if (result.affectedRows === 0) {
         return Response.json(
-          { message: 'Failed to create driver' },
+          { message: "Failed to create driver" },
           { status: 500 }
         );
       }
 
       return Response.json(
-        { message: 'Driver created successfully' },
+        { message: "Driver created successfully" },
         { status: 201 }
       );
     } finally {
       conn.release();
     }
   } catch (err: any) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
@@ -133,7 +133,7 @@ export async function editDriver(
       conn.release();
     }
   } catch (err: any) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
@@ -147,7 +147,7 @@ export async function deleteDriver(id: number) {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        'DELETE FROM driver WHERE driverID = ?',
+        "DELETE FROM driver WHERE driverID = ?",
         [id]
       );
 
@@ -166,7 +166,7 @@ export async function deleteDriver(id: number) {
       conn.release();
     }
   } catch (err: any) {
-    console.error('DB Error:', err);
+    console.error("DB Error:", err);
     return catchDBError(err);
   }
 }
