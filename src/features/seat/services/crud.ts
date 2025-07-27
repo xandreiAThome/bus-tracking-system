@@ -18,7 +18,10 @@ export async function getSeat(id: number) {
   try {
     const seat = await prisma.seat.findUnique({ where: { id } });
     if (!seat) {
-      return Response.json({ message: `Seat with id: ${id} not found` }, { status: 404 });
+      return Response.json(
+        { message: `Seat with id: ${id} not found` },
+        { status: 404 }
+      );
     }
     return Response.json({ seat }, { status: 200 });
   } catch (err) {
@@ -35,7 +38,10 @@ export async function addSeat(seat_number: string, bus_id: number) {
         bus_id,
       },
     });
-    return Response.json({ message: "Seat created successfully", created }, { status: 201 });
+    return Response.json(
+      { message: "Seat created successfully", created },
+      { status: 201 }
+    );
   } catch (err: any) {
     console.error("Prisma Error:", err);
     return catchDBError(err);
@@ -46,9 +52,7 @@ export async function deleteSeat(id: number) {
   try {
     const deleted = await prisma.seat.delete({ where: { id } });
     return Response.json(
-      { message: `Seat deleted successfully`,
-        id:  deleted.id
-      },
+      { message: `Seat deleted successfully`, id: deleted.id },
       { status: 200 }
     );
   } catch (err: any) {
@@ -66,7 +70,10 @@ export async function deleteSeat(id: number) {
 export async function getSeatCountByBus(bus_id: number) {
   try {
     const seatCount = await prisma.seat.count({ where: { bus_id } });
-    return Response.json({ bus_id, seat_count: `${seatCount}` }, { status: 200 });
+    return Response.json(
+      { bus_id, seat_count: `${seatCount}` },
+      { status: 200 }
+    );
   } catch (err: any) {
     console.error("Prisma Error:", err);
     return catchDBError(err);
@@ -88,7 +95,7 @@ export async function getSeatsByBus(bus_id: number, order: "asc" | "desc") {
 
 /**
  * Updates a seat in the database
- * 
+ *
  * @param {number} id - The ID of the seat to update
  * @param {object} updateData - The fields to update
  * @param {string} [updateData.seat_number] - The new seat number (optional)
@@ -100,11 +107,11 @@ export async function updateSeat(
   {
     seat_number,
     bus_id,
-    status
+    status,
   }: {
-    seat_number?: string,
-    bus_id?: number,
-    status?: string
+    seat_number?: string;
+    bus_id?: number;
+    status?: string;
   }
 ) {
   try {
@@ -122,7 +129,7 @@ export async function updateSeat(
 
     const updatedSeat = await prisma.seat.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
 
     return Response.json(
@@ -130,7 +137,7 @@ export async function updateSeat(
       { status: 200 }
     );
   } catch (err: any) {
-    if (err.code === 'P2025') {
+    if (err.code === "P2025") {
       return Response.json(
         { message: `Seat with id ${id} not found` },
         { status: 404 }

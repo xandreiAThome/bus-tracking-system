@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
 
-
 /**
  * Gets all trips
  */
@@ -14,7 +13,7 @@ export async function getAllTrips() {
     return Response.json({ trips }, { status: 200 });
   } catch (err) {
     console.error("DB Error:", err);
-    return catchDBError(err);;
+    return catchDBError(err);
   }
 }
 
@@ -28,13 +27,16 @@ export async function getTrip(id: number) {
     });
 
     if (!trip) {
-      return Response.json({ message: `Trip with id: ${id} not found` }, { status: 404 });
+      return Response.json(
+        { message: `Trip with id: ${id} not found` },
+        { status: 404 }
+      );
     }
 
     return Response.json({ trip }, { status: 200 });
   } catch (err) {
     console.error("DB Error:", err);
-    return catchDBError(err);;
+    return catchDBError(err);
   }
 }
 
@@ -56,11 +58,13 @@ export async function addTrip(
         end_time: end_time ? new Date(end_time) : null,
         bus: { connect: { id: bus_id } },
         driver: { connect: { id: driver_id } },
-        station_trip_dest_station_idTostation: { connect: { id: dest_station } },
+        station_trip_dest_station_idTostation: {
+          connect: { id: dest_station },
+        },
         station_trip_src_station_idTostation: { connect: { id: src_station } },
         // status: ... if you want to set it
       },
-    });    
+    });
 
     return Response.json(
       { message: "Trip created successfully", created },
@@ -68,10 +72,9 @@ export async function addTrip(
     );
   } catch (err: any) {
     console.error("DB Error:", err);
-    return catchDBError(err);;
+    return catchDBError(err);
   }
 }
-
 
 /**
  * Deletes a trip by ID
@@ -96,6 +99,6 @@ export async function deleteTrip(id: number) {
     }
 
     console.error("DB Error:", err);
-    return catchDBError(err);;
+    return catchDBError(err);
   }
 }
