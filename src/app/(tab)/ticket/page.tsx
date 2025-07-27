@@ -72,7 +72,6 @@ const Page = () => {
 
     console.log("Submitting baggage ticket:", payload);
     
-    // Here you would normally call your API:
     fetch('http://localhost:3000/api/ticket', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -91,20 +90,18 @@ const Page = () => {
       cashier_id: 1, 
       ticket_type: "passenger",
       passenger_name: "John Doe1", 
-      // Note: We'll add seat_number later as discussed
     };
 
     console.log("Submitting passenger ticket:", payload);
     
-    // API call similar to baggage
-    // fetch('http://localhost:3000/api/ticket', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(payload)
-    // })
-    // .then(response => response.json())
-    // .then(data => alert("Passenger Ticket successfully created"))
-    // .catch(error => console.error("Error:", error));
+    fetch('http://localhost:3000/api/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => alert("Passenger Ticket successfully created"))
+    .catch(error => console.error("Error:", error));
   };
 
 
