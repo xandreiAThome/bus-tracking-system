@@ -1,3 +1,24 @@
+/**
+ * Edit a station by ID
+ */
+export async function editStation(id: number, data: { name: string }) {
+  try {
+    const updated = await prisma.station.update({
+      where: { id },
+      data: { name: data.name },
+    });
+    return Response.json({ station: updated }, { status: 200 });
+  } catch (err: any) {
+    if (err.code === "P2025") {
+      return Response.json(
+        { message: `Station with id: ${id} not found` },
+        { status: 404 }
+      );
+    }
+    console.error("Prisma Error:", err);
+    return catchDBError(err);
+  }
+}
 import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
 
