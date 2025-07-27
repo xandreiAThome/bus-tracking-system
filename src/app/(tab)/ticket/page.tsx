@@ -56,6 +56,7 @@ const Page = () => {
   }
 
 
+  // Baggage Submit
   const handleBaggageSubmit = () => {
     const payload = {
       price,
@@ -82,6 +83,29 @@ const Page = () => {
     .catch(error => console.error("Error:", error));
   };
 
+  // Passenger Submit
+  const handlePassengerSubmit = () => {
+    const payload = {
+      price,
+      trip_id: 1, 
+      cashier_id: 1, 
+      ticket_type: "passenger",
+      passenger_name: "John Doe1", 
+      // Note: We'll add seat_number later as discussed
+    };
+
+    console.log("Submitting passenger ticket:", payload);
+    
+    // API call similar to baggage
+    // fetch('http://localhost:3000/api/ticket', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(payload)
+    // })
+    // .then(response => response.json())
+    // .then(data => alert("Passenger Ticket successfully created"))
+    // .catch(error => console.error("Error:", error));
+  };
 
 
   return (
@@ -107,21 +131,46 @@ const Page = () => {
 
         <TabsContent value="passenger" className="space-y-4 mt-4">
           <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
-            {/* Trip Selection */}
-            <div className="flex gap-4 justify-center items-center border rounded-xl mb-2">
-              <label className="text-sm font-medium ml-5 mr-10">Trip</label>
-              <Select>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select trip"/>
-                </SelectTrigger>
-                <SelectContent>
-                  {dummyTrips.map((trip) => (
-                    <SelectItem key={trip.id} value={trip.id.toString()}>
-                      {trip.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-3 mb-2">
+              {/* Trip Selection */}
+              <div className="w-full">
+                <label className="text-sm font-medium mb-1 block">Trip</label>
+                <Select 
+                  value={selectedTrip}
+                  onValueChange={setSelectedTrip}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select trip" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dummyTrips.map((trip) => (
+                      <SelectItem key={trip.id} value={trip.id.toString()}>
+                        {trip.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Cashier Selection */}
+              <div className="w-full"> 
+                <label className="text-sm font-medium mb-1 block">Cashier</label>
+                <Select 
+                  value={selectedCashier}
+                  onValueChange={setSelectedCashier}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select cashier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dummyCashiers.map((cashier) => (
+                      <SelectItem key={cashier.id} value={cashier.id.toString()}>
+                        {cashier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Assigned Seat */}
@@ -378,7 +427,7 @@ const Page = () => {
           if (selectedType === "baggage") {
             handleBaggageSubmit();
           } else {
-            // handle passenger submission
+            handlePassengerSubmit();
           }
         }}
       >
