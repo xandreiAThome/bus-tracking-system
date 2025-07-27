@@ -6,7 +6,10 @@ export async function getAllTickets() {
   try {
     const tickets = await prisma.ticket.findMany();
     if (!tickets || tickets.length === 0) {
-      return Response.json({ message: "No available tickets" }, { status: 404 });
+      return Response.json(
+        { message: "No available tickets" },
+        { status: 404 }
+      );
     }
     return Response.json({ tickets }, { status: 200 });
   } catch (err) {
@@ -63,9 +66,7 @@ export async function deleteTicket(id: number) {
     const deleted = await prisma.ticket.delete({ where: { id } });
 
     return Response.json(
-      { message: `Ticket deleted successfully`,
-        id: deleted.id
-      },
+      { message: `Ticket deleted successfully`, id: deleted.id },
       { status: 200 }
     );
   } catch (err) {
@@ -87,9 +88,7 @@ export async function addPassengerTicket(
     });
 
     return Response.json(
-      { message: "Passenger ticket created successfully",
-        created
-      },
+      { message: "Passenger ticket created successfully", created },
       { status: 201 }
     );
   } catch (err) {
@@ -166,9 +165,7 @@ export async function addBaggageTicket(
     });
 
     return Response.json(
-      { message: "Baggage ticket created successfully",
-        created
-      },
+      { message: "Baggage ticket created successfully", created },
       { status: 201 }
     );
   } catch (err) {
@@ -323,10 +320,10 @@ export async function getAllPassengerTickets() {
         { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
-    return new Response(
-      JSON.stringify({ passengerTickets }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ passengerTickets }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
     return catchDBError(err);
   }
@@ -341,10 +338,10 @@ export async function getAllBaggageTickets() {
         { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
-    return new Response(
-      JSON.stringify({ baggageTickets }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ baggageTickets }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err) {
     return catchDBError(err);
   }

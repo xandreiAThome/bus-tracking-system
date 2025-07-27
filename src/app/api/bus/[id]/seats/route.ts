@@ -18,7 +18,7 @@ import { getSeatsByBus } from "@features/seat/services/crud";
  * @returns {Response} 200 - JSON response containing an array of seats sorted according to the specified order.
  * @returns {Response} 400 - If the bus ID is invalid.
  * @returns {Response} 500 - For internal server errors.
- * 
+ *
  * @returns
  * 200 OK — JSON response containing an array of seats sorted according to the specified order.:
  * {

@@ -16,22 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import React, { useState, useEffect } from "react";
 
-interface Station {
-  id: number;
-  name: string;
-}
-
-interface Driver {
-  id: string;
-  name: string;
-}
-
-interface Bus {
-  id: string;
-  name: string;
-}
+import React, { useState } from "react";
 
 export default function CreateTripModal() {
   const [stations, setStations] = useState<Station[]>([]);
@@ -193,7 +179,9 @@ export default function CreateTripModal() {
 
       <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
         <DrawerHeader>
-          <DrawerTitle className="text-center text-[#71AC61]">Create Trip</DrawerTitle>
+          <DrawerTitle className="text-center text-[#71AC61]">
+            Create Trip
+          </DrawerTitle>
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
@@ -203,13 +191,15 @@ export default function CreateTripModal() {
         >
           {/* Driver */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">Driver</Label>
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
+              Driver
+            </Label>
             <Select value={driver} onValueChange={setDriver}>
               <SelectTrigger className="w-full justify-start px-0">
                 <SelectValue placeholder="Choose Driver" />
               </SelectTrigger>
               <SelectContent>
-                {drivers.map((driver) => (
+                {drivers.map(driver => (
                   <SelectItem key={driver.id} value={driver.id}>
                     {driver.name}
                   </SelectItem>
@@ -220,7 +210,9 @@ export default function CreateTripModal() {
 
           {/* Source Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">Source Station</Label>
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
+              Source Station
+            </Label>
             <Select value={source} onValueChange={setSource}>
               <SelectTrigger className="w-full justify-start px-0">
                 <SelectValue placeholder="Choose Source" />
@@ -256,13 +248,15 @@ export default function CreateTripModal() {
 
           {/* Bus */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">Bus</Label>
+            <Label className="block text-sm font-medium text-gray-700 mb-1">
+              Bus
+            </Label>
             <Select value={bus} onValueChange={setBus}>
               <SelectTrigger className="w-full justify-start px-0">
                 <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
-                {buses.map((bus) => (
+                {buses.map(bus => (
                   <SelectItem key={bus.id} value={bus.id}>
                     {bus.name}
                   </SelectItem>
@@ -273,20 +267,17 @@ export default function CreateTripModal() {
 
           {/* Time Picker */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Time
+            </label>
             <div className="flex items-center gap-2">
               <div className="flex items-center border px-2 rounded">
-                <button 
-                  type="button" 
-                  onClick={decrementHour} 
-                  className="text-lg px-2"
-                  aria-label="Decrease hour"
-                >
+                <button type="button" onClick={decrementHour} className="text-lg px-2">
                   -
                 </button>
                 <input
                   value={hour}
-                  onChange={(e) => {
+                  onChange={e => {
                     const val = e.target.value;
                     if (/^\d{0,2}$/.test(val)) setHour(val);
                   }}
@@ -301,12 +292,7 @@ export default function CreateTripModal() {
                   className="w-10 text-center outline-none"
                   aria-label="Hour"
                 />
-                <button 
-                  type="button" 
-                  onClick={incrementHour} 
-                  className="text-lg px-2"
-                  aria-label="Increase hour"
-                >
+                <button type="button" onClick={incrementHour} className="text-lg px-2">
                   +
                 </button>
               </div>
@@ -314,17 +300,12 @@ export default function CreateTripModal() {
               <span className="text-xl">:</span>
 
               <div className="flex items-center border px-2 rounded">
-                <button 
-                  type="button" 
-                  onClick={decrementMinute} 
-                  className="text-lg px-2"
-                  aria-label="Decrease minute"
-                >
+                <button type="button" onClick={decrementMinute} className="text-lg px-2">
                   -
                 </button>
                 <input
                   value={minute}
-                  onChange={(e) => {
+                  onChange={e => {
                     const val = e.target.value;
                     if (/^\d{0,2}$/.test(val)) setMinute(val);
                   }}
@@ -339,12 +320,7 @@ export default function CreateTripModal() {
                   className="w-10 text-center outline-none"
                   aria-label="Minute"
                 />
-                <button 
-                  type="button" 
-                  onClick={incrementMinute} 
-                  className="text-lg px-2"
-                  aria-label="Increase minute"
-                >
+                <button type="button" onClick={incrementMinute} className="text-lg px-2">
                   +
                 </button>
               </div>

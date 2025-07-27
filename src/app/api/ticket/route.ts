@@ -4,7 +4,6 @@ import {
   createBaggageTicket,
 } from "@features/ticket/services/crud";
 
-
 /**
  * GET /api/ticket
  *

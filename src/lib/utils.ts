@@ -67,14 +67,27 @@ export function catchDBError(err: any) {
         );
       case "P2003":
         const message = err.message.toLowerCase();
-        if (message.includes("delete") || message.includes("foreign key constraint failed on delete")) {
+        if (
+          message.includes("delete") ||
+          message.includes("foreign key constraint failed on delete")
+        ) {
           return Response.json(
-            { message: "Delete failed: related records exist and prevent deletion." },
+            {
+              message:
+                "Delete failed: related records exist and prevent deletion.",
+            },
             { status: 409 }
           );
-        } else if (message.includes("insert") || message.includes("update") || message.includes("create")) {
+        } else if (
+          message.includes("insert") ||
+          message.includes("update") ||
+          message.includes("create")
+        ) {
           return Response.json(
-            { message: "Operation failed: referenced foreign key does not exist." },
+            {
+              message:
+                "Operation failed: referenced foreign key does not exist.",
+            },
             { status: 400 }
           );
         } else {
@@ -85,15 +98,15 @@ export function catchDBError(err: any) {
           );
         }
       case "P2025":
-        return Response.json(
-          { message: "Record not found." },
-          { status: 404 }
-        );
+        return Response.json({ message: "Record not found." }, { status: 404 });
       case "P2025":
       case "P2001":
         return Response.json({ message: "Record not found." }, { status: 404 });
       case "P2011":
-        return Response.json({ message: "Missing required field." }, { status: 400 });
+        return Response.json(
+          { message: "Missing required field." },
+          { status: 400 }
+        );
       default:
         return Response.json(
           { message: "Database error occurred." },
@@ -196,4 +209,15 @@ export function validateSortOrder(
     return order;
   }
   return "asc"; // default fallback
+}
+
+/**
+ * Helper function to generate seat numbers
+ */
+export function generateSeatNumbers(capacity: number): string[] {
+  const seats: string[] = [];
+  for (let i = 1; i <= capacity; i++) {
+    seats.push(`S${i.toString().padStart(2, '0')}`); // Formats as S01, S02, etc.
+  }
+  return seats;
 }

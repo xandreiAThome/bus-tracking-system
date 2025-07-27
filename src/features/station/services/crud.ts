@@ -1,3 +1,24 @@
+/**
+ * Edit a station by ID
+ */
+export async function editStation(id: number, data: { name: string }) {
+  try {
+    const updated = await prisma.station.update({
+      where: { id },
+      data: { name: data.name },
+    });
+    return Response.json({ station: updated }, { status: 200 });
+  } catch (err: any) {
+    if (err.code === "P2025") {
+      return Response.json(
+        { message: `Station with id: ${id} not found` },
+        { status: 404 }
+      );
+    }
+    console.error("Prisma Error:", err);
+    return catchDBError(err);
+  }
+}
 import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
 
@@ -60,9 +81,7 @@ export async function addStation(name: string) {
       data: { name },
     });
     return Response.json(
-      { message: "Station created successfully",
-        created
-      },
+      { message: "Station created successfully", created },
       { status: 201 }
     );
   } catch (err: any) {
@@ -78,9 +97,7 @@ export async function deleteStation(id: number) {
   try {
     const deleted = await prisma.station.delete({ where: { id } });
     return Response.json(
-      { message: `Station deleted successfully`,
-        id: deleted.id
-      },
+      { message: `Station deleted successfully`, id: deleted.id },
       { status: 200 }
     );
   } catch (err: any) {
