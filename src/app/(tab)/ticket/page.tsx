@@ -12,14 +12,66 @@ import {
 import { useState } from "react";
 
 const Page = () => {
+  // Common state
   const [price, setPrice] = useState("");
   const [selectedType, setSelectedType] = useState("passenger");
+  
+  // Passenger state
   const [selectedSeat, setSelectedSeat] = useState<number | null>(1);
   const [previousSeat, setPreviousSeat] = useState<number | null>(1);
   const [selectedStanding, setSelectedStanding] = useState<string | null>(null);
 
+  // Baggage state
+  const [selectedTrip, setSelectedTrip] = useState("");
+  const [selectedCashier, setSelectedCashier] = useState("");
+  const [senderNo, setSenderNo] = useState("");
+  const [dispatcherNo, setDispatcherNo] = useState("");
+  const [senderName, setSenderName] = useState("");
+  const [receiverName, setReceiverName] = useState("");
+  const [item, setItem] = useState("");
+
   const seats = Array.from({ length: 36 }, (_, i) => i + 1);
   const unavailableSeats = [5, 12, 18, 25, 31];
+
+
+  // Dummies because not yet made in backend
+  const dummyCashiers = [
+    { id: 1, name: "JJ1" },
+    { id: 2, name: "JJ2" },
+    { id: 3, name: "JJ3" },
+  ];
+
+  const dummyTrips = [
+    { id: 1, name: "Manila -> QC" },
+    { id: 2, name: "Taguig -> Pasig" },
+    { id: 3, name: "Makati -> Ortigas" },
+  ];
+
+  const handleBaggageSubmit = () => {
+    const payload = {
+      price,
+      trip_id: Number(selectedTrip), 
+      cashier_id: Number(selectedCashier),
+      ticket_type: "baggage",
+      sender_no: senderNo,
+      dispatcher_no: dispatcherNo,
+      sender_name: senderName,
+      receiver_name: receiverName,
+      item
+    };
+
+    console.log("Submitting baggage ticket:", payload);
+    
+    // Here you would normally call your API:
+    fetch('http://localhost:3000/api/ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => alert("Baggage Ticket succesfully created"))
+    .catch(error => console.error("Error:", error));
+  };
 
   return (
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
@@ -167,97 +219,109 @@ const Page = () => {
 
         <TabsContent value="baggage" className="space-y-4 mt-4">
           <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
-            {/* Trip Selection */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">Trip</label>
-              <Select defaultValue="allen-catarman">
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="allen-catarman">
-                    ALLEN → CATARMAN
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Departure Date */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                Departure Date
-              </label>
-              <div className="flex gap-1">
-                <Input placeholder="MM" className="flex-1" />
-                <span className="flex items-center">/</span>
-                <Input placeholder="DD" className="flex-1" />
-                <span className="flex items-center">/</span>
-                <Input placeholder="YYYY" className="flex-1" />
-              </div>
-            </div>
-
-            {/* Time */}
-            <div>
-              <label className="text-sm font-medium mb-1 block">Time</label>
-              <div className="flex gap-2 items-center">
-                <div className="flex items-center gap-1">
-                  <Input placeholder="HH" className="w-12 text-center" />
-                  <span>:</span>
-                  <Input placeholder="MM" className="w-12 text-center" />
-                </div>
-                <Select defaultValue="pm">
-                  <SelectTrigger className="w-16">
-                    <SelectValue />
+            <div className="flex gap-3">
+              {/* Trip Selection */}
+              <div className="w-full">
+                <label className="text-sm font-medium mb-1 block">Trip</label>
+                <Select 
+                  value={selectedTrip}
+                  onValueChange={setSelectedTrip}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select trip" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="am">a.m.</SelectItem>
-                    <SelectItem value="pm">p.m.</SelectItem>
+                    {dummyTrips.map((trip) => (
+                      <SelectItem key={trip.id} value={trip.id.toString()}>
+                        {trip.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Cashier Selection */}
+              <div className="w-full"> 
+                <label className="text-sm font-medium mb-1 block">Cashier</label>
+                <Select 
+                  value={selectedCashier}
+                  onValueChange={setSelectedCashier}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select cashier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dummyCashiers.map((cashier) => (
+                      <SelectItem key={cashier.id} value={cashier.id.toString()}>
+                        {cashier.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             {/* Sender and Dispatcher Numbers */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">
                   Sender no.
                 </label>
-                <Input placeholder="" />
+                <Input 
+                  placeholder="Sender number" 
+                  value={senderNo}
+                  onChange={(e) => setSenderNo(e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">
                   Dispatcher no.
                 </label>
-                <Input placeholder="" />
+                <Input 
+                  placeholder="Dispatcher number" 
+                  value={dispatcherNo}
+                  onChange={(e) => setDispatcherNo(e.target.value)}
+                />
               </div>
             </div>
 
             {/* Sender and Receiver */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Sender</label>
-                <Input placeholder="Input" />
+                <Input 
+                  placeholder="Sender name" 
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">
                   Receiver
                 </label>
-                <Input placeholder="Input" />
+                <Input 
+                  placeholder="Receiver name" 
+                  value={receiverName}
+                  onChange={(e) => setReceiverName(e.target.value)}
+                />
               </div>
             </div>
 
             {/* Item */}
-            <div>
+            <div className="mt-4">
               <label className="text-sm font-medium mb-1 block">Item</label>
-              <Input placeholder="Input" />
+              <Input 
+                placeholder="Item description" 
+                value={item}
+                onChange={(e) => setItem(e.target.value)}
+              />
             </div>
 
             {/* Pricing Section */}
             <div className="mt-4">
               <label className="text-sm font-medium mb-2 block">Pricing</label>
               <Input
-                placeholder="Input"
+                placeholder="Amount"
                 value={price}
                 onChange={e => setPrice(e.target.value)}
                 className="mb-3"
@@ -269,6 +333,7 @@ const Page = () => {
                     variant="outline"
                     className="h-10 bg-transparent"
                     onClick={() => setPrice(String(amt))}
+                    type="button"
                   >
                     {amt}
                   </Button>
@@ -280,7 +345,16 @@ const Page = () => {
       </Tabs>
 
       {/* Create Ticket Button */}
-      <Button className="w-[400px] mt-6 bg-green-800 font-bold cursor-pointer hover:bg-green-600 text-white">
+      <Button 
+        className="w-[400px] mt-6 bg-green-800 font-bold cursor-pointer hover:bg-green-600 text-white"
+        onClick={() => {
+          if (selectedType === "baggage") {
+            handleBaggageSubmit();
+          } else {
+            // handle passenger submission
+          }
+        }}
+      >
         Create Ticket
       </Button>
     </div>
