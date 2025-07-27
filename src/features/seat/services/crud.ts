@@ -1,165 +1,148 @@
-import pool from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
-import { RowDataPacket } from "mysql2";
-import { ResultSetHeader } from "mysql2";
 
 export async function getAllSeats() {
   try {
-    const conn = await pool.getConnection();
-    try {
-      const [seats] = await conn.query<RowDataPacket[]>("SELECT * FROM seat");
-      if (!seats) {
-        return Response.json(
-          { message: "No available seats" },
-          { status: 404 }
-        );
-      }
-      return Response.json({ seats }, { status: 200 });
-    } finally {
-      conn.release();
+    const seats = await prisma.seat.findMany();
+    if (!seats.length) {
+      return Response.json({ message: "No available seats" }, { status: 404 });
     }
+    return Response.json({ seats }, { status: 200 });
   } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("Prisma Error:", err);
+    return catchDBError(err);
   }
 }
 
-/**
- * Gets the data of a seat
- *
- * @param {number} id The ID of the `seat`
- */
 export async function getSeat(id: number) {
   try {
-    const conn = await pool.getConnection();
-    try {
-      // Check if seat exists
-      const [seats] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM seat WHERE id = ?",
-        [id]
+    const seat = await prisma.seat.findUnique({ where: { id } });
+    if (!seat) {
+      return Response.json(
+        { message: `Seat with id: ${id} not found` },
+        { status: 404 }
       );
-      const seat = seats[0];
-      if (!seat) {
-        return Response.json({ message: "seat not found" }, { status: 404 });
-      }
-      return Response.json({ seat }, { status: 200 });
-    } finally {
-      conn.release();
     }
+    return Response.json({ seat }, { status: 200 });
   } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error("Prisma Error:", err);
+    return catchDBError(err);
   }
 }
 
-/**
- * Adds a seat to the database
- *
- * @param {string} seat_number The seat_number of the seat
- * @param {number} bus_id The id of the bus associated with the seat
- */
 export async function addSeat(seat_number: string, bus_id: number) {
   try {
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO seat (seat_number, bus_id) VALUES (?, ?)",
-        [seat_number, bus_id]
-      );
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: "Internal Server Error" },
-          { status: 500 }
-        );
-      }
-      return Response.json(
-        { message: "Seat created successfully" },
-        { status: 201 }
-      );
-    } finally {
-      conn.release();
-    }
+    const created = await prisma.seat.create({
+      data: {
+        seat_number,
+        bus_id,
+      },
+    });
+    return Response.json(
+      { message: "Seat created successfully", created },
+      { status: 201 }
+    );
   } catch (err: any) {
-    console.error("DB Error:", err);
+    console.error("Prisma Error:", err);
     return catchDBError(err);
   }
 }
 
-/**
- * Deletes a seat from the database
- *
- * @param {number} id The ID of the `seat` to be deleted
- */
 export async function deleteSeat(id: number) {
   try {
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        "DELETE FROM seat WHERE id = ?",
-        [id]
-      );
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: `Seat with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-      return Response.json(
-        { message: `Seat with id ${id} deleted successfully` },
-        { status: 200 }
-      );
-    } finally {
-      conn.release();
-    }
+    const deleted = await prisma.seat.delete({ where: { id } });
+    return Response.json(
+      { message: `Seat deleted successfully`, id: deleted.id },
+      { status: 200 }
+    );
   } catch (err: any) {
-    console.error("DB Error:", err);
+    if (err.code === "P2025") {
+      return Response.json(
+        { message: `Seat with id: ${id} not found` },
+        { status: 404 }
+      );
+    }
+    console.error("Prisma Error:", err);
     return catchDBError(err);
   }
 }
 
-/**
- * Gets the number of seats that are associated with a bus
- *
- * @param {number} bus_id The ID of the `bus`
- */
 export async function getSeatCountByBus(bus_id: number) {
   try {
-    const conn = await pool.getConnection();
-    try {
-      const [rows] = await conn.query<RowDataPacket[]>(
-        "SELECT COUNT(*) AS seatCount FROM seat WHERE bus_id = ?",
-        [bus_id]
-      );
-      const seatCount = rows[0]?.seatCount ?? 0;
-      return Response.json({ bus_id, seatCount }, { status: 200 });
-    } finally {
-      conn.release();
-    }
+    const seatCount = await prisma.seat.count({ where: { bus_id } });
+    return Response.json(
+      { bus_id, seat_count: `${seatCount}` },
+      { status: 200 }
+    );
   } catch (err: any) {
-    console.error("DB Error:", err);
+    console.error("Prisma Error:", err);
+    return catchDBError(err);
+  }
+}
+
+export async function getSeatsByBus(bus_id: number, order: "asc" | "desc") {
+  try {
+    const seats = await prisma.seat.findMany({
+      where: { bus_id },
+      orderBy: { seat_number: order },
+    });
+    return Response.json({ bus_id, seats }, { status: 200 });
+  } catch (err: any) {
+    console.error("Prisma Error:", err);
     return catchDBError(err);
   }
 }
 
 /**
- * Gets all the seats associated with a bus
+ * Updates a seat in the database
  *
- * @param {number} bus_id The ID of the `bus`
- * @param {string} order The order: ASC or DESC
+ * @param {number} id - The ID of the seat to update
+ * @param {object} updateData - The fields to update
+ * @param {string} [updateData.seat_number] - The new seat number (optional)
+ * @param {number} [updateData.bus_id] - The new bus ID (optional)
+ * @param {string} [updateData.status] - The new status (optional)
  */
-export async function getSeatsByBus(bus_id: number, order: string) {
+export async function updateSeat(
+  id: number,
+  {
+    seat_number,
+    bus_id,
+    status,
+  }: {
+    seat_number?: string;
+    bus_id?: number;
+    status?: string;
+  }
+) {
   try {
-    const conn = await pool.getConnection();
-    try {
-      const [rows] = await conn.query<RowDataPacket[]>(
-        `SELECT * FROM seat WHERE bus_id = ? ORDER BY seat_number ${order}`,
-        [bus_id]
+    const updateData: Record<string, any> = {};
+    if (seat_number !== undefined) updateData.seat_number = seat_number;
+    if (bus_id !== undefined) updateData.bus_id = bus_id;
+    if (status !== undefined) updateData.status = status;
+
+    if (Object.keys(updateData).length === 0) {
+      return Response.json(
+        { message: "No valid fields to update" },
+        { status: 400 }
       );
-      return Response.json({ bus_id, seats: rows }, { status: 200 });
-    } finally {
-      conn.release();
     }
+
+    const updatedSeat = await prisma.seat.update({
+      where: { id },
+      data: updateData,
+    });
+
+    return Response.json(
+      { message: "Seat updated successfully", seat: updatedSeat },
+      { status: 200 }
+    );
   } catch (err: any) {
+    if (err.code === "P2025") {
+      return Response.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
     console.error("DB Error:", err);
     return catchDBError(err);
   }

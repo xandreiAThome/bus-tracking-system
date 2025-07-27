@@ -15,7 +15,7 @@ model baggage_ticket {
   sender_name   String? @db.VarChar(100)
   receiver_name String? @db.VarChar(100)
   item          String  @db.VarChar(255)
-  ticket_id     Int
+  ticket_id     Int     @unique(map: "ticket_id_UNIQUE")
   ticket        ticket  @relation(fields: [ticket_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_baggage_ticket_ticket1")
 
   @@index([ticket_id], map: "fk_baggage_ticket_ticket1_idx")
@@ -63,9 +63,9 @@ model driver {
 
 model passenger_ticket {
   id             Int                        @id @default(autoincrement())
-  passenger_name String                     @db.VarChar(100)
+  passenger_name String?                    @db.VarChar(100)
   discount       passenger_ticket_discount?
-  ticket_id      Int
+  ticket_id      Int                        @unique(map: "ticket_id_UNIQUE")
   ticket         ticket                     @relation(fields: [ticket_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_passenger_ticket_ticket1")
 
   @@index([ticket_id], map: "fk_passenger_ticket_ticket1_idx")
@@ -73,10 +73,11 @@ model passenger_ticket {
 }
 
 model seat {
-  id          Int    @id @default(autoincrement())
-  seat_number String @db.VarChar(5)
+  id          Int         @id @default(autoincrement())
+  seat_number String      @db.VarChar(5)
   bus_id      Int
-  bus         bus    @relation(fields: [bus_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_seat_bus1")
+  status      seat_status @default(available)
+  bus         bus         @relation(fields: [bus_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_seat_bus1")
 
   @@unique([bus_id, seat_number], map: "unique_bus_order")
   @@index([bus_id], map: "fk_seat_bus1_idx")
@@ -84,7 +85,7 @@ model seat {
 
 model station {
   id                                 Int       @id @default(autoincrement())
-  name                               String    @db.VarChar(45)
+  name                               String    @unique @db.VarChar(45)
   bus                                bus[]
   cashier                            cashier[]
   trip_trip_dest_station_idTostation trip[]    @relation("trip_dest_station_idTostation")
@@ -97,8 +98,8 @@ model ticket {
   trip_id          Int
   cashier_id       Int
   ticket_type      ticket_ticket_type
-  baggage_ticket   baggage_ticket[]
-  passenger_ticket passenger_ticket[]
+  baggage_ticket   baggage_ticket?
+  passenger_ticket passenger_ticket?
   cashier          cashier            @relation(fields: [cashier_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_cashier1")
   trip             trip               @relation(fields: [trip_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_trip1")
 
@@ -159,4 +160,9 @@ enum trip_status {
   boarding
   transit
   complete
+}
+
+enum seat_status {
+  available
+  occupied
 }

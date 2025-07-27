@@ -11,6 +11,22 @@ import { getStation, deleteStation } from "@features/station/services/crud";
  *
  * Example request:
  * GET /api/station/1
+ *
+ * @param {Request} req - Incoming request object.
+ * @param {Object} params - URL parameters object containing:
+ *   @param {string} id - The station ID to retrieve.
+ *
+ * @returns {Response} 200 OK - Returns a JSON object with the station data:
+ * {
+ *   "station": {
+ *     "id": number,
+ *     "name": string
+ *   }
+ * }
+ *
+ * @returns {Response} 400 Bad Request - If `id` is invalid.
+ * @returns {Response} 404 Not Found - If no station exists with the given ID.
+ * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function GET(
   req: Request,
@@ -31,6 +47,20 @@ export async function GET(
  *
  * Example request:
  * DELETE /api/station/1
+ *
+ * @param {Request} req - Incoming request object.
+ * @param {Object} params - URL parameters object containing:
+ *   @param {string} id - The station ID to delete.
+ *
+ * @returns {Response} 200 OK - Returns a JSON message confirming deletion:
+ * {
+ *   "message": "Station deleted successfully",
+ *   "id": number
+ * }
+ *
+ * @returns {Response} 400 Bad Request - If `id` is invalid.
+ * @returns {Response} 404 Not Found - If no station exists with the given ID.
+ * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function DELETE(
   req: Request,

@@ -1,15 +1,22 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TripCard from "@/features/trips/components/tripCard";
 import CreateTripModal from "@/features/trips/components/CreateTrip";
-import { getAllTrips } from '@features/trip/services/crud';
+import { auth } from "@/features/auth/services/auth";
+import { redirect } from "next/navigation";
 
 const dummyTrips = [
   { route: "ALLEN → CATARMAN", time: "9:00 PM", driver: "Juan Dela Cruz" },
   { route: "MANILA → DAVAO", time: "9:00 PM", driver: "Rage Del Fiero" },
 ];
 
-export default function TripsOverview() {
-  const trips = getAllTrips();
+export default async function TripsOverview() {
+  const session = await auth();
+
+  console.log(session?.user?.role);
+  if (session?.user?.role === "driver") {
+    redirect("/map/1");
+  }
+
   return (
     <div className="h-full flex items-start justify-center p-5">
       <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5 ">
@@ -28,19 +35,6 @@ export default function TripsOverview() {
                 route={trip.route}
                 time={trip.time}
                 driver={trip.driver}
-              />
-            ))}
-            {trips.map((trip, index) => (
-              <TripCard
-                key={index}
-                id={trip.id}
-                start={trip.start_time}
-                end={trip.end_time}
-                dst={trip.dest_station_id}
-                src={trip.src_station_id}
-                bus={trip.bus_id}
-                driver={trip.driver_id}
-                status={trip.status}
               />
             ))}
           </div>

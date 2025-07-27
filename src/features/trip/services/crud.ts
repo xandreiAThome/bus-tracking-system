@@ -1,6 +1,5 @@
-import { PrismaClient } from "@/generated/prisma";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { catchDBError } from "@/lib/utils";
 
 /**
  * Gets all trips
@@ -14,7 +13,7 @@ export async function getAllTrips() {
     return Response.json({ trips }, { status: 200 });
   } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);
   }
 }
 
@@ -28,13 +27,16 @@ export async function getTrip(id: number) {
     });
 
     if (!trip) {
-      return Response.json({ message: "Trip not found" }, { status: 404 });
+      return Response.json(
+        { message: `Trip with id: ${id} not found` },
+        { status: 404 }
+      );
     }
 
     return Response.json({ trip }, { status: 200 });
   } catch (err) {
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);
   }
 }
 
@@ -50,28 +52,29 @@ export async function addTrip(
   driver_id: number
 ) {
   try {
-    const newTrip = await prisma.trip.create({
+    const created = await prisma.trip.create({
       data: {
         start_time: start_time ? new Date(start_time) : null,
         end_time: end_time ? new Date(end_time) : null,
         bus: { connect: { id: bus_id } },
         driver: { connect: { id: driver_id } },
-        station_trip_dest_station_idTostation: { connect: { id: dest_station } },
+        station_trip_dest_station_idTostation: {
+          connect: { id: dest_station },
+        },
         station_trip_src_station_idTostation: { connect: { id: src_station } },
         // status: ... if you want to set it
       },
-    });    
+    });
 
     return Response.json(
-      { message: "Trip created successfully", trip: newTrip },
+      { message: "Trip created successfully", created },
       { status: 201 }
     );
   } catch (err: any) {
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);
   }
 }
-
 
 /**
  * Deletes a trip by ID
@@ -83,7 +86,7 @@ export async function deleteTrip(id: number) {
     });
 
     return Response.json(
-      { message: `Trip with id ${id} deleted successfully`, trip: deleted },
+      { message: `Trip deleted successfully`, id: deleted.id },
       { status: 200 }
     );
   } catch (err: any) {
@@ -96,6 +99,6 @@ export async function deleteTrip(id: number) {
     }
 
     console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return catchDBError(err);
   }
 }
