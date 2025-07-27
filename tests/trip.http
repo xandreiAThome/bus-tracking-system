@@ -1,0 +1,22 @@
+### GET request
+GET http://localhost:3000/api/trip
+Accept: application/json
+
+### POST request
+POST http://localhost:3000/api/trip
+Content-Type: application/json
+
+{
+  "start_time": "2025-07-16 08:00:00",
+  "end_time": "2025-07-16 12:00:00",
+  "src_station": 6,
+  "dest_station": 6,
+  "bus_id": 1
+}
+
+### GET request
+GET http://localhost:3000/api/trip/1
+
+### DELETE request
+DELETE http://localhost:3000/api/trip/1
+

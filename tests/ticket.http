@@ -1,0 +1,78 @@
+### Get Passenger Ticket by ID (replace :id with actual ticket id)
+GET http://localhost:3000/api/ticket/passenger/1
+Accept: application/json
+
+###
+
+### Get Baggage Ticket by ID (replace :id with actual ticket id)
+GET http://localhost:3000/api/ticket/baggage/2
+Accept: application/json
+
+###
+
+### Example passenger ticket creation (adjust URL and body as needed)
+POST http://localhost:3000/api/ticket
+Content-Type: application/json
+
+{
+  "price": "150.00",
+  "trip_id": 1,
+  "cashier_id": 2,
+  "ticket_type": "passenger",
+  "passenger_name": "John Doe",
+  "discount": "student"
+}
+
+###
+
+### Example baggage ticket creation (adjust URL and body as needed)
+POST http://localhost:3000/api/ticket
+Content-Type: application/json
+
+{
+  "price": "50.00",
+  "trip_id": 1,
+  "cashier_id": 2,
+  "ticket_type": "baggage",
+  "sender_no": 1234567890,
+  "dispatcher_no": 9876543210,
+  "sender_name": "Alice",
+  "receiver_name": "Bob",
+  "item": "Box"
+}
+
+###
+
+### Example passenger ticket creation (adjust URL and body as needed)
+POST http://localhost:3000/api/ticket
+Content-Type: application/json
+
+{
+  "price": "20.00",
+  "trip_id": 1,
+  "cashier_id": 1,
+  "ticket_type": "passenger",
+  "passenger_name": "John Deer"
+}
+
+###
+
+GET http://localhost:3000/api/ticket
+Accept: application/json
+
+###
+
+GET http://localhost:3000/api/ticket/passenger/1
+Accept: application/json
+
+### Example passenger ticket update (adjust URL and body as needed)
+PUT http://localhost:3000/api/ticket/passenger/1
+Content-Type: application/json
+
+{
+  "price": "20.00",
+  "trip_id": 1,
+  "cashier_id": 1,
+  "ticket_type": "passenger",
+  "passenger_name": "John Deer"
+}
