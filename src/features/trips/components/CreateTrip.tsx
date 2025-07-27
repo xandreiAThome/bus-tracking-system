@@ -138,8 +138,8 @@ export default function CreateTripModal() {
       start_time,
       end_time,
       bus_id: parseInt(bus),
-      src_station_id: parseInt(source),  // Fixed to match your API expectation
-      dest_station_id: parseInt(destination),  // Fixed to match your API expectation
+      src_station: parseInt(source),  
+      dest_station: parseInt(destination),  
       driver_id: parseInt(driver)
     };
 

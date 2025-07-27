@@ -23,6 +23,11 @@ interface Trip {
   status: string | null;
 }
 
+interface Station {
+  id: number;
+  name: string;
+}
+
 const Page = () => {
   // Common state
   const [price, setPrice] = useState("");
@@ -49,6 +54,8 @@ const Page = () => {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [stations, setStations] = useState([]);
+
   useEffect(() => {
     const fetchTrips = async () => {
       setIsLoading(true);
@@ -64,7 +71,7 @@ const Page = () => {
         }
         
         const data = await response.json();
-        setTrips(data.trips || data); // Handle both array and object with trips property
+        setTrips(data.trips || data); 
       } catch (err) {
         console.error("Error:", err);
       } finally {
@@ -73,6 +80,15 @@ const Page = () => {
     };
   
     fetchTrips();
+  }, []);
+
+  useEffect(() => {
+    const fetchStations = async () => {
+      const response = await fetch('/api/station');
+      const data = await response.json();
+      setStations(data.stations || data); 
+    };
+    fetchStations();
   }, []);
 
   // Dummy cashiers
@@ -133,9 +149,17 @@ const Page = () => {
     .catch(error => console.error("Error:", error));
   };
 
-  const formatTripDisplay = (trip: Trip) => {
-    const startTime = new Date(trip.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `Trip #${trip.id} (${startTime})`;
+  const formatTripDisplay = (trip: Trip, stations: Station[]) => {
+    const srcStation = stations.find(s => s.id === trip.src_station_id);
+    const destStation = stations.find(s => s.id === trip.dest_station_id);
+  
+    const time = new Date(trip.start_time).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  
+    return `${srcStation?.name} → ${destStation?.name} • ${time}`;
   };
 
   if (isLoading) return <div className="min-h-screen bg-[#71AC61] flex items-center justify-center">Loading trips...</div>;
@@ -177,7 +201,7 @@ const Page = () => {
                   <SelectContent>
                     {trips.map((trip) => (
                       <SelectItem key={trip.id} value={trip.id.toString()}>
-                        {formatTripDisplay(trip)}
+                        {formatTripDisplay(trip, stations)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -341,7 +365,7 @@ const Page = () => {
                   <SelectContent>
                     {trips.map((trip) => (
                       <SelectItem key={trip.id} value={trip.id.toString()}>
-                        {formatTripDisplay(trip)}
+                        {formatTripDisplay(trip, stations)}
                       </SelectItem>
                     ))}
                   </SelectContent>
