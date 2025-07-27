@@ -52,4 +52,3 @@ GET http://localhost:3000/api/seat/2
 
 ### DELETE request
 DELETE http://localhost:3000/api/seat/2
-

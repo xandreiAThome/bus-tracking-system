@@ -85,3 +85,58 @@ export async function getSeatsByBus(bus_id: number, order: "asc" | "desc") {
     return catchDBError(err);
   }
 }
+
+/**
+ * Updates a seat in the database
+ * 
+ * @param {number} id - The ID of the seat to update
+ * @param {object} updateData - The fields to update
+ * @param {string} [updateData.seat_number] - The new seat number (optional)
+ * @param {number} [updateData.bus_id] - The new bus ID (optional)
+ * @param {string} [updateData.status] - The new status (optional)
+ */
+export async function updateSeat(
+  id: number,
+  {
+    seat_number,
+    bus_id,
+    status
+  }: {
+    seat_number?: string,
+    bus_id?: number,
+    status?: string
+  }
+) {
+  try {
+    const updateData: Record<string, any> = {};
+    if (seat_number !== undefined) updateData.seat_number = seat_number;
+    if (bus_id !== undefined) updateData.bus_id = bus_id;
+    if (status !== undefined) updateData.status = status;
+
+    if (Object.keys(updateData).length === 0) {
+      return Response.json(
+        { message: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
+
+    const updatedSeat = await prisma.seat.update({
+      where: { id },
+      data: updateData
+    });
+
+    return Response.json(
+      { message: "Seat updated successfully", seat: updatedSeat },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    if (err.code === 'P2025') {
+      return Response.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    console.error("DB Error:", err);
+    return catchDBError(err);
+  }
+}
