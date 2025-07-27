@@ -1,27 +1,27 @@
-import pool from "@/lib/db";
-import { catchDBError } from "@/lib/utils";
-import { RowDataPacket, ResultSetHeader } from "mysql2";
+import pool from '@/lib/db'
+import { catchDBError } from '@/lib/utils'
+import { RowDataPacket, ResultSetHeader } from 'mysql2'
 
 /**
  * Get all buses from the database.
  */
 export async function getAllBuses() {
   try {
-    const conn = await pool.getConnection();
+    const conn = await pool.getConnection()
     try {
-      const [buses] = await conn.query<RowDataPacket[]>("SELECT * FROM bus");
+      const [buses] = await conn.query<RowDataPacket[]>('SELECT * FROM bus')
 
       if (!buses || buses.length === 0) {
-        return Response.json({ message: "No buses found" }, { status: 404 });
+        return Response.json({ message: 'No buses found' }, { status: 404 })
       }
 
-      return Response.json({ buses }, { status: 200 });
+      return Response.json({ buses }, { status: 200 })
     } finally {
-      conn.release();
+      conn.release()
     }
   } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error('DB Error:', err)
+    return Response.json({ message: 'Internal Server Error' }, { status: 500 })
   }
 }
 
@@ -31,28 +31,25 @@ export async function getAllBuses() {
  */
 export async function getBusByID(id: number) {
   try {
-    const conn = await pool.getConnection();
+    const conn = await pool.getConnection()
     try {
       const [buses] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM bus WHERE id = ?",
+        'SELECT * FROM bus WHERE id = ?',
         [id]
-      );
-      const bus = buses[0];
+      )
+      const bus = buses[0]
 
       if (!bus) {
-        return Response.json(
-          { message: `Bus with id ${id} not found` },
-          { status: 404 }
-        );
+        return Response.json({ message: `Bus with id ${id} not found` }, { status: 404 })
       }
 
-      return Response.json({ bus }, { status: 200 });
+      return Response.json({ bus }, { status: 200 })
     } finally {
-      conn.release();
+      conn.release()
     }
   } catch (err) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    console.error('DB Error:', err)
+    return catchDBError(err)
   }
 }
 
@@ -68,30 +65,24 @@ export async function addBus(
   capacity: number
 ) {
   try {
-    const conn = await pool.getConnection();
+    const conn = await pool.getConnection()
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO bus (plate_number, station_id, capacity) VALUES (?, ?, ?)",
+        'INSERT INTO bus (plate_number, station_id, capacity) VALUES (?, ?, ?)',
         [plate_number, station_id, capacity]
-      );
+      )
 
       if (result.affectedRows === 0) {
-        return Response.json(
-          { message: "Failed to create bus" },
-          { status: 500 }
-        );
+        return Response.json({ message: 'Failed to create bus' }, { status: 500 })
       }
 
-      return Response.json(
-        { message: "Bus created successfully" },
-        { status: 201 }
-      );
+      return Response.json({ message: 'Bus created successfully' }, { status: 201 })
     } finally {
-      conn.release();
+      conn.release()
     }
   } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    console.error('DB Error:', err)
+    return catchDBError(err)
   }
 }
 
@@ -104,55 +95,35 @@ export async function addBus(
  */
 export async function editBus(
   id: number,
-  fields: { plate_number?: string; station_id?: number; capacity?: number }
+  plate_number: string,
+  station_id: number,
+  capacity: number
 ) {
   try {
-    const conn = await pool.getConnection();
+    const conn = await pool.getConnection()
     try {
-      // Build dynamic SQL and values
-      const updates = [];
-      const values = [];
-      if (fields.plate_number !== undefined) {
-        updates.push("plate_number = ?");
-        values.push(fields.plate_number);
-      }
-      if (fields.station_id !== undefined) {
-        updates.push("station_id = ?");
-        values.push(fields.station_id);
-      }
-      if (fields.capacity !== undefined) {
-        updates.push("capacity = ?");
-        values.push(fields.capacity);
-      }
-      if (updates.length === 0) {
-        return Response.json(
-          { message: "No fields to update" },
-          { status: 400 }
-        );
-      }
-      values.push(id);
       const [result] = await conn.execute<ResultSetHeader>(
-        `UPDATE bus SET ${updates.join(", ")} WHERE id = ?`,
-        values
-      );
+        `UPDATE bus SET plate_number = ?, station_id = ?, capacity = ? WHERE id = ?`,
+        [plate_number, station_id, capacity, id]
+      )
 
       if (result.affectedRows === 0) {
         return Response.json(
           { message: `Bus with id ${id} not found or no changes made` },
           { status: 404 }
-        );
+        )
       }
 
       return Response.json(
         { message: `Bus with id ${id} updated successfully` },
         { status: 200 }
-      );
+      )
     } finally {
-      conn.release();
+      conn.release()
     }
   } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    console.error('DB Error:', err)
+    return catchDBError(err)
   }
 }
 
@@ -166,17 +137,11 @@ export async function deleteBus(id: number) {
     try {
       await conn.beginTransaction()
 
-      // Set bus_id to NULL in related seats
-      await conn.execute('UPDATE seat SET bus_id = NULL WHERE bus_id = ?', [id])
-
-      // Set bus_id to NULL in related trips
-      await conn.execute('UPDATE trip SET bus_id = NULL WHERE bus_id = ?', [id])
-
       // Delete related seats
-      //await conn.execute('DELETE FROM seat WHERE bus_id = ?', [id])
+      await conn.execute('DELETE FROM seat WHERE bus_id = ?', [id])
 
       // Delete related trips
-      //await conn.execute('DELETE FROM trip WHERE bus_id = ?', [id])
+      await conn.execute('DELETE FROM trip WHERE bus_id = ?', [id])
 
       // Delete the bus itself
       const [result] = await conn.execute<ResultSetHeader>(
@@ -203,3 +168,4 @@ export async function deleteBus(id: number) {
     return catchDBError(err)
   }
 }
+
