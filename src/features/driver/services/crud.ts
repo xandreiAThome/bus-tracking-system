@@ -106,16 +106,36 @@ export async function addDriver(
  */
 export async function editDriver(
   id: number,
-  first_name: string,
-  last_name: string,
-  user_id: number
+  fields: { first_name?: string; last_name?: string; user_id?: number }
 ) {
   try {
     const conn = await pool.getConnection();
     try {
+      // Build dynamic SQL and values
+      const updates = [];
+      const values = [];
+      if (fields.first_name !== undefined) {
+        updates.push("first_name = ?");
+        values.push(fields.first_name);
+      }
+      if (fields.last_name !== undefined) {
+        updates.push("last_name = ?");
+        values.push(fields.last_name);
+      }
+      if (fields.user_id !== undefined) {
+        updates.push("user_id = ?");
+        values.push(fields.user_id);
+      }
+      if (updates.length === 0) {
+        return Response.json(
+          { message: "No fields to update" },
+          { status: 400 }
+        );
+      }
+      values.push(id);
       const [result] = await conn.execute<ResultSetHeader>(
-        `UPDATE driver SET first_name = ?, last_name = ?, user_id = ? WHERE driverID = ?`,
-        [first_name, last_name, user_id, id]
+        `UPDATE driver SET ${updates.join(", ")} WHERE id = ?`,
+        values
       );
 
       if (result.affectedRows === 0) {
@@ -147,7 +167,7 @@ export async function deleteDriver(id: number) {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute<ResultSetHeader>(
-        "DELETE FROM driver WHERE driverID = ?",
+        "DELETE FROM driver WHERE id = ?",
         [id]
       );
 

@@ -52,16 +52,24 @@ export async function PATCH(
   if (id instanceof Response) return id;
 
   try {
-    const { first_name, last_name, user_id } = await req.json();
-
-    if (!first_name || !last_name || user_id == null) {
+    const body = await req.json();
+    const { first_name, last_name, user_id } = body;
+    // Only allow update if at least one field is present
+    if (
+      first_name === undefined &&
+      last_name === undefined &&
+      user_id === undefined
+    ) {
       return Response.json(
-        { message: "Missing required fields" },
+        {
+          message:
+            "At least one field (first_name, last_name, user_id) must be provided",
+        },
         { status: 400 }
       );
     }
 
-    return editDriver(id, first_name, last_name, user_id);
+    return editDriver(id, { first_name, last_name, user_id });
   } catch (err) {
     console.error("PATCH /api/driver/[id] error:", err);
     return Response.json(
