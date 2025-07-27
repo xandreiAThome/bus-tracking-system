@@ -1,9 +1,9 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import UsersTab from "@/features/admin/components/userTab";
 import BusesTab from "@/features/admin/components/busTab";
-import StationsTab from "@/features/admin/components/stationTab";
 import { auth } from "@/features/auth/services/auth";
 import { redirect } from "next/navigation";
+import StationTab from "@/features/admin/components/stationTab";
 
 export default async function AdminDashboard() {
   const session = await auth();
@@ -46,7 +46,7 @@ export default async function AdminDashboard() {
             <BusesTab />
           </TabsContent>
           <TabsContent value="stations">
-            <StationsTab />
+            <StationTab />
           </TabsContent>
         </Tabs>
       </div>
