@@ -24,15 +24,54 @@ interface EditTripModalProps {
   onSuccess?: () => void;
 }
 
+interface Driver {
+  id: string;
+  name: string;
+}
+
+interface Bus {
+  id: string;
+  name: string;
+}
+
+interface Trip {
+  id: number;
+  driver_id: number;
+  bus_id: number;
+  src_station_id: number;
+  dest_station_id: number;
+  start_time: string;
+}
+
+interface Station {
+  id: number;
+  name: string;
+}
+
 export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps) {
-  const stations = [
-    { id: "1", name: "Manila" },
-    { id: "2", name: "Quezon City" },
-    { id: "3", name: "Makati" },
-    { id: "4", name: "Taguig" },
-    { id: "5", name: "Mandaluyong" },
-    { id: "6", name: "Pasig" },
-  ];
+  
+  const [stations, setStations] = useState([]);
+  const [isLoadingStations, setIsLoadingStations] = useState(true);
+
+  useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const response = await fetch('/api/station');
+        if (!response.ok) {
+          throw new Error('Failed to fetch stations');
+        }
+        const data = await response.json();
+        setStations(data.stations || data); // Handle both formats
+      } catch (error) {
+        console.error("Error fetching stations:", error);
+        alert("Failed to load stations");
+      } finally {
+        setIsLoadingStations(false);
+      }
+    };
+
+    fetchStations();
+  }, []);
 
   const drivers = [
     { id: "1", name: "Mark Reyes" },
@@ -230,8 +269,8 @@ export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps)
                 <SelectValue placeholder="Choose Source" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
-                  <SelectItem key={station.id} value={station.id}>
+                {stations.map((station: Station) => (
+                  <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
                 ))}
@@ -249,8 +288,8 @@ export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps)
                 <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
-                  <SelectItem key={station.id} value={station.id}>
+                {stations.map((station: Station) => (
+                  <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
                 ))}
