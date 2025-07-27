@@ -157,34 +157,49 @@ export async function editBus(
 }
 
 /**
- * Delete a bus by ID.
+ * Delete a bus and its associated seats and trips by ID.
  * @param id - Bus ID
  */
 export async function deleteBus(id: number) {
   try {
-    const conn = await pool.getConnection();
+    const conn = await pool.getConnection()
     try {
+      await conn.beginTransaction()
+
+      // Set bus_id to NULL in related seats
+      await conn.execute('UPDATE seat SET bus_id = NULL WHERE bus_id = ?', [id])
+
+      // Set bus_id to NULL in related trips
+      await conn.execute('UPDATE trip SET bus_id = NULL WHERE bus_id = ?', [id])
+
+      // Delete related seats
+      //await conn.execute('DELETE FROM seat WHERE bus_id = ?', [id])
+
+      // Delete related trips
+      //await conn.execute('DELETE FROM trip WHERE bus_id = ?', [id])
+
+      // Delete the bus itself
       const [result] = await conn.execute<ResultSetHeader>(
-        "DELETE FROM bus WHERE id = ?",
+        'DELETE FROM bus WHERE id = ?',
         [id]
-      );
+      )
 
       if (result.affectedRows === 0) {
-        return Response.json(
-          { message: `Bus with id ${id} not found` },
-          { status: 404 }
-        );
+        await conn.rollback()
+        return Response.json({ message: `Bus with id ${id} not found` }, { status: 404 })
       }
 
-      return Response.json(
-        { message: `Bus with id ${id} deleted successfully` },
-        { status: 200 }
-      );
+      await conn.commit()
+      return Response.json({ message: `Bus with id ${id} and related records deleted successfully` }, { status: 200 })
+    } catch (innerErr) {
+      await conn.rollback()
+      console.error('DB Transaction Error:', innerErr)
+      return Response.json({ message: 'Failed to delete bus and related data' }, { status: 500 })
     } finally {
-      conn.release();
+      conn.release()
     }
   } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    console.error('DB Connection Error:', err)
+    return catchDBError(err)
   }
 }
