@@ -32,7 +32,7 @@ export default function NavBar({ handleSignOut }: NavBarProps) {
         </SheetTrigger>
         <SheetContent className="px-8 py-10 text-lg text-green-800 font-bold">
           <SheetTitle className="text-green-800">Navigation Menu</SheetTitle>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <Link href={"/tripsOverview"} className="flex items-center gap-2">
               <House />
               Home
@@ -45,6 +45,8 @@ export default function NavBar({ handleSignOut }: NavBarProps) {
               <Navigation />
               GPS Broadcast
             </Link>
+
+            <Link href={"/admin"}>Admin Dashboard</Link>
 
             <form action={handleSignOut}>
               <button type="submit" className="w-full text-left">
