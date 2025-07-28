@@ -1,0 +1,43 @@
+# Get a cashier by ID
+GET http://localhost:3000/api/cashier/1
+Accept: application/json
+
+###
+
+# Update a cashier by ID (partial update)
+PATCH http://localhost:3000/api/cashier/1
+Content-Type: application/json
+Accept: application/json
+
+{
+  "first_name": "Updated",
+  "station_id": 2
+}
+
+###
+
+# Delete a cashier by ID
+DELETE http://localhost:3000/api/cashier/2
+Accept: application/json
+
+###
+
+# Get all cashiers
+GET http://localhost:3000/api/cashier
+Accept: application/json
+
+###
+
+# Add a new cashier
+POST http://localhost:3000/api/cashier
+Content-Type: application/json
+Accept: application/json
+
+{
+  "first_name": "Test",
+  "last_name": "Cashier",
+  "user_id": 1,
+  "station_id": 1
+}
+
+###
