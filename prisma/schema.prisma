@@ -98,6 +98,7 @@ model ticket {
   trip_id          Int
   cashier_id       Int
   ticket_type      ticket_ticket_type
+  createdAt        DateTime?          @default(now()) @db.DateTime(0)
   baggage_ticket   baggage_ticket?
   passenger_ticket passenger_ticket?
   cashier          cashier            @relation(fields: [cashier_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_cashier1")

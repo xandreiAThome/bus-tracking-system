@@ -1,6 +1,7 @@
 import { validateIdParam } from "@/lib/utils";
 import { getPassengerTicketByTicketId } from "@features/ticket/services/crud";
 import { putPassengerTicket } from "@features/ticket/services/crud";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/ticket/passenger/[id]
@@ -31,26 +32,29 @@ import { putPassengerTicket } from "@features/ticket/services/crud";
  * @returns {Response} 404 Not Found - If no passenger ticket exists for the given ticket ID.
  * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  }
+export async function GET(_: NextRequest, context: { params: { id: string } }) {
+  try {
+    const id = validateIdParam(context.params.id);
+    if (id instanceof Response) {
+      // If validateIdParam returns a Response, wrap it in NextResponse
+      return NextResponse.json(await id.json(), { status: id.status });
+    }
 
-  const passengerTicket = await getPassengerTicketByTicketId(id);
-  if (!passengerTicket) {
-    return new Response(
-      JSON.stringify({ message: "Passenger ticket not found" }),
-      { status: 404, headers: { "Content-Type": "application/json" } }
+    const tickets = await getPassengerTicketByTicketId(id);
+    if (!tickets) {
+      return NextResponse.json(
+        { message: "No passenger tickets found." },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ tickets });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
     );
   }
-  return new Response(JSON.stringify({ passengerTicket }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 /**

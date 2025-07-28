@@ -1,5 +1,6 @@
 import { validateIdParam } from "@/lib/utils";
-import { deleteTrip, getTrip, editTrip} from "@features/trip/services/crud";
+import { deleteTrip, editTrip, getTrip } from "@/features/trips/services/crud";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/trip/[id]
@@ -27,14 +28,27 @@ import { deleteTrip, getTrip, editTrip} from "@features/trip/services/crud";
  * @returns {Response} 500 - Internal server/database error.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getTrip(id);
+  try {
+    const id = validateIdParam(context.params.id);
+    if (id instanceof Response) {
+      // If validateIdParam returns a Response, wrap it in NextResponse
+      return NextResponse.json(await id.json(), { status: id.status });
+    }
+
+    const trip = await getTrip(id);
+    if (!trip) {
+      return NextResponse.json({ message: " trip not found" }, { status: 404 });
+    }
+    return NextResponse.json({ trip }, { status: 200 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -68,7 +82,6 @@ export async function DELETE(
   }
 }
 
-
 /**
  * PATCH /api/trip/[id]
  *
@@ -77,7 +90,7 @@ export async function DELETE(
  * @param {Request} req Incoming request containing JSON payload:
  * {
  *   start_time?: string,  // Optional ISO date-time string "YYYY-MM-DDTHH:MM:SSZ"
- *   end_time?: string,    // Optional ISO date-time string "YYYY-MM-DDTHH:MM:SSZ" 
+ *   end_time?: string,    // Optional ISO date-time string "YYYY-MM-DDTHH:MM:SSZ"
  *   bus_id?: number,      // Optional ID of the bus
  *   src_station?: number, // Optional ID of source station
  *   dest_station?: number,// Optional ID of destination station
@@ -90,7 +103,7 @@ export async function DELETE(
  * @returns {Response} 500 - Internal server/database error
  */
 export async function PATCH(
-  req: Request, 
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   const id = validateIdParam(params.id);
@@ -98,14 +111,8 @@ export async function PATCH(
     return id;
   }
 
-  const { 
-    start_time, 
-    end_time, 
-    bus_id, 
-    src_station, 
-    dest_station, 
-    driver_id 
-  } = await req.json();
+  const { start_time, end_time, bus_id, src_station, dest_station, driver_id } =
+    await req.json();
 
   // At least one field must be provided
   if (

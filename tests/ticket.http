@@ -17,7 +17,7 @@ Content-Type: application/json
 {
   "price": "150.00",
   "trip_id": 1,
-  "cashier_id": 2,
+  "cashier_id": 6,
   "ticket_type": "passenger",
   "passenger_name": "John Doe",
   "discount": "student"
@@ -32,7 +32,7 @@ Content-Type: application/json
 {
   "price": "50.00",
   "trip_id": 1,
-  "cashier_id": 1,
+  "cashier_id": 6,
   "ticket_type": "baggage",
   "sender_no": 1234567890,
   "dispatcher_no": 9876543210,
