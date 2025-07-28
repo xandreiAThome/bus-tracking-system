@@ -10,20 +10,22 @@ export async function getAllTrips() {
   try {
     const trips = await prisma.trip.findMany({
       include: {
-        bus: {
-          include: {
-            station: true,
-          },
-        },
+        bus: { include: { station: true } },
         driver: true,
         station_trip_dest_station_idTostation: true,
         station_trip_src_station_idTostation: true,
       },
     });
+
     if (trips.length === 0) {
-      return Response.json({ message: "No available trips" }, { status: 404 });
+      return { 
+        success: false, 
+        message: "No available trips", 
+        status: 404 
+      };
     }
-    const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
+
+    const mappedTrips = trips.map(trip => ({
       id: trip.id,
       start_time: trip.start_time,
       end_time: trip.end_time,
@@ -33,13 +35,21 @@ export async function getAllTrips() {
       bus: trip.bus,
       driver: trip.driver,
     }));
-    return Response.json({ mappedTrips }, { status: 200 });
+
+    return { 
+      success: true, 
+      data: mappedTrips, 
+      status: 200 
+    };
   } catch (err) {
     console.error("DB Error:", err);
-    return catchDBError(err);
+    return { 
+      success: false, 
+      error: "Database error", 
+      status: 500 
+    };
   }
 }
-
 /**
  * Gets a specific trip by ID
  */

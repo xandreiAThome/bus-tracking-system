@@ -3,24 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TripCard from "@/features/trips/components/tripCard";
 import CreateTripModal from "@/features/trips/components/CreateTrip";
 import { useEffect, useState } from "react";
-
-interface Trip {
-  id: number;
-  start_time: string;
-  end_time: string;
-  dest_station_id: number;
-  src_station_id: number;
-  bus_id: number;
-  driver_id: number;
-  status: string | null; 
-  driver_name?: string;
-  src_station_name?: string;
-  dest_station_name?: string;
-}
+import { AggregatedTripType } from "../types/types";
 
 export default function OverviewCard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<AggregatedTripType[]>([]);
   const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
@@ -31,7 +18,9 @@ export default function OverviewCard() {
           throw new Error(response.statusText || "Failed to fetch trips");
         }
         const data = await response.json();
-        const tripsData = data.trips || [];
+
+        const tripsData = data.data || data.mappedTrips || [];
+        console.log(tripsData)
         setTrips(tripsData);
       } catch (err) {
         console.error("Error fetching trips:", err);
@@ -68,15 +57,15 @@ export default function OverviewCard() {
             <div className="flex flex-col overflow-y-auto gap-y-4">
               {trips.map((trip) => (
                 <TripCard
-                  key={trip.id} // Use trip.id instead of index for better React key
-                  id={trip.id}
+                  key={trip.id}          // ✅ add key prop
+                  id={trip.id}           // ✅ use actual trip.id
                   start_time={trip.start_time}
                   end_time={trip.end_time}
-                  dest_station_id={trip.dest_station_id}
-                  src_station_id={trip.src_station_id}
-                  bus_id={trip.bus_id}
-                  driver_id={trip.driver_id}
-                  status={trip.status} // Fixed: Removed erroneous `?`
+                  dest_station={trip.dest_station}
+                  src_station={trip.src_station}
+                  bus={trip.bus}
+                  driver={trip.driver}
+                  status={trip.status}
                 />
               ))}
             </div>

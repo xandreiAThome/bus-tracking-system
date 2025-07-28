@@ -95,6 +95,7 @@ export async function DELETE(
  *   src_station?: number, // Optional ID of source station
  *   dest_station?: number,// Optional ID of destination station
  *   driver_id?: number    // Optional ID of the driver
+ *   status?: string    // Optional ID of the driver
  * }
  *
  * @returns {Response} 200 - Trip updated successfully, returns updated trip data
@@ -111,7 +112,7 @@ export async function PATCH(
     return id;
   }
 
-  const { start_time, end_time, bus_id, src_station, dest_station, driver_id } =
+  const { start_time, end_time, bus_id, src_station, dest_station, driver_id, status } =
     await req.json();
 
   // At least one field must be provided
@@ -121,7 +122,8 @@ export async function PATCH(
     bus_id === undefined &&
     src_station === undefined &&
     dest_station === undefined &&
-    driver_id === undefined
+    driver_id === undefined &&
+    status === undefined
   ) {
     return Response.json(
       { message: "Invalid input: At least one field must be provided" },
@@ -136,6 +138,7 @@ export async function PATCH(
     bus_id,
     src_station,
     dest_station,
-    driver_id
+    driver_id,
+    status
   );
 }

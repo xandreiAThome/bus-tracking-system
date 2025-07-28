@@ -1,25 +1,11 @@
 "use client";
-
 import React, { useEffect, useState } from 'react';
 import TripCard from './tripCard';
-
-interface Trip {
-  id: number;
-  start_time: string;
-  end_time: string;
-  dest_station_id: number;
-  src_station_id: number;
-  bus_id: number;
-  driver_id: number;
-  status: string | null;
-  driver_name?: string;
-  src_station_name?: string;
-  dest_station_name?: string;
-}
+import { AggregatedTripType } from '../types/types';
 
 function TripsList() {
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<AggregatedTripType[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,7 +18,10 @@ function TripsList() {
         }
         
         const data = await response.json();
-        const tripsData = Array.isArray(data.trips) ? data.trips : Array.isArray(data) ? data : [];
+        console.log(data)
+        
+        // Handle the API response structure
+        const tripsData = data.data || [];
         setTrips(tripsData);
         
       } catch (err) {
@@ -82,30 +71,12 @@ function TripsList() {
     <div className="flex flex-col overflow-y-auto gap-y-4">
       {trips.map((trip) => (
         <TripCard 
-          id={trip.id}
-          start_time={trip.start_time}
-          end_time={trip.end_time}
-          dest_station_id={trip.dest_station_id}
-          src_station_id={trip.src_station_id}
-          bus_id={trip.bus_id}
-          driver_id={trip.driver_id}
-          status={null}          
+          key={trip.id}
+          {...trip} 
         />
       ))}
     </div>
   );
-}
-
-// Helper function to format time
-function formatTime(timeString: string): string {
-  try {
-    return new Date(timeString).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch {
-    return timeString;
-  }
 }
 
 export default TripsList;
