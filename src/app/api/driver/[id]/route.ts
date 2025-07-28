@@ -10,10 +10,8 @@ import {
  *
  * Fetches a single driver by ID.
  */
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: Request, context: { params: { id: string } }) {
+  const { params } = await Promise.resolve(context);
   const id = validateIdParam(params.id);
   if (id instanceof Response) return id;
   return getDriver(id);
@@ -26,8 +24,9 @@ export async function GET(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = await Promise.resolve(context);
   const id = validateIdParam(params.id);
   if (id instanceof Response) return id;
   return deleteDriver(id);
@@ -44,10 +43,8 @@ export async function DELETE(
  *   user_id: number
  * }
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: Request, context: { params: { id: string } }) {
+  const { params } = await Promise.resolve(context);
   const id = validateIdParam(params.id);
   if (id instanceof Response) return id;
 
