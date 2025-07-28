@@ -93,6 +93,8 @@ export async function getSeatsByBus(bus_id: number, order: "asc" | "desc") {
   }
 }
 
+
+
 /**
  * Updates a seat in the database
  *

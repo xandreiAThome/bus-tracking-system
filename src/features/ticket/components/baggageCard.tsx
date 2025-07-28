@@ -1,21 +1,41 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, SquarePen } from "lucide-react";
+import { useEffect, useState } from 'react';
 
-interface BaggageCardProps {
-  id: number;
+interface TicketCardProps {
   num: number;
-  sender_no: string;
-  dispatcher_no: string;
-  sender_name: string;
-  receiver_name: string;
-  item: string;
-  ticket_id: string;
+  id: number;
   price: number;
-  timeDate: string;
+  trip: number;
+  cashier: number;
+  type: string;
 }
 
-export default function BaggageCard(props: BaggageCardProps) {
+export default function BaggageCard(props: TicketCardProps) {
+  const [baggage, setBaggage] = useState();
+  const [trip, setTrip] = useState();
+
+  // Fetch Baggage
+  useEffect(() => {
+    const fetchBaggage = async () => {
+      const res = await fetch(`/api/ticket/baggage/${props.id}`);
+      const data = await res.json();
+      setBaggage(data);
+    };
+    fetchBaggage();
+  }, []);
+
+  // Fetch Trip
+  useEffect(() => {
+    const fetchTrip = async () => {
+      const res = await fetch(`/api/trip/${props.trip}`);
+      const data = await res.json();
+      setTrip(data);
+    };
+    fetchTrip();
+  }, []);
+
   return (
     <div className="flex flex-col justify-center">
       <Card className="flex flex-col gap-0 p-5">
@@ -29,7 +49,7 @@ export default function BaggageCard(props: BaggageCardProps) {
             <button>
               <ShoppingBag />
             </button>
-            <span className="text-[#525252] font-medium text-lg">{props.item}</span>
+            <span className="text-[#525252] font-medium text-lg">{baggage.item}</span>
           </div>
           <div className="flex flex-row items-center gap-2">
             {/*Right Side*/}
@@ -39,9 +59,9 @@ export default function BaggageCard(props: BaggageCardProps) {
             </Button>
           </div>
         </div>
-        <div className="text-[#525252] -mt-2">{props.sender_name}</div>
+        <div className="text-[#525252] -mt-2">{baggage.sender_name}</div>
         <div className="text-[#456A3B] text-sm mt-2">
-          #{props.ticket_id} - {props.timeDate}
+          #{props.id} - {trip.start_time}
         </div>
       </Card>
     </div>

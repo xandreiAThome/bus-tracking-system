@@ -7,9 +7,8 @@ import {
 } from "@/components/ui/drawer";
 import PassengerCard from "@features/ticket/components/passengerCard";
 import BaggageCard from "@features/ticket/components/baggageCard";
-import { Dispatch, SetStateAction } from "react";
-import { getAllTicketsFromTrip } from "@features/ticket/services/refactorCrud";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const dummyTickets = [
   {
@@ -111,7 +110,20 @@ export default function IssuedTicketsModal({
   setOpenDrawer,
   tripID,
 }: IssuedTicketsModalProps) {
-  const tickets = getAllTicketsFromTrip(tripID);
+  const [tickets, setTickets] = useState<Ticket[]>();
+
+  // Fetch Tickets
+  useEffect(() => {
+    const fetchTickets = async () => {
+      const res = await fetch(`/api/ticket/byTrip/${tripID}`);
+      const data = await res.json();
+      setTickets(data.tickets || data);
+    };
+    fetchTickets();
+  }, []);
+
+  const passenger = tickets.filter(t => t.ticket_type === "passenger");
+  const baggage = tickets.filter(t => t.ticket_type !== "passenger");
 
   return (
     <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
@@ -142,14 +154,16 @@ export default function IssuedTicketsModal({
               className="max-h-[60vh] min-h-[60vh] overflow-auto "
             >
               <div className="flex flex-col gap-y-4">
-                {dummyTickets.map((ticket, index) => (
+                {passenger.map((pass, index) => (
                   <PassengerCard
                     key={index}
-                    seat={ticket.seat}
-                    price={ticket.price}
-                    ticketNo={ticket.ticketNo}
-                    dateTime={ticket.dateTime}
-                  />
+                    id={pass.id}
+                    price={pass.price}
+                    trip={pass.trip_id}
+                    cashier={pass.cashier_id}
+                    type={pass.ticket_type}
+                    arr={index}
+                  ></PassengerCard>
                 ))}
               </div>
               <div className="mt-4 sticky bottom-0 bg-white py">
@@ -165,19 +179,15 @@ export default function IssuedTicketsModal({
               className="max-h-[60vh] min-h-[60vh] overflow-auto "
             >
               <div className="flex flex-col gap-y-4">
-                {dummyBaggage.map((ticket, index) => (
+                {baggage.map((bag, index) => (
                   <BaggageCard
-                    id={ticket.id}
                     key={index}
                     num={index + 1}
-                    sender_no={ticket.sender_no}
-                    dispatcher_no={ticket.dispatcher_no}
-                    sender_name={ticket.sender_name}
-                    receiver_name={ticket.receiver_name}
-                    item={ticket.item}
-                    ticket_id={ticket.ticket_id}
-                    price={ticket.price}
-                    timeDate={ticket.timeDate}
+                    id={bag.id}
+                    price={bag.price}
+                    trip={bag.trip_id}
+                    cashier={bag.cashier}
+                    type={bag.ticket_type}
                   ></BaggageCard>
                 ))}
               </div>
