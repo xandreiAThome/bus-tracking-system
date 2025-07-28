@@ -4,28 +4,38 @@ import { validateDecimal6_2 } from "@/lib/utils";
 
 export async function getAllTickets() {
   try {
-    const tickets = await prisma.ticket.findMany();
-    if (!tickets || tickets.length === 0) {
-      return Response.json(
-        { message: "No available tickets" },
-        { status: 404 }
-      );
-    }
-    return Response.json({ tickets }, { status: 200 });
-  } catch (err) {
-    return catchDBError(err);
+    const tickets = await prisma.ticket.findMany({
+      include: {
+        baggage_ticket: true,
+        passenger_ticket: true,
+        cashier: true,
+      },
+    });
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching baggage tickets:", error);
+    throw new Error("Failed to retrieve baggage tickets.");
   }
 }
 
 export async function getTicket(id: number) {
   try {
-    const ticket = await prisma.ticket.findUnique({ where: { id } });
-    if (!ticket) {
-      return Response.json({ message: "Ticket not found" }, { status: 404 });
-    }
-    return Response.json({ ticket }, { status: 200 });
-  } catch (err) {
-    return catchDBError(err);
+    const tickets = await prisma.ticket.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        baggage_ticket: true,
+        passenger_ticket: true,
+        cashier: true,
+      },
+    });
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching baggage tickets:", error);
+    throw new Error("Failed to retrieve baggage tickets.");
   }
 }
 
@@ -98,15 +108,23 @@ export async function addPassengerTicket(
 
 export async function getPassengerTicketByTicketId(id: number) {
   try {
-    const ticket = await prisma.passenger_ticket.findUnique({
-      where: { id },
+    const tickets = await prisma.ticket.findUnique({
+      where: {
+        id: id,
+        NOT: {
+          passenger_ticket: null, // Ensures only tickets with baggage_ticket are included
+        },
+      },
+      include: {
+        passenger_ticket: true,
+        cashier: true,
+      },
     });
 
-    return ticket
-      ? ticket
-      : Response.json({ message: "Not found" }, { status: 404 });
-  } catch (err) {
-    return catchDBError(err);
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching passenger tickets:", error);
+    throw new Error("Failed to retrieve passenger tickets.");
   }
 }
 
@@ -175,15 +193,23 @@ export async function addBaggageTicket(
 
 export async function getBaggageTicketByTicketId(id: number) {
   try {
-    const ticket = await prisma.baggage_ticket.findUnique({
-      where: { id },
+    const tickets = await prisma.ticket.findUnique({
+      where: {
+        id: id,
+        NOT: {
+          baggage_ticket: null, // Ensures only tickets with baggage_ticket are included
+        },
+      },
+      include: {
+        baggage_ticket: true,
+        cashier: true,
+      },
     });
 
-    return ticket
-      ? ticket
-      : Response.json({ message: "Not found" }, { status: 404 });
-  } catch (err) {
-    return catchDBError(err);
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching baggage tickets:", error);
+    throw new Error("Failed to retrieve baggage tickets.");
   }
 }
 
@@ -313,36 +339,93 @@ export async function putBaggageTicket(
 
 export async function getAllPassengerTickets() {
   try {
-    const passengerTickets = await prisma.passenger_ticket.findMany();
-    if (!passengerTickets || passengerTickets.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No passenger tickets found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    return new Response(JSON.stringify({ passengerTickets }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        NOT: {
+          passenger_ticket: null, // Ensures only tickets with baggage_ticket are included
+        },
+      },
+      include: {
+        passenger_ticket: true,
+        cashier: true,
+      },
     });
-  } catch (err) {
-    return catchDBError(err);
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching passenger tickets:", error);
+    throw new Error("Failed to retrieve passenger tickets.");
   }
 }
 
 export async function getAllBaggageTickets() {
   try {
-    const baggageTickets = await prisma.baggage_ticket.findMany();
-    if (!baggageTickets || baggageTickets.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No baggage tickets found" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
-    }
-    return new Response(JSON.stringify({ baggageTickets }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        NOT: {
+          baggage_ticket: null, // Ensures only tickets with baggage_ticket are included
+        },
+      },
+      include: {
+        baggage_ticket: true,
+        cashier: true,
+      },
     });
-  } catch (err) {
-    return catchDBError(err);
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching baggage tickets:", error);
+    throw new Error("Failed to retrieve baggage tickets.");
   }
 }
+
+/**
+ * Get passenger tickets by trip ID
+ */
+
+export const getPassengerTicketsByTripId = async (tripId: number) => {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        trip_id: tripId,
+        NOT: {
+          passenger_ticket: null, // Ensures only tickets with baggage_ticket are included
+        },
+      },
+      include: {
+        passenger_ticket: true,
+        cashier: true,
+      },
+    });
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching passenger tickets:", error);
+    throw new Error("Failed to retrieve passenger tickets.");
+  }
+};
+
+/**
+ * Get baggage tickets by trip ID
+ */
+export const getBaggageTicketsByTripId = async (tripId: number) => {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        trip_id: tripId,
+        NOT: {
+          baggage_ticket: null, // Ensures only tickets with baggage_ticket are included
+        },
+      },
+      include: {
+        baggage_ticket: true,
+        cashier: true,
+      },
+    });
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching baggage tickets:", error);
+    throw new Error("Failed to retrieve baggage tickets.");
+  }
+};

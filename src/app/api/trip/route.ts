@@ -1,5 +1,6 @@
-import { getAllTrips } from "@features/trip/services/crud";
-import { addTrip } from "@features/trip/services/crud";
+import { getAllTrips } from "@/features/trips/services/crud";
+import { addTrip } from "@/features/trips/services/crud";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/trip
@@ -26,7 +27,15 @@ import { addTrip } from "@features/trip/services/crud";
  * @returns {Response} 500 - Internal server/database error.
  */
 export async function GET() {
-  return getAllTrips();
+  try {
+    const trips = await getAllTrips();
+    return NextResponse.json(trips);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("Error fetching trips:", err);
+    const message = err.message || "Internal Server Error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 /**

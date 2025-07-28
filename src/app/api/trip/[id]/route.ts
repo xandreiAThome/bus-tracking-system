@@ -1,5 +1,6 @@
 import { validateIdParam } from "@/lib/utils";
-import { deleteTrip, getTrip } from "@features/trip/services/crud";
+import { deleteTrip, getTrip } from "@/features/trips/services/crud";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/trip/[id]
@@ -27,14 +28,27 @@ import { deleteTrip, getTrip } from "@features/trip/services/crud";
  * @returns {Response} 500 - Internal server/database error.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getTrip(id);
+  try {
+    const id = validateIdParam(context.params.id);
+    if (id instanceof Response) {
+      // If validateIdParam returns a Response, wrap it in NextResponse
+      return NextResponse.json(await id.json(), { status: id.status });
+    }
+
+    const trip = await getTrip(id);
+    if (!trip) {
+      return NextResponse.json({ message: " trip not found" }, { status: 404 });
+    }
+    return NextResponse.json({ trip }, { status: 200 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 

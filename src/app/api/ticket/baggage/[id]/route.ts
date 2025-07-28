@@ -1,6 +1,7 @@
 import { validateIdParam } from "@/lib/utils";
 import { getBaggageTicketByTicketId } from "@features/ticket/services/crud";
 import { putBaggageTicket } from "@features/ticket/services/crud";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/ticket/baggage/[id]
@@ -35,25 +36,31 @@ import { putBaggageTicket } from "@features/ticket/services/crud";
  * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  }
+  try {
+    const id = validateIdParam(context.params.id);
+    if (id instanceof Response) {
+      // If validateIdParam returns a Response, wrap it in NextResponse
+      return NextResponse.json(await id.json(), { status: id.status });
+    }
 
-  const baggageTicket = await getBaggageTicketByTicketId(id);
-  if (!baggageTicket) {
-    return new Response(
-      JSON.stringify({ message: "Baggage ticket not found" }),
-      { status: 404, headers: { "Content-Type": "application/json" } }
+    const baggageTicket = await getBaggageTicketByTicketId(id);
+    if (!baggageTicket) {
+      return NextResponse.json(
+        { message: "Baggage ticket not found" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ baggageTicket }, { status: 200 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
     );
   }
-  return new Response(JSON.stringify({ baggageTicket }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
 }
 
 /**
