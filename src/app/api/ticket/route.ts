@@ -3,6 +3,7 @@ import {
   createPassengerTicket,
   createBaggageTicket,
 } from "@features/ticket/services/crud";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/ticket
@@ -17,7 +18,22 @@ import {
  * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function GET() {
-  return getAllTickets();
+  try {
+    const tickets = await getAllTickets();
+    if (!tickets || tickets.length === 0) {
+      return NextResponse.json(
+        { message: "No passenger tickets found." },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(tickets, { status: 200 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
+    );
+  }
 }
 
 /**

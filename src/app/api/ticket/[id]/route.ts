@@ -1,6 +1,7 @@
 import { editTrip } from "@/features/trip/services/crud";
 import { validateIdParam } from "@/lib/utils";
 import { deleteTicket, getTicket } from "@features/ticket/services/crud";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/ticket/[id]
@@ -34,14 +35,30 @@ import { deleteTicket, getTicket } from "@features/ticket/services/crud";
  * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  request: Request,
+  context: { params: { id: string } }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getTicket(id);
+  try {
+    const id = validateIdParam(context.params.id);
+    if (id instanceof Response) {
+      // If validateIdParam returns a Response, wrap it in NextResponse
+      return NextResponse.json(await id.json(), { status: id.status });
+    }
+
+    const ticket = await getTicket(id);
+    if (!ticket) {
+      return NextResponse.json(
+        { message: " ticket not found" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ ticket }, { status: 200 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 

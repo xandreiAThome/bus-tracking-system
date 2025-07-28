@@ -48,6 +48,8 @@ export default function NavBar({ handleSignOut }: NavBarProps) {
 
             <Link href={"/admin"}>Admin Dashboard</Link>
 
+            <Link href={"/reports"}>Tellers Report</Link>
+
             <form action={handleSignOut}>
               <button type="submit" className="w-full text-left">
                 Log Out
