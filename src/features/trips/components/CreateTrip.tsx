@@ -329,7 +329,7 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
 
           {/* Time Picker */}
           <div>
-            <Label>Time</Label>
+            <Label>End Time</Label>
             <div className="flex items-center gap-2">
               {/* Hour */}
               <div className="flex items-center border rounded">

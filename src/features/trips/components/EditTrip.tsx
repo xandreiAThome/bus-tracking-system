@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -26,12 +25,13 @@ interface EditTripModalProps {
 }
 
 interface Driver {
-  id: string;
-  name: string;
+  id: number;
+  first_name: string;
+  last_name: string;
 }
 
 interface Bus {
-  id: string;
+  id: number;
   plate_number: string;
 }
 
@@ -42,107 +42,202 @@ interface Station {
 
 export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripModalProps) {
   const [stations, setStations] = useState<Station[]>([]);
-  const [isLoadingStations, setIsLoadingStations] = useState(true);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [buses, setBuses] = useState<Bus[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
-  const drivers = [
-    { id: "1", name: "Mark Reyes" },
-    { id: "2", name: "Anthony Cruz" },
-    { id: "3", name: "Jared Thompson" },
-    { id: "4", name: "Samuel Diaz" },
-  ];
+  const [formData, setFormData] = useState({
+    driver_id: "",
+    bus_id: "",
+    src_station_id: "",
+    dest_station_id: ""
+  });
 
-  const [driver, setDriver] = useState("");
-  const [source, setSource] = useState("");
-  const [destination, setDestination] = useState("");
-  const [bus, setBus] = useState("");
-  const [hour, setHour] = useState("00");
-  const [minute, setMinute] = useState("00");
-  const [meridiem, setMeridiem] = useState("a.m.");
-  const [isLoading, setIsLoading] = useState(true);
-  const [buses, setBuses] = useState<Bus[]>([]);
+  const [startTime, setStartTime] = useState({
+    hour: "12",
+    minute: "00",
+    meridiem: "a.m." as "a.m." | "p.m."
+  });
+
+  const [endTime, setEndTime] = useState({
+    hour: "1",
+    minute: "00",
+    meridiem: "a.m." as "a.m." | "p.m."
+  });
+
+  // Time handling functions
+  const handleTimeChange = (timeType: 'start' | 'end', field: 'hour' | 'minute', operation: 'increment' | 'decrement') => {
+    const setTime = timeType === 'start' ? setStartTime : setEndTime;
+    const time = timeType === 'start' ? startTime : endTime;
+
+    setTime(prev => {
+      const current = parseInt(prev[field]);
+      let newValue: number;
+
+      if (field === 'hour') {
+        newValue = operation === 'increment' 
+          ? (current % 12) + 1 
+          : (current - 2 + 12) % 12 + 1;
+      } else {
+        newValue = operation === 'increment' 
+          ? (current + 1) % 60 
+          : (current - 1 + 60) % 60;
+      }
+
+      return {
+        ...prev,
+        [field]: newValue.toString().padStart(2, "0")
+      };
+    });
+  };
+
+  const handleInputChange = (timeType: 'start' | 'end', field: 'hour' | 'minute', value: string) => {
+    const setTime = timeType === 'start' ? setStartTime : setEndTime;
+    
+    if (/^\d{0,2}$/.test(value)) {
+      setTime(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const handleInputBlur = (timeType: 'start' | 'end', field: 'hour' | 'minute') => {
+    const setTime = timeType === 'start' ? setStartTime : setEndTime;
+    const time = timeType === 'start' ? startTime : endTime;
+
+    setTime(prev => {
+      const num = parseInt(prev[field]);
+      const min = field === 'hour' ? 1 : 0;
+      const max = field === 'hour' ? 12 : 59;
+      
+      const clamped = Math.max(min, Math.min(max, isNaN(num) ? min : num));
+      return {
+        ...prev,
+        [field]: clamped.toString().padStart(2, "0")
+      };
+    });
+  };
+
+  const handleMeridiemChange = (timeType: 'start' | 'end', value: "a.m." | "p.m.") => {
+    const setTime = timeType === 'start' ? setStartTime : setEndTime;
+    setTime(prev => ({ ...prev, meridiem: value }));
+  };
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchStations = async () => {
+    const fetchData = async () => {
       try {
-        const responseStations = await fetch('/api/station');
-        if (!responseStations.ok) throw new Error('Failed to fetch stations');
-        const dataStations = await responseStations.json();
-        setStations(dataStations.stations);
+        // Fetch trip data
+        const tripRes = await fetch(`/api/trip/${tripId}`);
+        if (!tripRes.ok) throw new Error('Failed to fetch trip data');
+        const tripData = await tripRes.json();
 
-        const response = await fetch("/api/bus");
-        if (!response.ok) throw new Error('Failed to fetch busses');
-        const data = await response.json();
-        setBuses(data.buses || data);
+        // Set form data
+        setFormData({
+          driver_id: tripData.driver?.id?.toString() || "",
+          bus_id: tripData.bus?.id?.toString() || "",
+          src_station_id: tripData.src_station?.id?.toString() || "",
+          dest_station_id: tripData.dest_station?.id?.toString() || ""
+        });
+
+        // Parse and set times
+        if (tripData.start_time) {
+          const startDate = new Date(tripData.start_time);
+          let startHour = startDate.getHours();
+          const startMeridiem = startHour >= 12 ? "p.m." : "a.m.";
+          startHour = startHour % 12 || 12; // Convert to 12-hour format
+
+          setStartTime({
+            hour: startHour.toString().padStart(2, "0"),
+            minute: startDate.getMinutes().toString().padStart(2, "0"),
+            meridiem: startMeridiem
+          });
+        }
+
+        if (tripData.end_time) {
+          const endDate = new Date(tripData.end_time);
+          let endHour = endDate.getHours();
+          const endMeridiem = endHour >= 12 ? "p.m." : "a.m.";
+          endHour = endHour % 12 || 12; // Convert to 12-hour format
+
+          setEndTime({
+            hour: endHour.toString().padStart(2, "0"),
+            minute: endDate.getMinutes().toString().padStart(2, "0"),
+            meridiem: endMeridiem
+          });
+        }
+
+        // Fetch stations
+        const stationsRes = await fetch('/api/station');
+        if (!stationsRes.ok) throw new Error('Failed to fetch stations');
+        const stationsData = await stationsRes.json();
+        setStations(stationsData.data || stationsData.stations || []);
+
+        // Fetch drivers
+        const driversRes = await fetch('/api/driver');
+        if (!driversRes.ok) throw new Error('Failed to fetch drivers');
+        const driversData = await driversRes.json();
+        setDrivers(driversData.data || driversData.drivers || []);
+
+        // Fetch buses
+        const busesRes = await fetch('/api/bus');
+        if (!busesRes.ok) throw new Error('Failed to fetch buses');
+        const busesData = await busesRes.json();
+        setBuses(busesData.data || busesData.buses || []);
 
       } catch (error) {
-        console.error("Error fetching stations:", error);
-        alert("Failed to load stations");
+        console.error("Error fetching data:", error);
+        alert("Failed to load required data");
       } finally {
-        setIsLoadingStations(false);
+        setIsLoading(false);
       }
     };
 
-    fetchStations();
-  }, [isOpen]);
-
-
-  const incrementHour = () => {
-    const newHour = (parseInt(hour) + 1) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
-  };
-
-  const decrementHour = () => {
-    const newHour = (parseInt(hour) - 1 + 12) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
-  };
-
-  const incrementMinute = () => {
-    const newMinute = (parseInt(minute) + 1) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
-
-  const decrementMinute = () => {
-    const newMinute = (parseInt(minute) - 1 + 60) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
+    fetchData();
+  }, [isOpen, tripId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!driver || !bus || !source || !destination) {
-      alert("Please fill in all fields.");
+    if (!formData.driver_id && !formData.bus_id && !formData.src_station_id && !formData.dest_station_id) {
+      alert("Please fill in at least one field");
       return;
     }
 
-    const today = new Date();
-    const [year, month, day] = [
-      today.getFullYear(),
-      (today.getMonth() + 1).toString().padStart(2, "0"),
-      today.getDate().toString().padStart(2, "0"),
-    ];
+    // Convert times to 24-hour format
+    const convertTo24Hour = (time: typeof startTime) => {
+      let hours = parseInt(time.hour);
+      if (time.meridiem === "p.m." && hours < 12) hours += 12;
+      if (time.meridiem === "a.m." && hours === 12) hours = 0;
+      return { hours, minutes: parseInt(time.minute) };
+    };
 
-    let h = parseInt(hour);
-    if (meridiem === "p.m." && h < 12) h += 12;
-    if (meridiem === "a.m." && h === 12) h = 0;
+    const start = convertTo24Hour(startTime);
+    const end = convertTo24Hour(endTime);
 
-    const date = new Date(
-      `${year}-${month}-${day}T${h.toString().padStart(2, "0")}:${minute.padStart(2, "0")}:00Z`
+    // Create date objects
+    const now = new Date();
+    const startDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      start.hours,
+      start.minutes
     );
 
-    const start_time = date.toISOString();
-    const end_time = new Date(date.getTime() + 60 * 60 * 1000).toISOString();
+    const endDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      end.hours,
+      end.minutes
+    );
 
-    const payload = {
-      start_time,
-      end_time,
-      bus_id: parseInt(bus),
-      src_station_id: parseInt(source),
-      dest_station_id: parseInt(destination),
-      driver_id: parseInt(driver)
-    };
+    // Validate time range
+    if (endDate <= startDate) {
+      alert("End time must be after start time");
+      return;
+    }
 
     try {
       const res = await fetch(`/api/trip/${tripId}`, {
@@ -150,7 +245,15 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...formData,
+          driver_id: formData.driver_id ? parseInt(formData.driver_id) : undefined,
+          bus_id: formData.bus_id ? parseInt(formData.bus_id) : undefined,
+          src_station_id: formData.src_station_id ? parseInt(formData.src_station_id) : undefined,
+          dest_station_id: formData.dest_station_id ? parseInt(formData.dest_station_id) : undefined,
+          start_time: startDate.toISOString(),
+          end_time: endDate.toISOString()
+        }),
       });
 
       if (!res.ok) {
@@ -164,10 +267,9 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
       if (onClose) onClose();
     } catch (err) {
       console.error("Error updating trip:", err);
-      alert(err instanceof Error ? err.message : "Network error occurred");
+      alert(err instanceof Error ? err.message : "Failed to update trip");
     }
   };
-
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
@@ -182,21 +284,21 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1"
-        >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1">
           {/* Driver */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">Driver</Label>
-            <Select value={driver} onValueChange={setDriver}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Driver</Label>
+            <Select 
+              value={formData.driver_id} 
+              onValueChange={(value) => setFormData({...formData, driver_id: value})}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Driver" />
               </SelectTrigger>
               <SelectContent>
                 {drivers.map((driver) => (
-                  <SelectItem key={driver.id} value={driver.id}>
-                    {driver.name}
+                  <SelectItem key={driver.id} value={driver.id.toString()}>
+                    {`${driver.first_name} ${driver.last_name}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -205,13 +307,16 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
 
           {/* Source Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">Source Station</Label>
-            <Select value={source} onValueChange={setSource}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Source Station</Label>
+            <Select 
+              value={formData.src_station_id} 
+              onValueChange={(value) => setFormData({...formData, src_station_id: value})}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Source" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station: Station) => (
+                {stations.map((station) => (
                   <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
@@ -222,15 +327,16 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
 
           {/* Destination Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Destination Station
-            </Label>
-            <Select value={destination} onValueChange={setDestination}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Destination Station</Label>
+            <Select 
+              value={formData.dest_station_id} 
+              onValueChange={(value) => setFormData({...formData, dest_station_id: value})}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station: Station) => (
+                {stations.map((station) => (
                   <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
@@ -241,9 +347,12 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
 
           {/* Bus */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">Bus</Label>
-            <Select value={bus} onValueChange={setBus}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Bus</Label>
+            <Select 
+              value={formData.bus_id} 
+              onValueChange={(value) => setFormData({...formData, bus_id: value})}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
@@ -256,79 +365,150 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
             </Select>
           </div>
 
-          {/* Time Picker */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center border px-2 rounded">
-                <button type="button" onClick={decrementHour} className="text-lg px-2">
-                  -
-                </button>
-                <input
-                  value={hour}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setHour(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(hour);
-                    setHour(
-                      (isNaN(n) ? 0 : Math.max(1, Math.min(12, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
-                  className="w-10 text-center outline-none"
-                />
-                <button type="button" onClick={incrementHour} className="text-lg px-2">
-                  +
-                </button>
+          <div className="flex justify-around">
+            {/* Start Time Picker */}
+            <div>
+              <Label>Start Time</Label>
+              <div className="flex items-center gap-2">
+                {/* Hour */}
+                <div className="flex items-center border rounded">
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('start', 'hour', 'decrement')} 
+                    className="px-2 py-1"
+                  >
+                    -
+                  </button>
+                  <input
+                    value={startTime.hour}
+                    onChange={(e) => handleInputChange('start', 'hour', e.target.value)}
+                    onBlur={() => handleInputBlur('start', 'hour')}
+                    className="w-10 text-center outline-none"
+                    aria-label="Hour"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('start', 'hour', 'increment')} 
+                    className="px-2 py-1"
+                  >
+                    +
+                  </button>
+                </div>
+
+                <span>:</span>
+
+                {/* Minute */}
+                <div className="flex items-center border rounded">
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('start', 'minute', 'decrement')} 
+                    className="px-2 py-1"
+                  >
+                    -
+                  </button>
+                  <input
+                    value={startTime.minute}
+                    onChange={(e) => handleInputChange('start', 'minute', e.target.value)}
+                    onBlur={() => handleInputBlur('start', 'minute')}
+                    className="w-10 text-center outline-none"
+                    aria-label="Minute"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('start', 'minute', 'increment')} 
+                    className="px-2 py-1"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* AM/PM */}
+                <select
+                  value={startTime.meridiem}
+                  onChange={(e) => handleMeridiemChange('start', e.target.value as "a.m." | "p.m.")}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="a.m.">a.m.</option>
+                  <option value="p.m.">p.m.</option>
+                </select>
               </div>
+            </div>
 
-              <span className="text-xl">:</span>
+            {/* End Time Picker */}
+            <div>
+              <Label>End Time</Label>
+              <div className="flex items-center gap-2">
+                {/* Hour */}
+                <div className="flex items-center border rounded">
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('end', 'hour', 'decrement')} 
+                    className="px-2 py-1"
+                  >
+                    -
+                  </button>
+                  <input
+                    value={endTime.hour}
+                    onChange={(e) => handleInputChange('end', 'hour', e.target.value)}
+                    onBlur={() => handleInputBlur('end', 'hour')}
+                    className="w-10 text-center outline-none"
+                    aria-label="Hour"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('end', 'hour', 'increment')} 
+                    className="px-2 py-1"
+                  >
+                    +
+                  </button>
+                </div>
 
-              <div className="flex items-center border px-2 rounded">
-                <button type="button" onClick={decrementMinute} className="text-lg px-2">
-                  -
-                </button>
-                <input
-                  value={minute}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setMinute(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(minute);
-                    setMinute(
-                      (isNaN(n) ? 0 : Math.min(59, Math.max(0, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
-                  className="w-10 text-center outline-none"
-                />
-                <button type="button" onClick={incrementMinute} className="text-lg px-2">
-                  +
-                </button>
+                <span>:</span>
+
+                {/* Minute */}
+                <div className="flex items-center border rounded">
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('end', 'minute', 'decrement')} 
+                    className="px-2 py-1"
+                  >
+                    -
+                  </button>
+                  <input
+                    value={endTime.minute}
+                    onChange={(e) => handleInputChange('end', 'minute', e.target.value)}
+                    onBlur={() => handleInputBlur('end', 'minute')}
+                    className="w-10 text-center outline-none"
+                    aria-label="Minute"
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => handleTimeChange('end', 'minute', 'increment')} 
+                    className="px-2 py-1"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* AM/PM */}
+                <select
+                  value={endTime.meridiem}
+                  onChange={(e) => handleMeridiemChange('end', e.target.value as "a.m." | "p.m.")}
+                  className="border rounded px-2 py-1"
+                >
+                  <option value="a.m.">a.m.</option>
+                  <option value="p.m.">p.m.</option>
+                </select>
               </div>
-
-              <select
-                value={meridiem}
-                onChange={(e) => setMeridiem(e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="a.m.">a.m.</option>
-                <option value="p.m.">p.m.</option>
-              </select>
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="bg-[#71AC61] text-white py-2 rounded mt-4 hover:brightness-110 transition"
+          <Button 
+            type="submit" 
+            className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
           >
             Update Trip
-          </button>
+          </Button>
         </form>
       </DrawerContent>
     </Drawer>
