@@ -21,7 +21,7 @@ interface Trip {
 export default function OverviewCard() {
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  //const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTrips = async () => {
@@ -42,7 +42,7 @@ export default function OverviewCard() {
         setTrips(tripsData);
       } catch (err) {
         console.error("Error fetching trips:", err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        //setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
         setIsLoading(false);
       }
@@ -61,27 +61,7 @@ export default function OverviewCard() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 mt-4">
-          {isLoading ? (
-            <div className="flex flex-col gap-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-32 w-full bg-gray-200 rounded-lg animate-pulse"
-                ></div>
-              ))}
-            </div>
-          ) : error ? (
-            // Error state
-            <div className="text-center text-red-500 py-8">
-              <p>Failed to load trips: {error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-2 text-sm underline"
-              >
-                Try again
-              </button>
-            </div>
-          ) : trips.length === 0 ? (
+          {trips.length === 0 ? (
             <div className="text-center py-8 text-gray-500">No trips found</div>
           ) : (
             <div className="flex flex-col overflow-y-auto gap-y-4">

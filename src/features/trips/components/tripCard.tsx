@@ -146,7 +146,7 @@ export default function TripCard(props: TripCardProps) {
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
           <div className="flex gap-2">
-            <Link href={`/map/${tripId}`} aria-label="View on map">
+            <Link href={`/map/${props.id}`} aria-label="View on map">
               <button className="p-1 rounded hover:bg-gray-100">
                 <Map className="h-5 w-5" />
               </button>
@@ -167,7 +167,7 @@ export default function TripCard(props: TripCardProps) {
                 <SquareArrowOutUpRight />
               </span>
             </div>
-            <Link href={`/ticket/${tripId}`} passHref>
+            <Link href={`/ticket/${props.id}`} passHref>
               <Button
                 className="bg-[#456A3B] hover:bg-[#32442D] font-semibold"
                 aria-label="Issue ticket"
@@ -191,8 +191,8 @@ export default function TripCard(props: TripCardProps) {
 function formatTime(timeString: string): string {
   try {
     return new Date(timeString).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
+      hour: "2-digit",
+      minute: "2-digit",
     });
   } catch {
     return timeString;
