@@ -23,56 +23,16 @@ import {
   Map,
 } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
-import { getStation } from '@features/station/services/crud';
 
 interface TripCardProps {
-  id: number;
-  start: string;
-  end: string;
-  dst: number;
-  src: number;
-  bus: number;
-  driver_id: number;
-  status: string;
+  route: string;
+  time: string;
+  driver: string;
 }
 
 export default function TripCard(props: TripCardProps) {
   const [status, setStatus] = useState("boarding");
   const [openDrawer, setOpenDrawer] = useState(false);
-
-  const [src, setSrc] = useState(null);
-  const [dst, setDst] = useState(null);
-  const [driver, setDriver] = useState(null);
-
-  // Fetch Source Station
-  useEffect(() => {
-    const fetchSrc = async () => {
-      const res = await fetch(`/api/station/${props.src}`);
-      const data = await res.json();
-      setSrc(data);
-    };
-    fetchSrc();
-  }, []);
-
-  // Fetch Destination Station
-  useEffect(() => {
-    const fetchDst = async () => {
-      const res = await fetch(`/api/station/${props.dst}`);
-      const data = await res.json();
-      setDst(data);
-    };
-    fetchDst();
-  }, []);
-
-  // Fetch Driver
-  useEffect(() => {
-    const fetchDriver = async () => {
-      const res = await fetch(`/api/driver/${props.driver_id}`);
-      const data = await res.json();
-      setDriver(data);
-    };
-    fetchDriver();
-  }, []);
 
   return (
     <div className="flex flex-col justify-center">
@@ -83,9 +43,9 @@ export default function TripCard(props: TripCardProps) {
             {/* Left Side: Place and Time */}
             <div className="flex gap-2">
               <span className="font-semibold text-[#456A3B]">
-                {src.name} → {dst.name}
+                {props.route}
               </span>
-              <span>{props.start}</span>
+              <span>{props.time}</span>
             </div>
 
             {/* Right Side: Ellipsis Button */}
@@ -105,14 +65,11 @@ export default function TripCard(props: TripCardProps) {
             </DropdownMenu>
           </div>
         </div>
-        <div className="text-[#456A3B]">
-          {driver.first_name} {driver.last_name} - #{props.bus}
-        </div>
         <div>
           <Select
             value={status}
-            onValueChange={setStatus}
-            defaultValue="boarding"
+            onValueChange={handleStatusChange}
+            defaultValue={propStatus}
           >
             <SelectTrigger
               className={`
@@ -122,9 +79,7 @@ export default function TripCard(props: TripCardProps) {
               `}
             >
               <SelectValue>
-                {status === "status"
-                  ? "Status"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -134,16 +89,21 @@ export default function TripCard(props: TripCardProps) {
             </SelectContent>
           </Select>
         </div>
+        <div className="text-[#456A3B]">{props.driver}</div>
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
           <div className="flex gap-2">
-            {/* TEMPORARY, CHANGE TO THE BUS ID OF THE TRIP WHEN INTEGRATED TO THE BACKEND */}
-            <Link href={props.bus}>
-              <Map />
+            <Link href={`/map/${tripId}`} aria-label="View on map">
+              <button className="p-1 rounded hover:bg-gray-100">
+                <Map className="h-5 w-5" />
+              </button>
             </Link>
-            <button>
-              <SquarePen />
-            </button>
+            <EditTripModal
+              tripId={tripId}
+              onSuccess={() => {
+                // Optional: refresh trip data
+              }}
+            />
           </div>
 
           {/* Right Side:  */}
@@ -154,9 +114,12 @@ export default function TripCard(props: TripCardProps) {
                 <SquareArrowOutUpRight />
               </span>
             </div>
-            <Link href={"ticket"}>
-              <Button className="bg-[#456A3B] hover:bg-[#32442D] font-semibold">
-                issue ticket
+            <Link href={`/ticket/${tripId}`} passHref>
+              <Button
+                className="bg-[#456A3B] hover:bg-[#32442D] font-semibold"
+                aria-label="Issue ticket"
+              >
+                Issue Ticket
               </Button>
             </Link>
           </div>

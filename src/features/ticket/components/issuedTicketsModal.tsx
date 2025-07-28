@@ -10,7 +10,23 @@ import BaggageCard from "@features/ticket/components/baggageCard";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const dummyTickets = [
+interface Ticket {
+  seat: number;
+  price: number;
+  passenger: string;
+  ticketNo: string;
+  dateTime: string;
+}
+
+interface IssuedTicketsModalProps {
+  openDrawer: boolean;
+  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
+  tripId?: number; // Added tripId prop
+  tickets?: Ticket[]; // Allow passing tickets as prop
+  onIssueTicket?: () => void; // Callback for issue ticket action
+}
+
+const defaultTickets: Ticket[] = [
   {
     seat: 4,
     price: 115.0,
@@ -41,89 +57,22 @@ const dummyTickets = [
   },
 ];
 
-const dummyBaggage = [
-  {
-    id: 1,
-    sender_no: "09171234567",
-    dispatcher_no: "09987654321",
-    sender_name: "Juan Dela Cruz",
-    receiver_name: "Maria Clara",
-    item: "Box of clothes",
-    ticket_id: "BAG001",
-    price: 150.00,
-    timeDate: "JUL 24 2025 12:25 PM",
-  },
-  {
-    id: 2,
-    sender_no: "09081234567",
-    dispatcher_no: "09181234567",
-    sender_name: "Ana Santos",
-    receiver_name: "Jose Rizal",
-    item: "Small appliance",
-    ticket_id: "BAG002",
-    price: 200.00,
-    timeDate: "JUL 24 2025 12:30 PM",
-  },
-  {
-    id: 3,
-    sender_no: "09221234567",
-    dispatcher_no: "09331234567",
-    sender_name: "Pedro Penduko",
-    receiver_name: "Luna Amihan",
-    item: "Fragile glassware",
-    ticket_id: "BAG003",
-    price: 250.00,
-    timeDate: "JUL 24 2025 12:45 PM",
-  },
-  {
-    id: 4,
-    sender_no: "09451234567",
-    dispatcher_no: "09561234567",
-    sender_name: "Kardo Dalisay",
-    receiver_name: "Alyana Arevalo",
-    item: "Backpack with books",
-    ticket_id: "BAG004",
-    price: 120.00,
-    timeDate: "JUL 24 2025 01:00 PM",
-  },
-  {
-    id: 5,
-    sender_no: "09391234567",
-    dispatcher_no: "09191234567",
-    sender_name: "Liza Soberano",
-    receiver_name: "Enrique Gil",
-    item: "Parcel with gadgets",
-    ticket_id: "BAG005",
-    price: 300.00,
-    timeDate: "JUL 24 2025 01:15 PM",
-  },
-];
-
-interface IssuedTicketsModalProps {
-  openDrawer: boolean;
-  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
-  tripID: number;
-}
-
 export default function IssuedTicketsModal({
   openDrawer,
   setOpenDrawer,
-  tripID,
+  tripId,
+  tickets = defaultTickets,
+  onIssueTicket,
 }: IssuedTicketsModalProps) {
-  const [tickets, setTickets] = useState<Ticket[]>();
-
-  // Fetch Tickets
-  useEffect(() => {
-    const fetchTickets = async () => {
-      const res = await fetch(`/api/ticket/byTrip/${tripID}`);
-      const data = await res.json();
-      setTickets(data.tickets || data);
-    };
-    fetchTickets();
-  }, []);
-
-  const passenger = tickets.filter(t => t.ticket_type === "passenger");
-  const baggage = tickets.filter(t => t.ticket_type !== "passenger");
+  const handleIssueTicket = () => {
+    if (onIssueTicket) {
+      onIssueTicket();
+    } else {
+      // Default behavior if no handler provided
+      window.location.href = `/ticket/${tripId || ''}`;
+    }
+    setOpenDrawer(false);
+  };
 
   return (
     <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
