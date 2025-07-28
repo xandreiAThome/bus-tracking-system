@@ -1,5 +1,5 @@
 import { validateIdParam } from "@/lib/utils";
-import { deleteTrip, getTrip } from "@/features/trips/services/crud";
+import { deleteTrip, editTrip, getTrip } from "@/features/trips/services/crud";
 import { NextResponse } from "next/server";
 
 /**
@@ -80,4 +80,62 @@ export async function DELETE(
   } else {
     return deleteTrip(id);
   }
+}
+
+/**
+ * PATCH /api/trip/[id]
+ *
+ * Updates an existing trip with the specified details.
+ *
+ * @param {Request} req Incoming request containing JSON payload:
+ * {
+ *   start_time?: string,  // Optional ISO date-time string "YYYY-MM-DDTHH:MM:SSZ"
+ *   end_time?: string,    // Optional ISO date-time string "YYYY-MM-DDTHH:MM:SSZ"
+ *   bus_id?: number,      // Optional ID of the bus
+ *   src_station?: number, // Optional ID of source station
+ *   dest_station?: number,// Optional ID of destination station
+ *   driver_id?: number    // Optional ID of the driver
+ * }
+ *
+ * @returns {Response} 200 - Trip updated successfully, returns updated trip data
+ * @returns {Response} 400 - Invalid input data
+ * @returns {Response} 404 - Trip not found
+ * @returns {Response} 500 - Internal server/database error
+ */
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  const id = validateIdParam(params.id);
+  if (id instanceof Response) {
+    return id;
+  }
+
+  const { start_time, end_time, bus_id, src_station, dest_station, driver_id } =
+    await req.json();
+
+  // At least one field must be provided
+  if (
+    start_time === undefined &&
+    end_time === undefined &&
+    bus_id === undefined &&
+    src_station === undefined &&
+    dest_station === undefined &&
+    driver_id === undefined
+  ) {
+    return Response.json(
+      { message: "Invalid input: At least one field must be provided" },
+      { status: 400 }
+    );
+  }
+
+  return editTrip(
+    id,
+    start_time,
+    end_time,
+    bus_id,
+    src_station,
+    dest_station,
+    driver_id
+  );
 }

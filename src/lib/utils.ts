@@ -210,3 +210,14 @@ export function validateSortOrder(
   }
   return "asc"; // default fallback
 }
+
+/**
+ * Helper function to generate seat numbers
+ */
+export function generateSeatNumbers(capacity: number): string[] {
+  const seats: string[] = [];
+  for (let i = 1; i <= capacity; i++) {
+    seats.push(`S${i.toString().padStart(2, '0')}`); // Formats as S01, S02, etc.
+  }
+  return seats;
+}
