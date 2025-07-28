@@ -36,7 +36,7 @@ export async function getDriver(id: number) {
     const conn = await pool.getConnection();
     try {
       const [drivers] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM driver WHERE driverID = ?",
+        "SELECT * FROM driver WHERE id = ?",
         [id]
       );
       const driver = drivers[0];
