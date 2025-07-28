@@ -12,7 +12,7 @@ interface Trip {
   src_station_id: number;
   bus_id: number;
   driver_id: number;
-  status: string | null;
+  status: string | null; 
   driver_name?: string;
   src_station_name?: string;
   dest_station_name?: string;
@@ -21,28 +21,21 @@ interface Trip {
 export default function OverviewCard() {
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<Trip[]>([]);
-  //const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
     const fetchTrips = async () => {
       try {
         const response = await fetch("/api/trip");
-
         if (!response.ok) {
           throw new Error(response.statusText || "Failed to fetch trips");
         }
-
         const data = await response.json();
-        console.log("Fetched trip data:", data);
-        const tripsData = Array.isArray(data.trips)
-          ? data.trips
-          : Array.isArray(data)
-            ? data
-            : [];
+        const tripsData = data.trips || [];
         setTrips(tripsData);
       } catch (err) {
         console.error("Error fetching trips:", err);
-        //setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
         setIsLoading(false);
       }
@@ -50,9 +43,17 @@ export default function OverviewCard() {
     fetchTrips();
   }, []);
 
+  if (isLoading) {
+    return <div className="text-center py-8 text-gray-500">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-500">{error}</div>;
+  }
+
   return (
     <div className="h-full flex items-start justify-center p-5">
-      <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5 ">
+      <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5">
         <CardHeader className="border-b border-gray-300">
           <div className="flex flex-col items-center">
             <CardTitle className="mt-2 font-extrabold text-[#456A3B]">
@@ -65,17 +66,17 @@ export default function OverviewCard() {
             <div className="text-center py-8 text-gray-500">No trips found</div>
           ) : (
             <div className="flex flex-col overflow-y-auto gap-y-4">
-              {trips.map((trip, index) => (
+              {trips.map((trip) => (
                 <TripCard
-                  key={index}
+                  key={trip.id} // Use trip.id instead of index for better React key
                   id={trip.id}
-                  start={trip.start_time}
-                  end={trip.end_time}
-                  dst={trip.dest_station_id}
-                  src={trip.src_station_id}
-                  bus={trip.bus_id}
+                  start_time={trip.start_time}
+                  end_time={trip.end_time}
+                  dest_station_id={trip.dest_station_id}
+                  src_station_id={trip.src_station_id}
+                  bus_id={trip.bus_id}
                   driver_id={trip.driver_id}
-                  status={trip.status}
+                  status={trip.status} // Fixed: Removed erroneous `?`
                 />
               ))}
             </div>

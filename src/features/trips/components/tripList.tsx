@@ -25,10 +25,7 @@ function TripsList() {
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const response = await fetch('/api/trip', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const response = await fetch('/api/trip');
         
         if (!response.ok) {
           throw new Error(response.statusText || 'Failed to fetch trips');
@@ -84,17 +81,15 @@ function TripsList() {
   return (
     <div className="flex flex-col overflow-y-auto gap-y-4">
       {trips.map((trip) => (
-        <TripCard
-          key={trip.id}
-          tripId={trip.id}
-          route={
-            trip.src_station_name && trip.dest_station_name
-              ? `${trip.src_station_name} → ${trip.dest_station_name}`
-              : `Station ${trip.src_station_id} → Station ${trip.dest_station_id}`
-          }
-          time={formatTime(trip.start_time)}
-          driver={trip.driver_name || `Driver ID: ${trip.driver_id}`}
-          status={trip.status || 'boarding'}
+        <TripCard 
+          id={trip.id}
+          start_time={trip.start_time}
+          end_time={trip.end_time}
+          dest_station_id={trip.dest_station_id}
+          src_station_id={trip.src_station_id}
+          bus_id={trip.bus_id}
+          driver_id={trip.driver_id}
+          status={null}          
         />
       ))}
     </div>

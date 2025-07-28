@@ -10,11 +10,10 @@ import {
  *
  * Fetches a single driver by ID.
  */
-export async function GET(req: Request, context: { params: { id: string } }) {
-  const { params } = await Promise.resolve(context);
+export async function GET(req: Request, { params }: { params: { id: string } }) {
   const id = validateIdParam(params.id);
   if (id instanceof Response) return id;
-  return getDriver(id);
+  return await getDriver(id);
 }
 
 /**
