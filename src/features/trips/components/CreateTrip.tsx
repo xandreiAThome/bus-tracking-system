@@ -16,101 +16,171 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-export default function CreateTripModal() {
-  const stations = [
-    { id: "1", name: "Manila" },
-    { id: "2", name: "Quezon City" },
-    { id: "3", name: "Makati" },
-    { id: "4", name: "Taguig" },
-    { id: "5", name: "Mandaluyong" },
-    { id: "6", name: "Pasig" },
-  ];
+interface Driver {
+  id: string;
+  name: string;
+}
 
-  const drivers = [
+interface Bus {
+  id: string;
+  plate_number: string;
+}
+
+interface Station {
+  id: number;
+  name: string;
+}
+
+interface TripPayload {
+  start_time: string;
+  end_time: string;
+  bus_id: number;
+  src_station: number;
+  dest_station: number;
+  driver_id: number;
+}
+
+interface CreateTripModalProps {
+  onTripCreated?: () => void;
+}
+
+
+export default function CreateTripModal({ onTripCreated }: CreateTripModalProps) {
+  const [stations, setStations] = useState<Station[]>([]);
+  const [buses, setBuses] = useState<Bus[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    driver: "",
+    source: "",
+    destination: "",
+    bus: "",
+    hour: "12",
+    minute: "00",
+    meridiem: "a.m." as "a.m." | "p.m."
+  });
+
+  const drivers: Driver[] = [
     { id: "1", name: "Mark Reyes" },
     { id: "2", name: "Anthony Cruz" },
     { id: "3", name: "Jared Thompson" },
     { id: "4", name: "Samuel Diaz" },
   ];
 
-  const buses = [
-    { id: "1", name: "Bus1" },
-    { id: "2", name: "Bus2" },
-    { id: "3", name: "Bus3" },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [stationsRes, busesRes] = await Promise.all([
+          fetch('/api/station'),
+          fetch('/api/bus')
+        ]);
 
-  const [driver, setDriver] = useState("");
-  const [source, setSource] = useState("");
-  const [destination, setDestination] = useState("");
-  const [bus, setBus] = useState("");
+        if (!stationsRes.ok || !busesRes.ok) {
+          throw new Error('Failed to fetch data');
+        }
 
-  const [hour, setHour] = useState("00");
-  const [minute, setMinute] = useState("00");
-  const [meridiem, setMeridiem] = useState("a.m.");
+        const [stationsData, busesData] = await Promise.all([
+          stationsRes.json(),
+          busesRes.json()
+        ]);
 
-  const incrementHour = () => {
-    const newHour = (parseInt(hour) + 1) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
+        setStations(stationsData.stations || stationsData);
+        setBuses(busesData.buses || busesData);
+      } catch (err) {
+        console.error("Fetch error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleTimeChange = (type: 'hour' | 'minute', operation: 'increment' | 'decrement') => {
+    setFormData(prev => {
+      const current = parseInt(prev[type]);
+      let newValue: number;
+
+      if (type === 'hour') {
+        newValue = operation === 'increment' 
+          ? (current % 12) + 1 
+          : (current - 2 + 12) % 12 + 1;
+      } else {
+        newValue = operation === 'increment' 
+          ? (current + 1) % 60 
+          : (current - 1 + 60) % 60;
+      }
+
+      return {
+        ...prev,
+        [type]: newValue.toString().padStart(2, "0")
+      };
+    });
   };
 
-  const decrementHour = () => {
-    const newHour = (parseInt(hour) - 1 + 12) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (/^\d{0,2}$/.test(value)) {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
-  const incrementMinute = () => {
-    const newMinute = (parseInt(minute) + 1) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
-
-  const decrementMinute = () => {
-    const newMinute = (parseInt(minute) - 1 + 60) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
+  const handleInputBlur = (type: 'hour' | 'minute') => {
+    setFormData(prev => {
+      const num = parseInt(prev[type]);
+      const min = type === 'hour' ? 1 : 0;
+      const max = type === 'hour' ? 12 : 59;
+      
+      const clamped = Math.max(min, Math.min(max, isNaN(num) ? min : num));
+      return {
+        ...prev,
+        [type]: clamped.toString().padStart(2, "0")
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
+    const { driver, bus, source, destination, hour, minute, meridiem } = formData;
 
     if (!driver || !bus || !source || !destination) {
-      alert("Please fill in all fields.");
+      alert("Please fill in all required fields.");
+      setIsSubmitting(false);
       return;
     }
 
-    const today = new Date();
-    const [year, month, day] = [
-      today.getFullYear(),
-      (today.getMonth() + 1).toString().padStart(2, "0"),
-      today.getDate().toString().padStart(2, "0"),
-    ];
-
-    let h = parseInt(hour);
-    if (meridiem === "p.m." && h < 12) h += 12;
-    if (meridiem === "a.m." && h === 12) h = 0;
-
-    const date = new Date(
-      `${year}-${month}-${day}T${h.toString().padStart(2, "0")}:${minute.padStart(
-        2,
-        "0"
-      )}:00Z`
-    );
-
-    const start_time = date.toISOString();
-    const end_time = new Date(date.getTime() + 60 * 60 * 1000).toISOString(); // +1 hour
-
-    const payload = {
-      start_time,
-      end_time,
-      bus_id: parseInt(bus),
-      src_station: parseInt(source),
-      dest_station: parseInt(destination),
-      driver_id: parseInt(driver),
-    };
-
-    console.log("Trip payload to be submitted:", payload);
-
     try {
+      // Convert to 24-hour format
+      let hours24 = parseInt(hour);
+      if (meridiem === "p.m." && hours24 < 12) hours24 += 12;
+      if (meridiem === "a.m." && hours24 === 12) hours24 = 0;
+
+      const now = new Date();
+      const startTime = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        hours24,
+        parseInt(minute)
+      );
+
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000); // +1 hour
+
+      const payload: TripPayload = {
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        bus_id: parseInt(bus),
+        src_station: parseInt(source),
+        dest_station: parseInt(destination),
+        driver_id: parseInt(driver)
+      };
+
       const res = await fetch("/api/trip", {
         method: "POST",
         headers: {
@@ -121,25 +191,41 @@ export default function CreateTripModal() {
 
       if (!res.ok) {
         const errorData = await res.json();
-        console.error("Failed to create trip:", errorData);
-        alert("Error: Failed to create trip");
-      } else {
-        alert("Trip created successfully!");
-
-        // Reset form
-        setDriver("");
-        setBus("");
-        setSource("");
-        setDestination("");
-        setHour("00");
-        setMinute("00");
-        setMeridiem("a.m.");
+        throw new Error(errorData.message || "Failed to create trip");
       }
+
+      // Reset form
+      setFormData({
+        driver: "",
+        source: "",
+        destination: "",
+        bus: "",
+        hour: "12",
+        minute: "00",
+        meridiem: "a.m."
+      });
+
+      // Execute callback if provided
+      if (onTripCreated) {
+        onTripCreated();
+      }
+
+      alert("Trip created successfully!");
     } catch (err) {
-      console.error("Network error:", err);
-      alert("Network error occurred.");
+      console.error("Error:", err);
+      alert(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-4">
+        Loading data...
+      </div>
+    );
+  }
 
   return (
     <Drawer>
@@ -159,15 +245,16 @@ export default function CreateTripModal() {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1"
+          className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1 w-full"
         >
-          {/* Driver */}
-          <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Driver
-            </Label>
-            <Select value={driver} onValueChange={setDriver}>
-              <SelectTrigger className="w-full justify-start px-0">
+          {/* Driver Selection */}
+          <div >
+            <Label>Driver</Label>
+            <Select 
+              value={formData.driver} 
+              onValueChange={value => setFormData(prev => ({ ...prev, driver: value }))}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Driver" />
               </SelectTrigger>
               <SelectContent>
@@ -182,16 +269,17 @@ export default function CreateTripModal() {
 
           {/* Source Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Source Station
-            </Label>
-            <Select value={source} onValueChange={setSource}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Source Station</Label>
+            <Select 
+              value={formData.source} 
+              onValueChange={value => setFormData(prev => ({ ...prev, source: value }))}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Source" />
               </SelectTrigger>
               <SelectContent>
                 {stations.map(station => (
-                  <SelectItem key={station.id} value={station.id}>
+                  <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
                 ))}
@@ -201,16 +289,17 @@ export default function CreateTripModal() {
 
           {/* Destination Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Destination Station
-            </Label>
-            <Select value={destination} onValueChange={setDestination}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Destination Station</Label>
+            <Select 
+              value={formData.destination} 
+              onValueChange={value => setFormData(prev => ({ ...prev, destination: value }))}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
                 {stations.map(station => (
-                  <SelectItem key={station.id} value={station.id}>
+                  <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
                 ))}
@@ -218,19 +307,20 @@ export default function CreateTripModal() {
             </Select>
           </div>
 
-          {/* Bus */}
+          {/* Bus Selection */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Bus
-            </Label>
-            <Select value={bus} onValueChange={setBus}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Bus</Label>
+            <Select 
+              value={formData.bus} 
+              onValueChange={value => setFormData(prev => ({ ...prev, bus: value }))}
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
                 {buses.map(bus => (
-                  <SelectItem key={bus.id} value={bus.id}>
-                    {bus.name}
+                  <SelectItem key={bus.id} value={String(bus.id)}>
+                    {bus.plate_number}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -239,82 +329,70 @@ export default function CreateTripModal() {
 
           {/* Time Picker */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
-            </label>
+            <Label>Time</Label>
             <div className="flex items-center gap-2">
-              <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementHour}
-                  className="text-lg px-2"
+              {/* Hour */}
+              <div className="flex items-center border rounded">
+                <button 
+                  type="button" 
+                  onClick={() => handleTimeChange('hour', 'decrement')} 
+                  className="px-2 py-1"
                 >
                   -
                 </button>
                 <input
-                  value={hour}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setHour(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(hour);
-                    setHour(
-                      (isNaN(n) ? 0 : Math.max(1, Math.min(12, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
+                  name="hour"
+                  value={formData.hour}
+                  onChange={handleInputChange}
+                  onBlur={() => handleInputBlur('hour')}
                   className="w-10 text-center outline-none"
+                  aria-label="Hour"
                 />
-                <button
-                  type="button"
-                  onClick={incrementHour}
-                  className="text-lg px-2"
+                <button 
+                  type="button" 
+                  onClick={() => handleTimeChange('hour', 'increment')} 
+                  className="px-2 py-1"
                 >
                   +
                 </button>
               </div>
 
-              <span className="text-xl">:</span>
+              <span>:</span>
 
-              <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementMinute}
-                  className="text-lg px-2"
+              {/* Minute */}
+              <div className="flex items-center border rounded">
+                <button 
+                  type="button" 
+                  onClick={() => handleTimeChange('minute', 'decrement')} 
+                  className="px-2 py-1"
                 >
                   -
                 </button>
                 <input
-                  value={minute}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setMinute(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(minute);
-                    setMinute(
-                      (isNaN(n) ? 0 : Math.min(59, Math.max(0, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
+                  name="minute"
+                  value={formData.minute}
+                  onChange={handleInputChange}
+                  onBlur={() => handleInputBlur('minute')}
                   className="w-10 text-center outline-none"
+                  aria-label="Minute"
                 />
-                <button
-                  type="button"
-                  onClick={incrementMinute}
-                  className="text-lg px-2"
+                <button 
+                  type="button" 
+                  onClick={() => handleTimeChange('minute', 'increment')} 
+                  className="px-2 py-1"
                 >
                   +
                 </button>
               </div>
 
+              {/* AM/PM */}
               <select
-                value={meridiem}
-                onChange={e => setMeridiem(e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm"
+                value={formData.meridiem}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  meridiem: e.target.value as "a.m." | "p.m."
+                }))}
+                className="border rounded px-2 py-1"
               >
                 <option value="a.m.">a.m.</option>
                 <option value="p.m.">p.m.</option>
@@ -322,12 +400,12 @@ export default function CreateTripModal() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="bg-[#71AC61] text-white py-2 rounded mt-4 hover:brightness-110 transition"
+          <Button 
+            type="submit" 
+            className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
           >
             Create New Trip
-          </button>
+          </Button>
         </form>
       </DrawerContent>
     </Drawer>

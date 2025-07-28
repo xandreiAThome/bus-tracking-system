@@ -57,7 +57,7 @@ export async function getBusByID(id: number) {
 }
 
 /**
- * Create a new bus.
+ * Create a new bus and populate its seats based on capacity.
  * @param plate_number - Plate number
  * @param station_id - Station ID
  * @param capacity - Seating capacity
@@ -67,33 +67,70 @@ export async function addBus(
   station_id: number,
   capacity: number
 ) {
+  let conn;
   try {
-    const conn = await pool.getConnection();
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
+
     try {
-      const [result] = await conn.execute<ResultSetHeader>(
+      const [busResult] = await conn.execute<ResultSetHeader>(
         "INSERT INTO bus (plate_number, station_id, capacity) VALUES (?, ?, ?)",
         [plate_number, station_id, capacity]
       );
 
-      if (result.affectedRows === 0) {
+      if (busResult.affectedRows === 0) {
+        await conn.rollback();
         return Response.json(
           { message: "Failed to create bus" },
           { status: 500 }
         );
       }
 
+      const busId = busResult.insertId;
+
+      const seatValues = [];
+      for (let i = 1; i <= capacity; i++) {
+        seatValues.push([`S${i.toString().padStart(2, '0')}`, busId, 'available']);
+      }
+
+      const [seatResult] = await conn.query<ResultSetHeader>(
+        "INSERT INTO seat (seat_number, bus_id, status) VALUES ?",
+        [seatValues]
+      );
+
+      if (seatResult.affectedRows !== capacity) {
+        await conn.rollback();
+        return Response.json(
+          { message: "Failed to create all seats" },
+          { status: 500 }
+        );
+      }
+
+      await conn.commit();
       return Response.json(
-        { message: "Bus created successfully" },
+        { 
+          message: "Bus created successfully with seats",
+          busId,
+          seatsCreated: seatResult.affectedRows
+        },
         { status: 201 }
       );
-    } finally {
-      conn.release();
+    } catch (innerErr) {
+      await conn.rollback();
+      console.error("Transaction Error:", innerErr);
+      return Response.json(
+        { message: "Failed to create bus and seats" },
+        { status: 500 }
+      );
     }
   } catch (err: any) {
-    console.error("DB Error:", err);
+    console.error("DB Connection Error:", err);
     return catchDBError(err);
+  } finally {
+    if (conn) conn.release();
   }
 }
+
 
 /**
  * Update an existing bus.

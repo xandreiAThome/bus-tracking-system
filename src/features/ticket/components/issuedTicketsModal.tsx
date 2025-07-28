@@ -8,7 +8,23 @@ import {
 import TicketCard from "./ticketCard";
 import { Dispatch, SetStateAction } from "react";
 
-const dummyTickets = [
+interface Ticket {
+  seat: number;
+  price: number;
+  passenger: string;
+  ticketNo: string;
+  dateTime: string;
+}
+
+interface IssuedTicketsModalProps {
+  openDrawer: boolean;
+  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
+  tripId?: number; // Added tripId prop
+  tickets?: Ticket[]; // Allow passing tickets as prop
+  onIssueTicket?: () => void; // Callback for issue ticket action
+}
+
+const defaultTickets: Ticket[] = [
   {
     seat: 4,
     price: 115.0,
@@ -16,62 +32,62 @@ const dummyTickets = [
     ticketNo: "#3901",
     dateTime: "JUL 24 2025 12:25 PM",
   },
-  {
-    seat: 5,
-    price: 115.0,
-    passenger: "Astherielle Rafael",
-    ticketNo: "#3902",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
-  {
-    seat: 6,
-    price: 115.0,
-    passenger: "Kidlat Adlawan",
-    ticketNo: "#3903",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
-  {
-    seat: 7,
-    price: 115.0,
-    passenger: "Kidlat Adlawan",
-    ticketNo: "#3904",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
+  // ... other default tickets
 ];
 
 export default function IssuedTicketsModal({
   openDrawer,
   setOpenDrawer,
-}: {
-  openDrawer: boolean;
-  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
-}) {
+  tripId,
+  tickets = defaultTickets,
+  onIssueTicket,
+}: IssuedTicketsModalProps) {
+  const handleIssueTicket = () => {
+    if (onIssueTicket) {
+      onIssueTicket();
+    } else {
+      // Default behavior if no handler provided
+      window.location.href = `/ticket/${tripId || ''}`;
+    }
+    setOpenDrawer(false);
+  };
+
   return (
     <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
-      <DrawerContent className="w-[90%] mx-auto p-5">
-        <DrawerHeader className="border-b border-gray-300">
-          <DrawerTitle className="font-extrabold text-[#456A3B]">
-            Issued Tickets
+      <DrawerContent className="w-full sm:w-[90%] mx-auto p-5 max-h-[90vh]">
+        <DrawerHeader className="border-b border-gray-300 px-0">
+          <DrawerTitle className="font-extrabold text-[#456A3B] text-center">
+            Issued Tickets{tripId ? ` (Trip #${tripId})` : ''}
           </DrawerTitle>
         </DrawerHeader>
-        <div className="flex flex-col gap-y-3 overflow-auto mt-5">
-          {dummyTickets.map((ticket, index) => (
-            <TicketCard
-              key={index}
-              seat={ticket.seat}
-              price={ticket.price}
-              passenger={ticket.passenger}
-              ticketNo={ticket.ticketNo}
-              dateTime={ticket.dateTime}
-            />
-          ))}
+        
+        <div className="flex flex-col gap-4 mt-5 px-1 overflow-y-auto">
+          {tickets.length > 0 ? (
+            tickets.map((ticket) => (
+              <TicketCard
+                key={`${ticket.ticketNo}-${ticket.seat}`}
+                seat={ticket.seat}
+                price={ticket.price}
+                passenger={ticket.passenger}
+                ticketNo={ticket.ticketNo}
+                dateTime={ticket.dateTime}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No tickets issued yet
+            </div>
+          )}
         </div>
-        <div className="mt-4">
-          <div className="flex justify-center">
-            <Button className="h-max w-[70%] bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-              Issue Ticket
-            </Button>
-          </div>
+
+        <div className="mt-6 sticky bottom-0 bg-background pt-4 pb-2">
+          <Button 
+            onClick={handleIssueTicket}
+            className="h-12 w-full sm:w-[70%] mx-auto bg-[#71AC61] hover:bg-[#456A3B] font-bold text-lg rounded-lg"
+            size="lg"
+          >
+            Issue New Ticket
+          </Button>
         </div>
       </DrawerContent>
     </Drawer>
