@@ -96,8 +96,11 @@ export default function ReportsClient() {
                 {Array.isArray(tripsList) &&
                   tripsList.map(trip => (
                     <SelectItem key={trip.id} value={String(trip.id)}>
-                      Trip {trip.src_station.name} {"->"} (Bus{" "}
-                      {trip.dest_station.name})
+                      Trip {trip.src_station.name} {"-> "}
+                      {trip.dest_station.name}{" "}
+                      {trip?.start_time
+                        ? new Date(trip.start_time).toLocaleString()
+                        : ""}
                     </SelectItem>
                   ))}
               </SelectContent>
