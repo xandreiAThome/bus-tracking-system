@@ -23,6 +23,7 @@ import {
   Map,
 } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
+import EditTripModal from "./EditTrip";
 
 interface TripCardProps {
   tripId: number;
@@ -113,7 +114,7 @@ export default function TripCard({
         </div>
 
         {/* Driver Info */}
-        <div className="text-[#456A3B] text-sm">{driver}</div>
+        <div className="text-[#456A3B] text-sm">{driver} : {tripId}</div>
 
         {/* Action Buttons */}
         <div className="flex items-end justify-between">
@@ -123,12 +124,12 @@ export default function TripCard({
                 <Map className="h-5 w-5" />
               </button>
             </Link>
-            <button 
-              aria-label="Edit trip"
-              className="p-1 rounded hover:bg-gray-100"
-            >
-              <SquarePen className="h-5 w-5" />
-            </button>
+            <EditTripModal 
+              tripId={tripId}
+              onSuccess={() => {
+                // Optional: refresh trip data
+              }}
+            />
           </div>
           
           <div className="flex flex-col items-end gap-1">

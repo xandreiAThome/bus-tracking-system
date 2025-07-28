@@ -16,12 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
+import { SquarePen } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 interface EditTripModalProps {
   tripId: number;
   onSuccess?: () => void;
+  onClose?: () => void;
 }
 
 interface Driver {
@@ -34,56 +35,21 @@ interface Bus {
   plate_number: string;
 }
 
-interface Trip {
-  id: number;
-  driver_id: number;
-  bus_id: number;
-  src_station_id: number;
-  dest_station_id: number;
-  start_time: string;
-}
-
 interface Station {
   id: number;
   name: string;
 }
 
-export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps) {
-  
-  const [stations, setStations] = useState([]);
+export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripModalProps) {
+  const [stations, setStations] = useState<Station[]>([]);
   const [isLoadingStations, setIsLoadingStations] = useState(true);
-
-  useEffect(() => {
-    const fetchStations = async () => {
-      try {
-        const response = await fetch('/api/station');
-        if (!response.ok) {
-          throw new Error('Failed to fetch stations');
-        }
-        const data = await response.json();
-        setStations(data.stations || data); // Handle both formats
-      } catch (error) {
-        console.error("Error fetching stations:", error);
-        alert("Failed to load stations");
-      } finally {
-        setIsLoadingStations(false);
-      }
-    };
-
-    fetchStations();
-  }, []);
+  const [isOpen, setIsOpen] = useState(false);
 
   const drivers = [
     { id: "1", name: "Mark Reyes" },
     { id: "2", name: "Anthony Cruz" },
     { id: "3", name: "Jared Thompson" },
     { id: "4", name: "Samuel Diaz" },
-  ];
-
-  const buses = [
-    { id: "1", name: "Bus1" },
-    { id: "2", name: "Bus2" },
-    { id: "3", name: "Bus3" },
   ];
 
   const [driver, setDriver] = useState("");
@@ -94,48 +60,34 @@ export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps)
   const [minute, setMinute] = useState("00");
   const [meridiem, setMeridiem] = useState("a.m.");
   const [isLoading, setIsLoading] = useState(true);
+  const [buses, setBuses] = useState<Bus[]>([]);
 
-  // Fetch trip data when component mounts
   useEffect(() => {
-    const fetchTripData = async () => {
+    if (!isOpen) return;
+
+    const fetchStations = async () => {
       try {
-        const response = await fetch(`/api/trip/${tripId}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch trip data');
-        }
-        const trip = await response.json();
-        
-        // Set form fields with trip data
-        setDriver(trip.driver_id.toString());
-        setBus(trip.bus_id.toString());
-        setSource(trip.src_station.toString());
-        setDestination(trip.dest_station.toString());
+        const responseStations = await fetch('/api/station');
+        if (!responseStations.ok) throw new Error('Failed to fetch stations');
+        const dataStations = await responseStations.json();
+        setStations(dataStations.stations);
 
-        // Parse the start_time
-        if (trip.start_time) {
-          const date = new Date(trip.start_time);
-          let hours = date.getHours();
-          const minutes = date.getMinutes();
-          
-          // Convert to 12-hour format
-          const isPM = hours >= 12;
-          if (isPM && hours > 12) hours -= 12;
-          if (!isPM && hours === 0) hours = 12;
+        const response = await fetch("/api/bus");
+        if (!response.ok) throw new Error('Failed to fetch busses');
+        const data = await response.json();
+        setBuses(data.buses || data);
 
-          setHour(hours.toString().padStart(2, "0"));
-          setMinute(minutes.toString().padStart(2, "0"));
-          setMeridiem(isPM ? "p.m." : "a.m.");
-        }
       } catch (error) {
-        console.error("Error fetching trip data:", error);
-        alert("Failed to load trip data");
+        console.error("Error fetching stations:", error);
+        alert("Failed to load stations");
       } finally {
-        setIsLoading(false);
+        setIsLoadingStations(false);
       }
     };
 
-    fetchTripData();
-  }, [tripId]);
+    fetchStations();
+  }, [isOpen]);
+
 
   const incrementHour = () => {
     const newHour = (parseInt(hour) + 1) % 12 || 12;
@@ -177,21 +129,18 @@ export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps)
     if (meridiem === "a.m." && h === 12) h = 0;
 
     const date = new Date(
-      `${year}-${month}-${day}T${h.toString().padStart(2, "0")}:${minute.padStart(
-        2,
-        "0"
-      )}:00Z`
+      `${year}-${month}-${day}T${h.toString().padStart(2, "0")}:${minute.padStart(2, "0")}:00Z`
     );
 
     const start_time = date.toISOString();
-    const end_time = new Date(date.getTime() + 60 * 60 * 1000).toISOString(); // +1 hour
+    const end_time = new Date(date.getTime() + 60 * 60 * 1000).toISOString();
 
     const payload = {
       start_time,
       end_time,
       bus_id: parseInt(bus),
-      src_station: parseInt(source),
-      dest_station: parseInt(destination),
+      src_station_id: parseInt(source),
+      dest_station_id: parseInt(destination),
       driver_id: parseInt(driver)
     };
 
@@ -206,34 +155,27 @@ export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps)
 
       if (!res.ok) {
         const errorData = await res.json();
-        console.error("Failed to update trip:", errorData);
-        alert(`Error: ${errorData.message || "Failed to update trip"}`);
-      } else {
-        alert("Trip updated successfully!");
-        if (onSuccess) onSuccess();
+        throw new Error(errorData.message || "Failed to update trip");
       }
+
+      alert("Trip updated successfully!");
+      if (onSuccess) onSuccess();
+      setIsOpen(false);
+      if (onClose) onClose();
     } catch (err) {
-      console.error("Network error:", err);
-      alert("Network error occurred.");
+      console.error("Error updating trip:", err);
+      alert(err instanceof Error ? err.message : "Network error occurred");
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-32">
-        <p>Loading trip data...</p>
-      </div>
-    );
-  }
 
   return (
-    <Drawer>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerTrigger asChild>
-        <Button className="h-max bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-          Edit Trip
+        <Button variant="ghost" size="icon" aria-label="Edit trip">
+          <SquarePen className="h-5 w-5" />
         </Button>
       </DrawerTrigger>
-
       <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">Edit Trip</DrawerTitle>
@@ -306,8 +248,8 @@ export default function EditTripModal({ tripId, onSuccess }: EditTripModalProps)
               </SelectTrigger>
               <SelectContent>
                 {buses.map((bus) => (
-                  <SelectItem key={bus.id} value={bus.id}>
-                    {bus.name}
+                  <SelectItem key={bus.id} value={bus.id.toString()}>
+                    {bus.plate_number}
                   </SelectItem>
                 ))}
               </SelectContent>
