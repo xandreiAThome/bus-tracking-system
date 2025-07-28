@@ -25,14 +25,65 @@ import {
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
 
 interface TripCardProps {
-  route: string;
-  time: string;
-  driver: string;
+  id: number;
+  start_time: string;
+  end_time: string;
+  dest_station_id: string;
+  src_station_id: string;
+  bus_id: number;
+  driver_id: number;
+  status: string;
+}
+
+interface Station {
+  id: number;
+  name: string;
+}
+
+interface Driver {
+  id: number;
+  first_name: string;
+  last_name: string;
+  user_id: number;
 }
 
 export default function TripCard(props: TripCardProps) {
   const [status, setStatus] = useState("boarding");
   const [openDrawer, setOpenDrawer] = useState(false);
+
+  const [src, setSrc] = useState<Station>(null);
+  const [dst, setDst] = useState<Station>(null);
+  const [driver, setDriver] = useState<Driver>(null);
+
+  // Fetch Source Station
+  useEffect(() => {
+    const fetchSrc = async () => {
+      const res = await fetch(`/api/station/${props.src_station_id}`);
+      const data = await res.json();
+      setSrc(data);
+    };
+    fetchSrc();
+  }, []);
+
+  // Fetch Destination Source
+  useEffect(() => {
+    const fetchDst = async () => {
+      const res = await fetch(`/api/station/${props.dest_station_id}`);
+      const data = await res.json();
+      setDst(data);
+    };
+    fetchDst();
+  }, []);
+  
+  // Fetch Driver
+  useEffect(() => {
+    const fetchDriver = async () => {
+      const res = await fetch(`/api/driver/${props.driver_id}`);
+      const data = await res.json();
+      setDriver(data);
+    };
+    fetchDriver();
+  }, []);
 
   return (
     <div className="flex flex-col justify-center">
@@ -43,9 +94,9 @@ export default function TripCard(props: TripCardProps) {
             {/* Left Side: Place and Time */}
             <div className="flex gap-2">
               <span className="font-semibold text-[#456A3B]">
-                {props.route}
+                {src.name} → {dst.name}
               </span>
-              <span>{props.time}</span>
+              <span>{formatTime(props.start_time)}</span>
             </div>
 
             {/* Right Side: Ellipsis Button */}
@@ -64,6 +115,9 @@ export default function TripCard(props: TripCardProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+        </div>
+        <div className="text-[#456A3B]">
+          {driver.first_name} {driver.last_name}
         </div>
         <div>
           <Select
@@ -89,7 +143,6 @@ export default function TripCard(props: TripCardProps) {
             </SelectContent>
           </Select>
         </div>
-        <div className="text-[#456A3B]">{props.driver}</div>
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
           <div className="flex gap-2">
@@ -133,4 +186,15 @@ export default function TripCard(props: TripCardProps) {
       ></IssuedTicketsModal>
     </div>
   );
+}
+
+function formatTime(timeString: string): string {
+  try {
+    return new Date(timeString).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return timeString;
+  }
 }

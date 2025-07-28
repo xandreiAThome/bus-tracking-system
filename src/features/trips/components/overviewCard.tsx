@@ -26,12 +26,7 @@ export default function OverviewCard() {
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const response = await fetch('/api/trip', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-
-        console.trace('headers used')
+        const response = await fetch("/api/trip");
 
         if (!response.ok) {
           throw new Error(response.statusText || "Failed to fetch trips");
@@ -39,8 +34,12 @@ export default function OverviewCard() {
 
         const data = await response.json();
         console.log("Fetched trip data:", data);
-        //const tripsData = Array.isArray(data.trips) ? data.trips : Array.isArray(data) ? data : [];
-        setTrips(data.trips || data);
+        const tripsData = Array.isArray(data.trips)
+          ? data.trips
+          : Array.isArray(data)
+            ? data
+            : [];
+        setTrips(tripsData);
       } catch (err) {
         console.error("Error fetching trips:", err);
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
@@ -48,7 +47,6 @@ export default function OverviewCard() {
         setIsLoading(false);
       }
     };
-
     fetchTrips();
   }, []);
 
