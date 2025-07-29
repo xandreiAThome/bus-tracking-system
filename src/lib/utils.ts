@@ -213,15 +213,24 @@ export function generateSeatNumbers(capacity: number): string[] {
   return seats;
 }
 
+function isPrismaClientKnownRequestError(err: any): err is Prisma.PrismaClientKnownRequestError {
+  return (
+    err &&
+    typeof err === "object" &&
+    "code" in err &&
+    typeof err.code === "string" &&
+    (err.name === "PrismaClientKnownRequestError" || err.name === "PrismaClientRustPanicError") // optional
+  );
+}
 export function parseError(err: unknown): {
   status: number;
   message: string;
 } {
   console.log(err)
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+  if (isPrismaClientKnownRequestError(err)) {
     switch (err.code) {
-      case "p2000":
-        return { status: 409, message: "Invalid input"};
+      case "P2000":
+        return { status: 400, message: "Input for column/s too long"};
       case "P2002":
         return { status: 409, message: "Duplicate entry" };
       case "P2001":

@@ -7,19 +7,28 @@ GET http://localhost:3000/api/bus/2/seatcount
 Accept: application/json
 
 ### GET seats by bus
-GET http://localhost:3000/api/bus/1/seats
+GET http://localhost:3000/api/bus/5/seats
 Accept: application/json
 
 ### GET seats by bus
-GET http://localhost:3000/api/bus/1/seats?sortOrder=DESC
+GET http://localhost:3000/api/bus/5/seats?sortOrder=DESC
 Accept: application/json
+
+### UPDATE bus
+DELETE http://localhost:3000/api/bus/5
+Accept: application/json
+
+{
+  "capacity": 32,
+  "plate_number": "223223323233"
+}
 
 ### GET seats by bus
 GET http://localhost:3000/api/bus/2/seats
 Accept: application/json
 
 ### GET seats by bus
-GET http://localhost:3000/api/bus/3/seats
+GET http://localhost:3000/api/bus/3
 Accept: application/json
 
 ###
