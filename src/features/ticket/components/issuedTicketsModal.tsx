@@ -47,7 +47,7 @@ export default function IssuedTicketsModal({
       onIssueTicket();
     } else {
       // Default behavior if no handler provided
-      window.location.href = `/ticket/${tripId || ''}`;
+      window.location.href = `/ticket/${tripId || ""}`;
     }
     setOpenDrawer(false);
   };
@@ -57,13 +57,13 @@ export default function IssuedTicketsModal({
       <DrawerContent className="w-full sm:w-[90%] mx-auto p-5 max-h-[90vh]">
         <DrawerHeader className="border-b border-gray-300 px-0">
           <DrawerTitle className="font-extrabold text-[#456A3B] text-center">
-            Issued Tickets{tripId ? ` (Trip #${tripId})` : ''}
+            Issued Tickets{tripId ? ` (Trip #${tripId})` : ""}
           </DrawerTitle>
         </DrawerHeader>
-        
+
         <div className="flex flex-col gap-4 mt-5 px-1 overflow-y-auto">
           {tickets.length > 0 ? (
-            tickets.map((ticket) => (
+            tickets.map(ticket => (
               <TicketCard
                 key={`${ticket.ticketNo}-${ticket.seat}`}
                 seat={ticket.seat}
@@ -81,7 +81,7 @@ export default function IssuedTicketsModal({
         </div>
 
         <div className="mt-6 sticky bottom-0 bg-background pt-4 pb-2">
-          <Button 
+          <Button
             onClick={handleIssueTicket}
             className="h-12 w-full sm:w-[70%] mx-auto bg-[#71AC61] hover:bg-[#456A3B] font-bold text-lg rounded-lg"
             size="lg"

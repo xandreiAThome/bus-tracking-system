@@ -8,6 +8,8 @@ import StationTab from "@/features/admin/components/stationTab";
 export default async function AdminDashboard() {
   const session = await auth();
 
+  console.log(session?.user);
+
   if (session?.user?.role !== "admin") {
     redirect("/unauthorized");
   }

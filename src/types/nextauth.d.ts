@@ -9,10 +9,12 @@ declare module "next-auth" {
       email?: string | null;
       image?: string | null;
       role?: "user" | "admin" | "driver" | "cashier" | null; // Add your custom role field here
+      user_id?: number | null;
     };
   }
 
   interface User extends DefaultUser {
     role?: string; // Add your custom role field here
+    user_id?: number;
   }
 }

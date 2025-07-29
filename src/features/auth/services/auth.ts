@@ -76,10 +76,13 @@ const authConfig = {
         // Query Prisma for the user's role
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email },
-          select: { role: true },
         });
-        if (dbUser?.role) {
+
+        if (dbUser?.role && dbUser?.id) {
           token.role = dbUser.role;
+        }
+        if (dbUser?.id) {
+          token.user_id = dbUser.id;
         }
       }
       return token;
@@ -95,6 +98,10 @@ const authConfig = {
           | "admin"
           | "driver"
           | "cashier";
+      }
+
+      if (typeof token.user_id === "number") {
+        session.user.user_id = token.user_id as number;
       }
       return session;
     },

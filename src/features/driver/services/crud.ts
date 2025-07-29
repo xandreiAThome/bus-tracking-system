@@ -1,4 +1,5 @@
 import pool from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 
@@ -188,5 +189,21 @@ export async function deleteDriver(id: number) {
   } catch (err: any) {
     console.error("DB Error:", err);
     return catchDBError(err);
+  }
+}
+
+export async function getDriverByUserId(userId: number) {
+  try {
+    const driver = await prisma.driver.findFirst({
+      where: { user_id: userId },
+      include: {
+        user: true, // include user details if needed
+      },
+    });
+
+    return driver;
+  } catch (error) {
+    console.error("Error fetching driver by user ID:", error);
+    throw new Error("Failed to fetch driver by user ID.");
   }
 }
