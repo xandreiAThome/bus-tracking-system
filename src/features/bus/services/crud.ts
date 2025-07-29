@@ -92,7 +92,7 @@ export async function addBus(
 
       return { busId: bus.id, seatsCreated: seats.count, seats: seatsData};
     });
-    return { busId: result.busId, seatsCreated: result.seatsCreated, seats: result.seats };
+    return { bus_id: result.busId, seats_created: result.seatsCreated, seats: result.seats };
   } catch (error) {
     throw error
   }
