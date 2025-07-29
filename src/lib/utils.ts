@@ -219,7 +219,7 @@ export function generateSeatNumbers(capacity: number): string[] {
   return seats;
 }
 
-export function parsePrismaError(err: unknown): {
+export function parseError(err: unknown): {
   status: number;
   message: string;
 } {
