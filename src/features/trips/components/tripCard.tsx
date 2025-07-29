@@ -34,13 +34,13 @@ interface TripCardProps {
   onStatusChange?: (newStatus: string) => void; // Callback for status updates
 }
 
-export default function TripCard({ 
-  tripId, 
-  route, 
-  time, 
+export default function TripCard({
+  tripId,
+  route,
+  time,
   driver,
   status: propStatus = "boarding",
-  onStatusChange
+  onStatusChange,
 }: TripCardProps) {
   const [localStatus, setLocalStatus] = useState(propStatus);
   const [openDrawer, setOpenDrawer] = useState(false);
@@ -62,14 +62,12 @@ export default function TripCard({
         {/* Route and Time */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-[#456A3B]">
-              {route}
-            </span>
+            <span className="font-semibold text-[#456A3B]">{route}</span>
             <span className="text-sm text-gray-600">{time}</span>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button 
+              <button
                 aria-label="Trip options"
                 className="p-1 rounded hover:bg-gray-100"
               >
@@ -114,7 +112,9 @@ export default function TripCard({
         </div>
 
         {/* Driver Info */}
-        <div className="text-[#456A3B] text-sm">{driver} : {tripId}</div>
+        <div className="text-[#456A3B] text-sm">
+          {driver} : {tripId}
+        </div>
 
         {/* Action Buttons */}
         <div className="flex items-end justify-between">
@@ -124,21 +124,21 @@ export default function TripCard({
                 <Map className="h-5 w-5" />
               </button>
             </Link>
-            <EditTripModal 
+            <EditTripModal
               tripId={tripId}
               onSuccess={() => {
                 // Optional: refresh trip data
               }}
             />
           </div>
-          
+
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-1">
               <span className="font-bold">15/40</span>
               <SquareArrowOutUpRight className="h-4 w-4" />
             </div>
             <Link href={`/ticket/${tripId}`} passHref>
-              <Button 
+              <Button
                 className="bg-[#456A3B] hover:bg-[#32442D] font-semibold"
                 aria-label="Issue ticket"
               >

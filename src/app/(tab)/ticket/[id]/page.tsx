@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import SeatButton from "@/features/ticket/components/SeatButton";
 import { useEffect, useState } from "react";
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 
 interface Station {
   id: number;
@@ -45,7 +45,7 @@ const Page = () => {
   const [price, setPrice] = useState("");
   const [selectedType, setSelectedType] = useState("passenger");
   const [selectedCashier, setSelectedCashier] = useState("");
-  
+
   // Passenger state
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [selectedStanding, setSelectedStanding] = useState<string | null>(null);
@@ -66,43 +66,45 @@ const Page = () => {
   const dummyCashiers = [
     { id: 1, name: "JJ1" },
     { id: 2, name: "JJ2" },
-    { id: 3, name: "JJ3" }
+    { id: 3, name: "JJ3" },
   ];
 
-  const leftSeats = Array.from({ length: 12 }, (_, i) => i + 1); 
+  const leftSeats = Array.from({ length: 12 }, (_, i) => i + 1);
   const rightSeats = Array.from({ length: 12 }, (_, i) => i + 13);
   const backSeats = Array.from({ length: 5 }, (_, i) => i + 25);
 
   useEffect(() => {
     const fetchTrip = async () => {
       if (!params.id) return;
-      
+
       setIsLoading(true);
       try {
         const response = await fetch(`/api/trip/${params.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch trip');
+          throw new Error("Failed to fetch trip");
         }
         const data = await response.json();
 
         setTrip(data.trip);
-        
+
         // 2. After getting trip, fetch stations for display
-        const stationsResponse = await fetch('/api/station');
+        const stationsResponse = await fetch("/api/station");
         const stationsData = await stationsResponse.json();
         setStations(stationsData.stations || stationsData);
-        
+
         // 3. Then fetch seats using the bus_id from the trip
         if (data.trip.bus_id) {
-          const seatsResponse = await fetch(`/api/bus/${data.trip.bus_id}/seats`);
+          const seatsResponse = await fetch(
+            `/api/bus/${data.trip.bus_id}/seats`
+          );
           const seatsData = await seatsResponse.json();
 
-          console.log(seatsData)
+          console.log(seatsData);
 
           setSeats(seatsData.seats || seatsData);
-          
+
           const unavailable = (seatsData.seats || seatsData)
-            .filter((seat: Seat) => seat.status === 'occupied')
+            .filter((seat: Seat) => seat.status === "occupied")
             .map((seat: Seat) => seat.id);
           setUnavailableSeats(unavailable);
         }
@@ -114,17 +116,18 @@ const Page = () => {
     };
 
     fetchTrip();
-    
   }, []);
 
   const getSeatIdByNumber = (seatNumber: number): number | null => {
-    const seat = seats.find(s => parseInt(s.seat_number.replace(/\D/g, '')) === seatNumber);
+    const seat = seats.find(
+      s => parseInt(s.seat_number.replace(/\D/g, "")) === seatNumber
+    );
     return seat?.id || null;
   };
 
   const getSeatNumberById = (seatId: number): number | null => {
     const seat = seats.find(s => s.id === seatId);
-    return seat ? parseInt(seat.seat_number.replace(/\D/g, '')) : null;
+    return seat ? parseInt(seat.seat_number.replace(/\D/g, "")) : null;
   };
 
   const handleSeatSelect = (seatNumber: number) => {
@@ -134,42 +137,42 @@ const Page = () => {
 
   const formatTripDisplay = (trip: Trip) => {
     if (!trip || !stations.length) return "Loading trip...";
-    
+
     const srcStation = stations.find(s => s.id === trip.src_station_id);
     const destStation = stations.find(s => s.id === trip.dest_station_id);
-  
+
     const time = new Date(trip.start_time).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
-  
-    return `${srcStation?.name || 'Unknown'} → ${destStation?.name || 'Unknown'} • ${time}`;
+
+    return `${srcStation?.name || "Unknown"} → ${destStation?.name || "Unknown"} • ${time}`;
   };
 
   const handleBaggageSubmit = () => {
     if (!trip) return;
-    
+
     const payload = {
       price,
-      trip_id: trip.id, 
+      trip_id: trip.id,
       cashier_id: Number(selectedCashier),
       ticket_type: "baggage",
       sender_no: senderNo,
       dispatcher_no: dispatcherNo,
       sender_name: senderName,
       receiver_name: receiverName,
-      item
+      item,
     };
 
-    fetch('/api/ticket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    fetch("/api/ticket", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     })
-    .then(response => response.json())
-    .then(data => alert("Baggage Ticket successfully created"))
-    .catch(error => console.error("Error:", error));
+      .then(response => response.json())
+      .then(data => alert("Baggage Ticket successfully created"))
+      .catch(error => console.error("Error:", error));
   };
 
   const handlePassengerSubmit = async () => {
@@ -177,9 +180,9 @@ const Page = () => {
       alert("Please select a seat first");
       return;
     }
-  
+
     const seatNumber = getSeatNumberById(selectedSeat);
-    
+
     const payload = {
       price,
       trip_id: trip.id,
@@ -187,51 +190,67 @@ const Page = () => {
       ticket_type: "passenger",
       passenger_name: "John Doe",
       seat_id: selectedSeat,
-      seat_number: seatNumber?.toString()
+      seat_number: seatNumber?.toString(),
     };
-  
+
     try {
-      const ticketResponse = await fetch('/api/ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const ticketResponse = await fetch("/api/ticket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-  
+
       const ticketData = await ticketResponse.json();
-  
+
       if (!ticketResponse.ok) {
         throw new Error(ticketData.message || "Failed to create ticket");
       }
-  
+
       const seatResponse = await fetch(`/api/seat/${selectedSeat}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: "occupied" })
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "occupied" }),
       });
-  
+
       const seatData = await seatResponse.json();
-  
+
       if (!seatResponse.ok) {
-        throw new Error(seatData.message || "Ticket created but failed to update seat status");
+        throw new Error(
+          seatData.message || "Ticket created but failed to update seat status"
+        );
       }
-  
+
       setUnavailableSeats(prev => [...prev, selectedSeat]);
       setSelectedSeat(null);
-      
+
       alert("Passenger Ticket successfully created");
     } catch (error) {
       console.error("Error:", error);
-      alert(error instanceof Error ? error.message : "An error occurred while creating ticket");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "An error occurred while creating ticket"
+      );
     }
   };
 
   const getStationName = (stationId: number): string => {
     const station = stations.find(s => s.id === stationId);
-    return station?.name || 'Unknown Station';
+    return station?.name || "Unknown Station";
   };
 
-  if (isLoading) return <div className="min-h-screen bg-[#71AC61] flex items-center justify-center">Loading...</div>;
-  if (!trip) return <div className="min-h-screen bg-[#71AC61] flex items-center justify-center">Trip not found</div>;
+  if (isLoading)
+    return (
+      <div className="min-h-screen bg-[#71AC61] flex items-center justify-center">
+        Loading...
+      </div>
+    );
+  if (!trip)
+    return (
+      <div className="min-h-screen bg-[#71AC61] flex items-center justify-center">
+        Trip not found
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
@@ -257,9 +276,11 @@ const Page = () => {
         <TabsContent value="passenger" className="space-y-4 mt-4">
           <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
             <div className="flex gap-3 mb-2">
-              <div className="w-full"> 
-                <label className="text-sm font-medium mb-1 block">Cashier</label>
-                <Select 
+              <div className="w-full">
+                <label className="text-sm font-medium mb-1 block">
+                  Cashier
+                </label>
+                <Select
                   value={selectedCashier}
                   onValueChange={setSelectedCashier}
                 >
@@ -267,8 +288,11 @@ const Page = () => {
                     <SelectValue placeholder="Select cashier" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dummyCashiers.map((cashier) => (
-                      <SelectItem key={cashier.id} value={cashier.id.toString()}>
+                    {dummyCashiers.map(cashier => (
+                      <SelectItem
+                        key={cashier.id}
+                        value={cashier.id.toString()}
+                      >
                         {cashier.name}
                       </SelectItem>
                     ))}
@@ -298,7 +322,9 @@ const Page = () => {
                     {selectedSeat === null ? (
                       <span className="text-gray-600">Standing</span>
                     ) : (
-                      <span className="text-green-600">Seat {getSeatNumberById(selectedSeat)}</span>
+                      <span className="text-green-600">
+                        Seat {getSeatNumberById(selectedSeat)}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -306,37 +332,47 @@ const Page = () => {
 
               <div className="relative">
                 <div className="p-6 border rounded bg-gray-50">
-                  <div className="text-center text-xs font-medium mb-4 text-gray-600">AMOEC TRANSPORT</div>
+                  <div className="text-center text-xs font-medium mb-4 text-gray-600">
+                    AMOEC TRANSPORT
+                  </div>
 
                   <div className="w-full flex flex-col justify-center items-center">
                     <div className="grid grid-cols-2 gap-12 justify-center mb-5">
                       <div className="grid grid-cols-2 gap-4">
-                        {leftSeats.map((seatNumber) => {
+                        {leftSeats.map(seatNumber => {
                           const seatId = getSeatIdByNumber(seatNumber);
-                          const isUnavailable = seatId ? unavailableSeats.includes(seatId) : false;
+                          const isUnavailable = seatId
+                            ? unavailableSeats.includes(seatId)
+                            : false;
                           return (
                             <SeatButton
                               key={seatNumber}
                               seatNumber={seatNumber}
                               isSelected={selectedSeat === seatId}
                               isUnavailable={isUnavailable}
-                              onSeatSelect={() => !isUnavailable && handleSeatSelect(seatNumber)}
+                              onSeatSelect={() =>
+                                !isUnavailable && handleSeatSelect(seatNumber)
+                              }
                             />
                           );
                         })}
                       </div>
-                      
+
                       <div className="grid grid-cols-2 gap-4">
-                        {rightSeats.map((seatNumber) => {
+                        {rightSeats.map(seatNumber => {
                           const seatId = getSeatIdByNumber(seatNumber);
-                          const isUnavailable = seatId ? unavailableSeats.includes(seatId) : false;
+                          const isUnavailable = seatId
+                            ? unavailableSeats.includes(seatId)
+                            : false;
                           return (
                             <SeatButton
                               key={seatNumber}
                               seatNumber={seatNumber}
                               isSelected={selectedSeat === seatId}
                               isUnavailable={isUnavailable}
-                              onSeatSelect={() => !isUnavailable && handleSeatSelect(seatNumber)}
+                              onSeatSelect={() =>
+                                !isUnavailable && handleSeatSelect(seatNumber)
+                              }
                             />
                           );
                         })}
@@ -344,23 +380,29 @@ const Page = () => {
                     </div>
 
                     <div className="grid grid-cols-5 gap-2 justify-center pt-4 border-t">
-                      {backSeats.map((seatNumber) => {
+                      {backSeats.map(seatNumber => {
                         const seatId = getSeatIdByNumber(seatNumber);
-                        const isUnavailable = seatId ? unavailableSeats.includes(seatId) : false;
+                        const isUnavailable = seatId
+                          ? unavailableSeats.includes(seatId)
+                          : false;
                         return (
                           <SeatButton
                             key={seatNumber}
                             seatNumber={seatNumber}
                             isSelected={selectedSeat === seatId}
                             isUnavailable={isUnavailable}
-                            onSeatSelect={() => !isUnavailable && handleSeatSelect(seatNumber)}
+                            onSeatSelect={() =>
+                              !isUnavailable && handleSeatSelect(seatNumber)
+                            }
                           />
                         );
                       })}
                     </div>
                   </div>
 
-                  <div className="text-center text-xs mt-4 text-gray-600">ALLEN - CATARMAN & V.V</div>
+                  <div className="text-center text-xs mt-4 text-gray-600">
+                    ALLEN - CATARMAN & V.V
+                  </div>
                 </div>
 
                 {selectedSeat === null && (
@@ -370,19 +412,31 @@ const Page = () => {
 
               <div className="text-center mt-2">
                 <button
-                  onClick={() => setSelectedSeat(selectedSeat === null ? getSeatIdByNumber(1) || null : null)}
+                  onClick={() =>
+                    setSelectedSeat(
+                      selectedSeat === null
+                        ? getSeatIdByNumber(1) || null
+                        : null
+                    )
+                  }
                   className={`w-full border border-solid text-sm font-medium rounded-md p-1 ${
-                    selectedSeat === null ? "bg-[#71AC61] text-white border-gray-400" : "border-[#456A3B]"
+                    selectedSeat === null
+                      ? "bg-[#71AC61] text-white border-gray-400"
+                      : "border-[#456A3B]"
                   }`}
                 >
                   Standing
                 </button>
 
                 <div className="flex justify-center gap-2 mt-2">
-                  {["Student", "Senior", "PWD"].map((type) => (
+                  {["Student", "Senior", "PWD"].map(type => (
                     <button
                       key={type}
-                      onClick={() => setSelectedStanding(selectedStanding === type ? null : type)}
+                      onClick={() =>
+                        setSelectedStanding(
+                          selectedStanding === type ? null : type
+                        )
+                      }
                       className={`px-3 py-1 text-xs rounded border w-full ${
                         selectedStanding === type
                           ? "bg-[#71AC61] text-white border-green-500"
@@ -423,9 +477,11 @@ const Page = () => {
         <TabsContent value="baggage" className="space-y-4 mt-4">
           <div className="p-4 bg-white border rounded-sm w-[400px] sm:w-[500px] md:w-[700px] lg:w-[800px]">
             <div className="flex gap-3">
-              <div className="w-full"> 
-                <label className="text-sm font-medium mb-1 block">Cashier</label>
-                <Select 
+              <div className="w-full">
+                <label className="text-sm font-medium mb-1 block">
+                  Cashier
+                </label>
+                <Select
                   value={selectedCashier}
                   onValueChange={setSelectedCashier}
                 >
@@ -433,8 +489,11 @@ const Page = () => {
                     <SelectValue placeholder="Select cashier" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dummyCashiers.map((cashier) => (
-                      <SelectItem key={cashier.id} value={cashier.id.toString()}>
+                    {dummyCashiers.map(cashier => (
+                      <SelectItem
+                        key={cashier.id}
+                        value={cashier.id.toString()}
+                      >
                         {cashier.name}
                       </SelectItem>
                     ))}
@@ -448,20 +507,20 @@ const Page = () => {
                 <label className="text-sm font-medium mb-1 block">
                   Sender no.
                 </label>
-                <Input 
-                  placeholder="Sender number" 
+                <Input
+                  placeholder="Sender number"
                   value={senderNo}
-                  onChange={(e) => setSenderNo(e.target.value)}
+                  onChange={e => setSenderNo(e.target.value)}
                 />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">
                   Dispatcher no.
                 </label>
-                <Input 
-                  placeholder="Dispatcher number" 
+                <Input
+                  placeholder="Dispatcher number"
                   value={dispatcherNo}
-                  onChange={(e) => setDispatcherNo(e.target.value)}
+                  onChange={e => setDispatcherNo(e.target.value)}
                 />
               </div>
             </div>
@@ -469,30 +528,30 @@ const Page = () => {
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Sender</label>
-                <Input 
-                  placeholder="Sender name" 
+                <Input
+                  placeholder="Sender name"
                   value={senderName}
-                  onChange={(e) => setSenderName(e.target.value)}
+                  onChange={e => setSenderName(e.target.value)}
                 />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">
                   Receiver
                 </label>
-                <Input 
-                  placeholder="Receiver name" 
+                <Input
+                  placeholder="Receiver name"
                   value={receiverName}
-                  onChange={(e) => setReceiverName(e.target.value)}
+                  onChange={e => setReceiverName(e.target.value)}
                 />
               </div>
             </div>
 
             <div className="mt-4">
               <label className="text-sm font-medium mb-1 block">Item</label>
-              <Input 
-                placeholder="Item description" 
+              <Input
+                placeholder="Item description"
                 value={item}
-                onChange={(e) => setItem(e.target.value)}
+                onChange={e => setItem(e.target.value)}
               />
             </div>
 
@@ -522,7 +581,7 @@ const Page = () => {
         </TabsContent>
       </Tabs>
 
-      <Button 
+      <Button
         className="w-[400px] mt-6 bg-green-800 font-bold cursor-pointer hover:bg-green-600 text-white"
         onClick={() => {
           if (selectedType === "baggage") {

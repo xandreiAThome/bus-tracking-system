@@ -37,6 +37,8 @@ export default function GPSBroadcastClient({
   const watchIdRef = useRef<number | null>(null);
   const broadcastIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isManuallyStoppedRef = useRef<boolean>(false);
+  // Track if disconnect was manual to prevent unwanted reconnects
+  const isManualDisconnectRef = useRef<boolean>(false);
   const currentLocationRef = useRef<{
     latitude: number;
     longitude: number;
@@ -58,14 +60,17 @@ export default function GPSBroadcastClient({
   const userId = `driver_${userEmail.split("@")[0]}`;
 
   useEffect(() => {
-    // Auto-connect when component mounts
     connect();
-
+    setHasTriedInitialConnect(true);
     return () => {
       stopBroadcasting(true);
+      if (reconnectionTimeoutRef.current)
+        clearTimeout(reconnectionTimeoutRef.current);
+      console.log("disconnecting from ws");
+      isManualDisconnectRef.current = true;
       disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -262,6 +267,11 @@ export default function GPSBroadcastClient({
 
   // Try to reconnect with exponential backoff
   const tryReconnect = useCallback(() => {
+    // Prevent reconnect if manual disconnect
+    if (isManualDisconnectRef.current) {
+      console.log("Manual disconnect detected, not reconnecting.");
+      return;
+    }
     if (reconnectionAttempts >= maxReconnectionAttempts) {
       setReconnectionFailed(true);
       return;
@@ -281,19 +291,9 @@ export default function GPSBroadcastClient({
       clearTimeout(reconnectionTimeoutRef.current);
       reconnectionTimeoutRef.current = null;
     }
+    isManualDisconnectRef.current = false;
     connect();
   }, [connect]);
-
-  // On mount, try to connect
-  useEffect(() => {
-    connect();
-    setHasTriedInitialConnect(true);
-    return () => {
-      if (reconnectionTimeoutRef.current)
-        clearTimeout(reconnectionTimeoutRef.current);
-    };
-    // eslint-disable-next-line
-  }, []);
 
   // Watch for connection loss or failed initial connect
   useEffect(() => {
@@ -301,7 +301,8 @@ export default function GPSBroadcastClient({
       !connected &&
       hasTriedInitialConnect &&
       !connecting &&
-      !reconnectionFailed
+      !reconnectionFailed &&
+      !isManualDisconnectRef.current
     ) {
       if (reconnectionAttempts < maxReconnectionAttempts) {
         tryReconnect();
@@ -312,8 +313,9 @@ export default function GPSBroadcastClient({
     if (connected) {
       setReconnectionAttempts(0);
       setReconnectionFailed(false);
+      // Reset manual disconnect flag on successful connect
+      isManualDisconnectRef.current = false;
     }
-    // eslint-disable-next-line
   }, [
     connected,
     connecting,

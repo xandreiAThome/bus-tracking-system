@@ -34,7 +34,11 @@ export async function POST(req: Request) {
       );
     }
 
-    if (typeof capacity !== 'number' || !Number.isInteger(capacity) || capacity <= 0) {
+    if (
+      typeof capacity !== "number" ||
+      !Number.isInteger(capacity) ||
+      capacity <= 0
+    ) {
       return Response.json(
         { message: "Capacity must be a positive integer" },
         { status: 400 }
@@ -48,12 +52,8 @@ export async function POST(req: Request) {
     );
 
     return response;
-
   } catch (error) {
     console.error("API Route Error:", error);
-    return Response.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    return Response.json({ message: "Internal server error" }, { status: 500 });
   }
 }

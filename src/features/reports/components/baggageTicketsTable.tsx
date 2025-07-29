@@ -10,6 +10,9 @@ import {
 } from "@/components/ui/table";
 import { AggregatedTicketType } from "@/features/ticket/types/types";
 import { AggregatedTripType } from "@/features/trips/types/types";
+import { useRef } from "react";
+import { Download } from "lucide-react";
+import { useDownloadExcel } from "react-export-table-to-excel";
 
 interface BaggageTicketsTableProps {
   tickets: AggregatedTicketType[] | undefined;
@@ -20,6 +23,13 @@ export function BaggageTicketsTable({
   tickets,
   selectedTrip,
 }: BaggageTicketsTableProps) {
+  const tableRef = useRef<HTMLTableElement>(null);
+  const { onDownload } = useDownloadExcel({
+    currentTableRef: tableRef.current,
+    filename: `BaggageTickets_${selectedTrip?.src_station?.name || ""}_${selectedTrip?.dest_station?.name || ""}`,
+    sheet: "BaggageTickets",
+  });
+
   if (tickets === undefined) {
     return (
       <div className="flex flex-col items-center justify-center py-8">
@@ -32,14 +42,23 @@ export function BaggageTicketsTable({
   }
   return (
     <Card className="border-green-400">
-      <CardHeader className="bg-green-50 rounded-t-lg">
+      <CardHeader className="bg-green-50 rounded-t-lg flex flex-row justify-between items-center">
         <CardTitle className="text-green-700">
           Baggage Tickets for Trip {selectedTrip?.src_station.name} {"->"}{" "}
-          {selectedTrip?.dest_station.name}
+          {selectedTrip?.dest_station.name}{" "}
+          {selectedTrip?.start_time
+            ? new Date(selectedTrip.start_time).toLocaleString()
+            : ""}
         </CardTitle>
+        <button
+          onClick={onDownload}
+          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded flex items-center gap-2"
+        >
+          <Download size={18} /> Export to Excel
+        </button>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table ref={tableRef}>
           <TableHeader>
             <TableRow>
               <TableHead>Ticket ID</TableHead>

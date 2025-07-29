@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface SeatButtonProps {
   seatNumber: number;
@@ -7,7 +7,12 @@ interface SeatButtonProps {
   onSeatSelect: (seatNumber: number) => void;
 }
 
-const SeatButton = ({ seatNumber, isSelected, isUnavailable, onSeatSelect }: SeatButtonProps) => {
+const SeatButton = ({
+  seatNumber,
+  isSelected,
+  isUnavailable,
+  onSeatSelect,
+}: SeatButtonProps) => {
   return (
     <button
       onClick={() => onSeatSelect(seatNumber)}
