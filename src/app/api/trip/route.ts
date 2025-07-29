@@ -29,6 +29,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const trips = await getAllTrips();
+
     return NextResponse.json(trips);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {

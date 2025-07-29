@@ -7,37 +7,32 @@ import { AggregatedTripType } from "../types/types";
  * Fields Are Aggregated
  */
 export async function getAllTrips() {
-  try {
-    const trips = await prisma.trip.findMany({
-      include: {
-        bus: {
-          include: {
-            station: true,
-          },
+  const trips = await prisma.trip.findMany({
+    include: {
+      bus: {
+        include: {
+          station: true,
         },
-        driver: true,
-        station_trip_dest_station_idTostation: true,
-        station_trip_src_station_idTostation: true,
       },
-    });
-    if (trips.length === 0) {
-      return Response.json({ message: "No available trips" }, { status: 404 });
-    }
-    const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
-      id: trip.id,
-      start_time: trip.start_time,
-      end_time: trip.end_time,
-      status: trip.status,
-      dest_station: trip.station_trip_dest_station_idTostation,
-      src_station: trip.station_trip_src_station_idTostation,
-      bus: trip.bus,
-      driver: trip.driver,
-    }));
-    return Response.json({ mappedTrips }, { status: 200 });
-  } catch (err) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+      driver: true,
+      station_trip_dest_station_idTostation: true,
+      station_trip_src_station_idTostation: true,
+    },
+  });
+  const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
+    id: trip.id,
+    start_time: trip.start_time,
+    end_time: trip.end_time,
+    status: trip.status,
+    dest_station: trip.station_trip_dest_station_idTostation,
+    src_station: trip.station_trip_src_station_idTostation,
+    bus: trip.bus,
+    driver: trip.driver,
+  }));
+  if (mappedTrips.length === 0) {
+    return Response.json({ message: "No available trips" }, { status: 404 });
   }
+  return mappedTrips;
 }
 
 /**
