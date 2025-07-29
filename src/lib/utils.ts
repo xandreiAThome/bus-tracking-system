@@ -26,23 +26,17 @@ export function extractParamAsString(
 /**
  * Validates the ID parameter of a route.
  * @param idParam is the id parameter
- * @returns A valid integer number if id is valid, else a Response with Error
+ * @returns A true if Id is valid, false otherwise
  */
-export function validateIdParam(idParam: string | null): number | Response {
+export function validateIdParam(idParam: string | null): boolean {
   if (idParam === null) {
-    return Response.json(
-      { message: "Missing required parameter: id" },
-      { status: 400 }
-    );
+    return false;
   }
   const userIdNum = Number(idParam);
-  if (!Number.isInteger(userIdNum)) {
-    return Response.json(
-      { message: "Invalid input: id is invalid" },
-      { status: 400 }
-    );
+  if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+    return false;
   }
-  return userIdNum;
+  return true;
 }
 
 /**
