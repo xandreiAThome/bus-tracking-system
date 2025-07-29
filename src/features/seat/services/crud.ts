@@ -70,7 +70,7 @@ export async function deleteSeat(id: number) {
 export async function getSeatCountByBus(bus_id: number) {
   try {
     const seatCount = await prisma.seat.count({ where: { bus_id } });
-    return {bus_id: bus_id, seatCount};
+    return {bus_id: bus_id, seat_count: seatCount};
   } catch (error) {
     throw error;
   }
