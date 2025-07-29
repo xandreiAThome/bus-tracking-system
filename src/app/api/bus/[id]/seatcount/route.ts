@@ -1,5 +1,6 @@
-import { validateIdParam } from "@/lib/utils";
+import { validateIdParam, parseError } from "@/lib/utils";
 import { getSeatCountByBus } from "@features/seat/services/crud";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/bus/[id]/seatcount
@@ -21,13 +22,19 @@ import { getSeatCountByBus } from "@features/seat/services/crud";
  * @returns {Response} 500 - For internal server errors.
  */
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getSeatCountByBus(id);
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+  }
+  try {
+    const result = await getSeatCountByBus(Number(id));
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({message}, {status});
   }
 }

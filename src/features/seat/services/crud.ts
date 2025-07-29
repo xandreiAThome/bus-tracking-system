@@ -70,13 +70,9 @@ export async function deleteSeat(id: number) {
 export async function getSeatCountByBus(bus_id: number) {
   try {
     const seatCount = await prisma.seat.count({ where: { bus_id } });
-    return Response.json(
-      { bus_id, seat_count: `${seatCount}` },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return {bus_id: bus_id, seatCount};
+  } catch (error) {
+    throw error;
   }
 }
 
@@ -86,10 +82,9 @@ export async function getSeatsByBus(bus_id: number, order: "asc" | "desc") {
       where: { bus_id },
       orderBy: { seat_number: order },
     });
-    return Response.json({ bus_id, seats }, { status: 200 });
-  } catch (err: any) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return {bus_id: bus_id, seats}
+  } catch (error) {
+    throw error
   }
 }
 
