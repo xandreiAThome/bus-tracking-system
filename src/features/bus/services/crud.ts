@@ -1,27 +1,20 @@
 import pool from "@/lib/db";
 import { catchDBError } from "@/lib/utils";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+import { prisma } from "@/lib/prisma"
 
 /**
  * Get all buses from the database.
  */
 export async function getAllBuses() {
   try {
-    const conn = await pool.getConnection();
-    try {
-      const [buses] = await conn.query<RowDataPacket[]>("SELECT * FROM bus");
-
-      if (!buses || buses.length === 0) {
-        return Response.json({ message: "No buses found" }, { status: 404 });
-      }
-
-      return Response.json({ buses }, { status: 200 });
-    } finally {
-      conn.release();
+    const buses = await prisma.bus.findMany();
+    if (!buses || buses.length === 0) {
+      throw new Error("Failed to create bus")
     }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
+    return buses
+  } catch (error) {
+    throw error;
   }
 }
 
@@ -67,74 +60,43 @@ export async function addBus(
   station_id: number,
   capacity: number
 ) {
-  let conn;
   try {
-    conn = await pool.getConnection();
-    await conn.beginTransaction();
-
-    try {
-      const [busResult] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO bus (plate_number, station_id, capacity) VALUES (?, ?, ?)",
-        [plate_number, station_id, capacity]
-      );
-
-      if (busResult.affectedRows === 0) {
-        await conn.rollback();
-        return Response.json(
-          { message: "Failed to create bus" },
-          { status: 500 }
-        );
-      }
-
-      const busId = busResult.insertId;
-
-      const seatValues = [];
-      for (let i = 1; i <= capacity; i++) {
-        seatValues.push([
-          `S${i.toString().padStart(2, "0")}`,
-          busId,
-          "available",
-        ]);
-      }
-
-      const [seatResult] = await conn.query<ResultSetHeader>(
-        "INSERT INTO seat (seat_number, bus_id, status) VALUES ?",
-        [seatValues]
-      );
-
-      if (seatResult.affectedRows !== capacity) {
-        await conn.rollback();
-        return Response.json(
-          { message: "Failed to create all seats" },
-          { status: 500 }
-        );
-      }
-
-      await conn.commit();
-      return Response.json(
-        {
-          message: "Bus created successfully with seats",
-          busId,
-          seatsCreated: seatResult.affectedRows,
+    const result = await prisma.$transaction(async (tx) => {
+      // Create bus
+      const bus = await tx.bus.create({
+        data: {
+          plate_number,
+          station_id,
+          capacity,
         },
-        { status: 201 }
-      );
-    } catch (innerErr) {
-      await conn.rollback();
-      console.error("Transaction Error:", innerErr);
-      return Response.json(
-        { message: "Failed to create bus and seats" },
-        { status: 500 }
-      );
-    }
-  } catch (err: any) {
-    console.error("DB Connection Error:", err);
-    return catchDBError(err);
-  } finally {
-    if (conn) conn.release();
+      });
+
+      // Prepare seat data
+      const seatsData = [];
+      for (let i = 1; i <= capacity; i++) {
+        seatsData.push({
+          seat_number: `S${i.toString().padStart(2, "0")}`,
+          bus_id: bus.id,
+        });
+      }
+
+      // Bulk create seats
+      const seats = await tx.seat.createMany({
+        data: seatsData,
+      });
+
+      // seats.count is the number of rows created
+      if (seats.count !== capacity) {
+        throw new Error("Failed to create all seats");
+      }
+
+      return { busId: bus.id, seatsCreated: seats.count, seats: seatsData};
+    });
+    return { busId: result.busId, seatsCreated: result.seatsCreated, seats: result.seats };
+  } catch (error) {
+    throw error
   }
 }
-
 /**
  * Update an existing bus.
  * @param id - Bus ID

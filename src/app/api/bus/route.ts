@@ -2,6 +2,8 @@
 
 import { getAllBuses } from "@/features/bus/services/crud";
 import { addBus } from "@/features/bus/services/crud";
+import { parsePrismaError } from "@/lib/utils"
+import { NextResponse, NextRequest } from 'next/server';
 
 /**
  * GET /api/bus
@@ -9,7 +11,16 @@ import { addBus } from "@/features/bus/services/crud";
  * Returns all buses in the system.
  */
 export async function GET() {
-  return getAllBuses();
+  try {
+    const buses = await getAllBuses();
+    if (!buses) {
+      return NextResponse.json({ message: "No buses found" }, { status: 404 });
+    }
+    return NextResponse.json({ buses }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parsePrismaError(error);
+    return NextResponse.json({message}, {status});
+  }
 }
 
 /**
@@ -23,7 +34,7 @@ export async function GET() {
  *   capacity: number
  * }
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { plate_number, station_id, capacity } = await req.json();
 
@@ -51,9 +62,9 @@ export async function POST(req: Request) {
       Number(capacity)
     );
 
-    return response;
+    return NextResponse.json(response, {status: 201});
   } catch (error) {
-    console.error("API Route Error:", error);
-    return Response.json({ message: "Internal server error" }, { status: 500 });
+    const { status, message } = parsePrismaError(error);
+    return NextResponse.json({message}, {status});
   }
 }

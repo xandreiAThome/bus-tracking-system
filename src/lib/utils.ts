@@ -223,6 +223,7 @@ export function parsePrismaError(err: unknown): {
   status: number;
   message: string;
 } {
+  console.log(err)
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     switch (err.code) {
       case "p2000":
@@ -237,6 +238,8 @@ export function parsePrismaError(err: unknown): {
       case "2011":
         return { status: 400, message: "Missing required fields" };
     }
+  } else if (err instanceof Error) {
+    return { status: 500, message: err.message || "Internal Server Error" };
   }
   return { status: 500, message: 'Internal Server Error' };
 }
