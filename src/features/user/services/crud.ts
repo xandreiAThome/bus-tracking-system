@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
+import { UserType } from "../types/types";
 
 export async function deleteUser(id: number) {
   try {
@@ -18,7 +19,7 @@ export async function updateUserRole(id: number, role: string) {
   try {
     const updated = await prisma.user.update({
       where: { id },
-      data: { role },
+      data: { role: role as UserType["role"] }, // cast to enum
     });
     return Response.json(
       { message: "User updated successfully", updated },

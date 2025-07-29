@@ -8,9 +8,9 @@ import {
 // DELETE /api/user/[id] - delete user by id
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam(params.id);
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
   return deleteUser(id);
 }
@@ -18,9 +18,9 @@ export async function DELETE(
 // PATCH /api/user/[id] - edit user by id
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam(params.id);
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
   const body = await req.json();
   const { role } = body;
@@ -37,9 +37,9 @@ export async function PATCH(
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam(params.id);
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
   return getUser(id);
 }

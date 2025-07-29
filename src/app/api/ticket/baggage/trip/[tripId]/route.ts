@@ -3,10 +3,10 @@ import { getBaggageTicketsByTripId } from "@/features/ticket/services/crud";
 
 export async function GET(
   _: NextRequest,
-  context: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
-    const tripId = parseInt(context.params.tripId);
+    const tripId = parseInt((await params).tripId);
 
     if (isNaN(tripId)) {
       return NextResponse.json({ error: "Invalid trip ID" }, { status: 400 });

@@ -29,9 +29,10 @@ import { getStationByName } from "@features/station/services/crud";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { name: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const name = decodeURIComponent(params.name || "").trim();
+  const paramName = (await params).id;
+  const name = decodeURIComponent(paramName || "").trim();
 
   if (!name) {
     return Response.json({ message: "Missing station name" }, { status: 400 });

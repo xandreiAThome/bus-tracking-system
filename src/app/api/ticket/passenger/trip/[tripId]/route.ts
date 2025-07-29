@@ -4,10 +4,10 @@ import { validateIdParam } from "@/lib/utils";
 
 export async function GET(
   _: NextRequest,
-  context: { params: { tripId: string } }
+  { params }: { params: Promise<{ tripId: string }> }
 ) {
   try {
-    const tripId = validateIdParam(context.params.tripId);
+    const tripId = validateIdParam((await params).tripId);
     if (tripId instanceof Response) {
       // If validateIdParam returns a Response, wrap it in NextResponse
       return NextResponse.json(await tripId.json(), { status: tripId.status });
