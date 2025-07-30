@@ -10,32 +10,32 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "first_name": "Test",
-  "last_name": "Driver",
+  "first_name": "Test2",
+  "last_name": "Driver2",
   "user_id": 1
 }
 
 ###
 
 # Get a driver by ID
-GET http://localhost:3000/api/driver/1
+GET http://localhost:3000/api/driver/7
 Accept: application/json
 
 ###
 
 # Update a driver by ID (partial update)
-PATCH http://localhost:3000/api/driver/1
+PATCH http://localhost:3000/api/driver/7
 Content-Type: application/json
 Accept: application/json
 
 {
-  "first_name": "Updated"
+  "first_name": "Xandrei"
 }
 
 ###
 
 # Delete a driver by ID
-DELETE http://localhost:3000/api/driver/1
+DELETE http://localhost:3000/api/driver/8
 Accept: application/json
 
 ###

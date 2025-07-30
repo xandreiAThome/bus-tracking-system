@@ -1,7 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
-import { ErrorBoundary } from "next/dist/client/components/error-boundary";
-
 /**
  * Get a single cashier by ID
  */
@@ -12,9 +9,8 @@ export async function getCashier(id: number) {
       return null
     }
     return cashier;
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+  } catch (error) {
+    throw error
   }
 }
 
