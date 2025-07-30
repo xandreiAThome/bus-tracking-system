@@ -1,7 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import {
   Select,
   SelectContent,
@@ -21,25 +21,29 @@ import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal"
 import EditTripModal from "./EditTrip";
 import { AggregatedTripType } from "../types/types";
 
-export default function TripCard(props: AggregatedTripType) {
+interface TripCardProps {
+  trip: AggregatedTripType;
+  onSuccessEdit: () => void;
+}
+
+export default function TripCard({ trip, onSuccessEdit }: TripCardProps) {
   const [status, setStatus] = useState<"boarding" | "transit" | "complete">(
-    props.status ?? "boarding"
+    trip.status ?? "boarding"
   );
-  const [openDrawer, setOpenDrawer] = useState(false);
   const [loading, setLoading] = useState({
     status: false,
   });
 
-  console.log(props.id, props.start_time);
+  console.log(trip.id, trip.start_time);
 
   // Extract data from props (assuming props now includes the relations)
-  const { src_station, dest_station, driver, bus } = props;
+  const { src_station, dest_station, driver, bus } = trip;
 
   async function handleStatusChange(newStatus: string) {
     try {
       setLoading(prev => ({ ...prev, status: true }));
 
-      const response = await fetch(`/api/trip/${props.id}`, {
+      const response = await fetch(`/api/trip/${trip.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -88,7 +92,7 @@ export default function TripCard(props: AggregatedTripType) {
                 {src_station?.name || "Unknown"} →{" "}
                 {dest_station?.name || "Unknown"}
               </span>
-              <span>{formatTime(props.start_time)}</span>
+              <span>{formatTime(trip.start_time)}</span>
             </div>
 
             {/* Right Side: Ellipsis Button */}
@@ -98,10 +102,10 @@ export default function TripCard(props: AggregatedTripType) {
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem
-                  onSelect={() => setOpenDrawer(true)}
                   className="w-full justify-center"
+                  onSelect={e => e.preventDefault()}
                 >
-                  Issued Tickets
+                  <IssuedTicketsModal tripId={trip.id} />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -110,7 +114,8 @@ export default function TripCard(props: AggregatedTripType) {
         <div className="text-[#456A3B]">
           {driver
             ? `${driver.first_name} ${driver.last_name}`
-            : "Driver unknown"}
+            : "Driver unknown"}{" "}
+          | {bus.plate_number}
         </div>
         <div>
           <Select
@@ -138,18 +143,13 @@ export default function TripCard(props: AggregatedTripType) {
         </div>
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
-          <div className="flex gap-2">
-            <Link href={`/map/${props.id}`} aria-label="View on map">
+          <div className="flex gap-2 items-center">
+            <Link href={`/map/${trip.bus.id}`} aria-label="View on map">
               <button className="p-1 rounded hover:bg-gray-100">
                 <Map className="h-5 w-5" />
               </button>
             </Link>
-            <EditTripModal
-              tripId={props.id}
-              onSuccess={() => {
-                // Optional: refresh trip data
-              }}
-            />
+            <EditTripModal trip={trip} onSuccess={onSuccessEdit} />
           </div>
 
           {/* Right Side:  */}
@@ -160,23 +160,15 @@ export default function TripCard(props: AggregatedTripType) {
                 <SquareArrowOutUpRight />
               </span>
             </div>
-            <Link href={`/ticket/${props.id}`} passHref>
-              <Button
-                className="bg-[#456A3B] hover:bg-[#32442D] font-semibold"
-                aria-label="Issue ticket"
-              >
-                Issue Ticket
-              </Button>
+            <Link
+              className="bg-green-600 text-white py-1 px-2 rounded-lg font-bold "
+              href={`/ticket/${trip.id}`}
+            >
+              Issue Ticket
             </Link>
           </div>
         </div>
       </Card>
-
-      <IssuedTicketsModal
-        openDrawer={openDrawer}
-        setOpenDrawer={setOpenDrawer}
-        tripId={props.id}
-      />
     </div>
   );
 }

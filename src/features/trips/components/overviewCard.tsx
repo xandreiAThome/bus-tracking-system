@@ -10,27 +10,28 @@ export default function OverviewCard() {
   const [trips, setTrips] = useState<AggregatedTripType[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchTrips = async () => {
-      try {
-        const response = await fetch("/api/trip");
-        if (!response.ok) {
-          throw new Error(response.statusText || "Failed to fetch trips");
-        }
-        const data = await response.json();
-
-        const tripsData = data.data || data.mappedTrips || [];
-        console.log(tripsData);
-        setTrips(tripsData);
-      } catch (err) {
-        console.error("Error fetching trips:", err);
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
-      } finally {
-        setIsLoading(false);
+  const fetchTrips = async () => {
+    try {
+      const response = await fetch(`/api/trip/daily`);
+      if (!response.ok) {
+        throw new Error(response.statusText || "Failed to fetch trips");
       }
-    };
+      const data = await response.json();
+      console.log(data);
+
+      const tripsData = Array.isArray(data.trips) ? data.trips : [];
+      console.log(tripsData);
+      setTrips(tripsData);
+    } catch (err) {
+      console.error("Error fetching trips:", err);
+      setError(
+        err instanceof Error ? err.message : "An unknown error occurred"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchTrips();
   }, []);
 
@@ -57,24 +58,21 @@ export default function OverviewCard() {
             <div className="text-center py-8 text-gray-500">No trips found</div>
           ) : (
             <div className="flex flex-col overflow-y-auto gap-y-4">
-              {trips.map(trip => (
-                <TripCard
-                  key={trip.id} // ✅ add key prop
-                  id={trip.id} // ✅ use actual trip.id
-                  start_time={trip.start_time}
-                  end_time={trip.end_time}
-                  dest_station={trip.dest_station}
-                  src_station={trip.src_station}
-                  bus={trip.bus}
-                  driver={trip.driver}
-                  status={trip.status}
-                />
-              ))}
+              {trips.map(trip => {
+                if (trip.status !== "complete")
+                  return (
+                    <TripCard
+                      key={trip.id} // ✅ add key prop
+                      onSuccessEdit={fetchTrips}
+                      trip={trip}
+                    />
+                  );
+              })}
             </div>
           )}
         </CardContent>
         <div className="flex mt-4 justify-center">
-          <CreateTripModal />
+          <CreateTripModal onTripCreated={fetchTrips} />
         </div>
       </Card>
     </div>

@@ -4,47 +4,53 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "@/components/ui/drawer";
 import PassengerCard from "@features/ticket/components/passengerCard";
 import BaggageCard from "@features/ticket/components/baggageCard";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AggregatedTicketType } from "../types/types";
+import { useEffect, useState } from "react";
 
 interface IssuedTicketsModalProps {
-  openDrawer: boolean;
-  setOpenDrawer: Dispatch<SetStateAction<boolean>>;
-  tripId?: number; // Added tripId prop
-  onIssueTicket?: () => void; // Callback for issue ticket action
+  tripId?: number; // Added tripId pro
 }
 
 export default function IssuedTicketsModal({
-  openDrawer,
-  setOpenDrawer,
   tripId,
-  onIssueTicket,
 }: IssuedTicketsModalProps) {
-  const handleIssueTicket = () => {
-    if (onIssueTicket) {
-      onIssueTicket();
-    } else {
-      // Default behavior if no handler provided
-      window.location.href = `/ticket/${tripId || ""}`;
-    }
-    setOpenDrawer(false);
-  };
-
   const [passengerTickets, setPassengerTickets] = useState<
     AggregatedTicketType[]
   >([]);
+  const [baggageTickets, setBaggageTickets] = useState<AggregatedTicketType[]>(
+    []
+  );
 
   useEffect(() => {
-    fetch("/api/ticket/byTrip");
-  }, []);
+    if (!open || !tripId) return;
+    // Fetch passenger tickets
+    fetch(`/api/ticket/passenger/trip/${tripId}`)
+      .then(res => res.json())
+      .then(data => {
+        setPassengerTickets(Array.isArray(data.tickets) ? data.tickets : []);
+      })
+      .catch(() => setPassengerTickets([]));
+
+    // Fetch baggage tickets
+    fetch(`/api/ticket/baggage/trip/${tripId}`)
+      .then(res => res.json())
+      .then(data => {
+        setBaggageTickets(Array.isArray(data.tickets) ? data.tickets : []);
+      })
+      .catch(() => setBaggageTickets([]));
+  }, [tripId, open]);
 
   return (
-    <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
-      <DrawerContent className="w-[80%] mx-auto">
+    <Drawer>
+      <DrawerTrigger asChild>
+        <Button>Issued Tickets</Button>
+      </DrawerTrigger>
+      <DrawerContent className="mx-auto max-w-4xl">
         <DrawerHeader className="border-b border-gray-300">
           <DrawerTitle className="font-extrabold text-[#456A3B]">
             Issued Tickets
@@ -71,24 +77,9 @@ export default function IssuedTicketsModal({
               className="max-h-[60vh] min-h-[60vh] overflow-auto "
             >
               <div className="flex flex-col gap-y-4">
-                {passenger.map((pass, index) => (
-                  <PassengerCard
-                    key={index}
-                    id={pass.id}
-                    price={pass.price}
-                    trip={pass.trip_id}
-                    cashier={pass.cashier_id}
-                    type={pass.ticket_type}
-                    arr={index}
-                  ></PassengerCard>
+                {passengerTickets.map((pass: AggregatedTicketType) => (
+                  <PassengerCard key={pass.id} ticket={pass} />
                 ))}
-              </div>
-              <div className="mt-4 sticky bottom-0 bg-white py">
-                <div className="flex justify-center">
-                  <Button className="h-max w-[70%] bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-                    Issue Ticket
-                  </Button>
-                </div>
               </div>
             </TabsContent>
             <TabsContent
@@ -96,33 +87,11 @@ export default function IssuedTicketsModal({
               className="max-h-[60vh] min-h-[60vh] overflow-auto "
             >
               <div className="flex flex-col gap-y-4">
-                {baggage.map((bag, index) => (
-                  <BaggageCard
-                    key={index}
-                    num={index + 1}
-                    id={bag.id}
-                    price={bag.price}
-                    trip={bag.trip_id}
-                    cashier={bag.cashier}
-                    type={bag.ticket_type}
-                  ></BaggageCard>
+                {baggageTickets.map((bag: AggregatedTicketType) => (
+                  <BaggageCard key={bag.id} ticket={bag} />
                 ))}
               </div>
-              <div className="mt-4 sticky bottom-0 bg-white">
-                <div className="flex justify-center">
-                  <Button className="h-max w-[70%] bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-                    Issue Ticket
-                  </Button>
-                </div>
-              </div>
             </TabsContent>
-          </div>
-          <div className="mt-4 bottom-0">
-            <div className="flex justify-center">
-              <Button className="h-max w-[70%] bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
-                Issue Ticket
-              </Button>
-            </div>
           </div>
         </Tabs>
       </DrawerContent>
