@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { catchDBError } from "@/lib/utils";
+import { ErrorBoundary } from "next/dist/client/components/error-boundary";
 
 /**
  * Get a single cashier by ID
@@ -22,14 +23,10 @@ export async function getCashier(id: number) {
  */
 export async function deleteCashier(id: number) {
   try {
-    await prisma.cashier.delete({ where: { id } });
-    return Response.json(
-      { message: "Cashier deleted successfully" },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    const deleted = await prisma.cashier.delete({ where: { id } });
+    return deleted
+  } catch (error) {
+    throw error
   }
 }
 
@@ -50,13 +47,9 @@ export async function editCashier(
       where: { id },
       data,
     });
-    return Response.json(
-      { message: "Cashier updated successfully", updated },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return updated
+  } catch (error) {
+    throw error
   }
 }
 
@@ -67,12 +60,11 @@ export async function getAllCashiers() {
   try {
     const cashiers = await prisma.cashier.findMany();
     if (!cashiers.length) {
-      return Response.json({ message: "No cashiers found" }, { status: 404 });
+      return null
     }
-    return Response.json({ cashiers }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return cashiers
+  } catch (error) {
+    throw error
   }
 }
 
@@ -94,12 +86,8 @@ export async function addCashier(
         station_id,
       },
     });
-    return Response.json(
-      { message: "Cashier created successfully", created },
-      { status: 201 }
-    );
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return created
+  } catch (error) {
+    throw error
   }
 }
