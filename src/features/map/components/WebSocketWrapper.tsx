@@ -45,7 +45,7 @@ export default function WebSocketWrapper({ busId }: { busId: string }) {
           <CardHeader>
             <CardTitle>Bus {busId} Location Map</CardTitle>
           </CardHeader>
-          <CardContent className="p-1 sm:p-6">
+          <CardContent className="p-0 sm:p-6">
             <MapComponent
               locations={locationUpdates}
               // TEMPORARY CENTERED LOCATION

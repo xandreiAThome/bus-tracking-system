@@ -9,8 +9,19 @@ import {
   TableCell,
   Table,
 } from "@/components/ui/table";
-
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
+import { toast, Toaster } from "sonner";
 
 type Station = {
   id: number;
@@ -25,6 +36,7 @@ export default function StationTab() {
   const [newStation, setNewStation] = useState({ name: "" });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editStation, setEditStation] = useState({ name: "" });
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const fetchStations = () => {
     setLoading(true);
@@ -58,8 +70,19 @@ export default function StationTab() {
   };
 
   const handleDelete = async (id: number) => {
-    await fetch(`/api/station/${id}`, { method: "DELETE" });
-    fetchStations();
+    try {
+      const res = await fetch(`/api/station/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error("Failed to delete station");
+        throw new Error("Delete Failed");
+      }
+      fetchStations();
+      toast.success("Deleted station succesfully");
+
+      setDeleteId(null);
+    } catch {
+      toast.error("Failed to delete station");
+    }
   };
 
   const handleEdit = (station: Station) => {
@@ -68,14 +91,23 @@ export default function StationTab() {
   };
 
   const handleEditSave = async (id: number) => {
-    await fetch(`/api/station/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editStation.name }),
-    });
-    setEditingId(null);
-    setEditStation({ name: "" });
-    fetchStations();
+    try {
+      const res = await fetch(`/api/station/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editStation.name }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to update station");
+        throw new Error("PATCH failed");
+      }
+      toast.success("Updated station succesfully");
+      setEditingId(null);
+      setEditStation({ name: "" });
+      fetchStations();
+    } catch {
+      toast.error("Failed to update station");
+    }
   };
 
   return (
@@ -132,12 +164,40 @@ export default function StationTab() {
                       >
                         Edit
                       </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleDelete(station.id)}
-                      >
-                        Delete
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            onClick={() => setDeleteId(station.id)}
+                          >
+                            Delete
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Bus</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this bus? This
+                              action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel
+                              onClick={() => setDeleteId(null)}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() =>
+                                deleteId !== null && handleDelete(deleteId)
+                              }
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </>
                 )}
@@ -157,6 +217,7 @@ export default function StationTab() {
           {adding ? "Adding..." : "Add Station"}
         </Button>
       </div>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }
