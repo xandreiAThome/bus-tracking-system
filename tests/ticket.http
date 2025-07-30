@@ -98,3 +98,6 @@ GET http://localhost:3000/api/ticket/passenger
 
 ###
 GET http://localhost:3000/api/ticket/baggage
+
+###
+GET http://localhost:3000/api/trip/1/tickets

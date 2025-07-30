@@ -429,3 +429,22 @@ export const getBaggageTicketsByTripId = async (tripId: number) => {
     throw new Error("Failed to retrieve baggage tickets.");
   }
 };
+
+export async function getTicketsByTrip(tripId: number) {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      where: {
+        trip_id: tripId
+      },
+      include: {
+        baggage_ticket: true,
+        passenger_ticket: true,
+        cashier: true
+      }
+    })
+    return tickets;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
