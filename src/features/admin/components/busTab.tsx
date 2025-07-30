@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/table";
 
 import { useEffect, useState } from "react";
+import { toast, Toaster } from "sonner";
 
 type Bus = {
   id: number;
@@ -100,9 +101,18 @@ export default function BusesTab() {
 
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const handleDelete = async (id: number) => {
-    await fetch(`/api/bus/${id}`, { method: "DELETE" });
-    setDeleteId(null);
-    fetchBuses();
+    try {
+      const res = await fetch(`/api/bus/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        throw new Error("Delete failed");
+        toast.error("Failed to delete bus");
+      }
+      toast.success("Bus deleted successfully");
+      setDeleteId(null);
+      fetchBuses();
+    } catch {
+      toast.error("Failed to delete bus");
+    }
   };
 
   const handleEdit = (bus: Bus) => {
@@ -116,14 +126,26 @@ export default function BusesTab() {
 
   const handleEditSave = async (id: number) => {
     if (editBus.capacity === "" || isNaN(Number(editBus.capacity))) return;
-    await fetch(`/api/bus/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...editBus, capacity: Number(editBus.capacity) }),
-    });
-    setEditingId(null);
-    setEditBus({ plate_number: "", station_id: -1, capacity: "" });
-    fetchBuses();
+    try {
+      const res = await fetch(`/api/bus/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...editBus,
+          capacity: Number(editBus.capacity),
+        }),
+      });
+      if (!res.ok) {
+        toast.error("Failed to update bus");
+        throw new Error("Save failed");
+      }
+      toast.success("Bus updated successfully");
+      setEditingId(null);
+      setEditBus({ plate_number: "", station_id: -1, capacity: "" });
+      fetchBuses();
+    } catch {
+      toast.error("Failed to update bus");
+    }
   };
 
   return (
@@ -304,6 +326,7 @@ export default function BusesTab() {
           {adding ? "Adding..." : "Add Bus"}
         </Button>
       </div>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }

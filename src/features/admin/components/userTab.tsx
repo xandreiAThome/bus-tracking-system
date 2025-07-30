@@ -53,6 +53,7 @@ export default function UserTab() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
     fetch("/api/user")
       .then(res => res.json())
       .then(data => setUsers(data.users || []));
@@ -61,7 +62,10 @@ export default function UserTab() {
       .then(data => setCashiers(data.cashiers || []));
     fetch("/api/station")
       .then(res => res.json())
-      .then(data => setStations(data.stations || []));
+      .then(data => {
+        setStations(data.stations || []);
+        setLoading(false);
+      });
   }, []);
 
   const handleRoleChange = (userId: number, newRole: string) => {
@@ -203,112 +207,117 @@ export default function UserTab() {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-2">Manage User Roles</h2>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Station</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user: User) => {
-            const edit = editState[user.id] || { role: user.role };
-            // Find cashier record for this user
-            const cashier = cashiers.find(c => c.user_id === user.id);
-            return (
-              <TableRow key={user.id}>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Select
-                    value={edit.role}
-                    onValueChange={val => handleRoleChange(user.id, val)}
-                  >
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue className="text-left" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">user</SelectItem>
-                      <SelectItem value="admin">admin</SelectItem>
-                      <SelectItem value="cashier">cashier</SelectItem>
-                      <SelectItem value="driver">driver</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  {edit.role === "cashier" ? (
+      {loading ? (
+        <div>Loading Users...</div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Station</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {users.map((user: User) => {
+              const edit = editState[user.id] || { role: user.role };
+              // Find cashier record for this user
+              const cashier = cashiers.find(c => c.user_id === user.id);
+              return (
+                <TableRow key={user.id}>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
                     <Select
-                      value={
-                        typeof edit.station_id === "number"
-                          ? String(edit.station_id)
-                          : cashier
-                            ? String(cashier.station_id)
-                            : ""
-                      }
-                      onValueChange={val => handleStationChange(user.id, val)}
+                      value={edit.role}
+                      onValueChange={val => handleRoleChange(user.id, val)}
                     >
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Assign station" />
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue className="text-left" />
                       </SelectTrigger>
                       <SelectContent>
-                        {stations.map(station => (
-                          <SelectItem
-                            key={station.id}
-                            value={String(station.id)}
-                          >
-                            {station.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="user">user</SelectItem>
+                        <SelectItem value="admin">admin</SelectItem>
+                        <SelectItem value="cashier">cashier</SelectItem>
+                        <SelectItem value="driver">driver</SelectItem>
                       </SelectContent>
                     </Select>
-                  ) : (
-                    <span className="text-gray-400 italic">N/A</span>
-                  )}
-                </TableCell>
-                <TableCell className="flex gap-2">
-                  <Button onClick={() => handleSave(user)} disabled={loading}>
-                    Save
-                  </Button>
-                  <Dialog
-                    open={deleteId === user.id}
-                    onOpenChange={open => setDeleteId(open ? user.id : null)}
-                  >
-                    <DialogTrigger asChild>
-                      <Button variant="destructive">Delete</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Delete User</DialogTitle>
-                      </DialogHeader>
-                      <p>
-                        Are you sure you want to delete <b>{user.name}</b>?
-                      </p>
-                      <DialogFooter>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setDeleteId(null)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDelete(user.id)}
-                          disabled={loading}
-                        >
-                          Delete
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+                  </TableCell>
+                  <TableCell>
+                    {edit.role === "cashier" ? (
+                      <Select
+                        value={
+                          typeof edit.station_id === "number"
+                            ? String(edit.station_id)
+                            : cashier
+                              ? String(cashier.station_id)
+                              : ""
+                        }
+                        onValueChange={val => handleStationChange(user.id, val)}
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Assign station" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stations.map(station => (
+                            <SelectItem
+                              key={station.id}
+                              value={String(station.id)}
+                            >
+                              {station.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-gray-400 italic">N/A</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="flex gap-2">
+                    <Button onClick={() => handleSave(user)} disabled={loading}>
+                      Save
+                    </Button>
+                    <Dialog
+                      open={deleteId === user.id}
+                      onOpenChange={open => setDeleteId(open ? user.id : null)}
+                    >
+                      <DialogTrigger asChild>
+                        <Button variant="destructive">Delete</Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Delete User</DialogTitle>
+                        </DialogHeader>
+                        <p>
+                          Are you sure you want to delete <b>{user.name}</b>?
+                        </p>
+                        <DialogFooter>
+                          <Button
+                            variant="secondary"
+                            onClick={() => setDeleteId(null)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            onClick={() => handleDelete(user.id)}
+                            disabled={loading}
+                          >
+                            Delete
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      )}
+
       {/* Sonner Toaster for notifications */}
       <Toaster position="top-right" richColors />
     </div>
