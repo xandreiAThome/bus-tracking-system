@@ -1,6 +1,3 @@
-import pool from "@/lib/db";
-import { catchDBError } from "@/lib/utils";
-import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { prisma } from "@/lib/prisma"
 
 /**
