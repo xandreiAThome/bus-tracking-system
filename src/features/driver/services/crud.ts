@@ -32,7 +32,7 @@ export async function getAllDrivers() {
  * Get a specific driver by ID.
  * @param id - Driver ID
  */
-export async function getDriver(id: number) {
+export async function getDriver(id: number): Promise<Response> {
   try {
     const conn = await pool.getConnection();
     try {
@@ -40,22 +40,21 @@ export async function getDriver(id: number) {
         "SELECT * FROM driver WHERE id = ?",
         [id]
       );
-      const driver = drivers[0];
 
-      if (!driver) {
+      if (!drivers || drivers.length === 0) {
         return Response.json(
           { message: `Driver with id ${id} not found` },
           { status: 404 }
         );
       }
 
-      return Response.json({ driver }, { status: 200 });
+      return Response.json({ driver: drivers[0] });
     } finally {
       conn.release();
     }
   } catch (err) {
     console.error("DB Error:", err);
-    return catchDBError(err);
+    return Response.json({ error: "Database error" }, { status: 500 });
   }
 }
 

@@ -18,15 +18,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  // const session = await auth();
 
-  if (!session?.user) {
-    redirect("/");
-  }
+  // if (!session?.user) {
+  //   redirect("/");
+  // }
 
-  if (session?.user?.role === "user") {
-    redirect("/unauthorized");
-  }
+  // if (session?.user?.role === "user") {
+  //   redirect("/unauthorized");
+  // }
 
   return (
     <div className="h-full ">

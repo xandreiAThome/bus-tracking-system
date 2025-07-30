@@ -53,12 +53,14 @@ export function AutoConnect({
   }, [clientInfo]);
 
   useEffect(() => {
+    if (!connected) {
+      initialized.current = false;
+    }
     // Only run initialization once
     if (!initialized.current) {
-      initialized.current = true;
       connect();
+      initialized.current = true;
     }
-
     // Cleanup on unmount
     return () => {
       disconnect();
