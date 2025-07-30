@@ -7,7 +7,7 @@ GET http://localhost:3000/api/bus/2/seatcount
 Accept: application/json
 
 ### GET seats by bus
-GET http://localhost:3000/api/bus/5/seats
+GET http://localhost:3000/api/bus/1/seats
 Accept: application/json
 
 ### GET seats by bus
@@ -24,11 +24,11 @@ Accept: application/json
 }
 
 ### GET seats by bus
-GET http://localhost:3000/api/bus/2/seats
+GET http://localhost:3000/api/bus/1/seats
 Accept: application/json
 
 ### GET seats by bus
-GET http://localhost:3000/api/bus/3
+GET http://localhost:3000/api/bus/1
 Accept: application/json
 
 ###
@@ -45,3 +45,14 @@ Accept: application/json
 
 GET http://localhost:3000/api/bus
 Accept: application/json
+
+### PATCH
+
+PATCH http://localhost:3000/api/bus/1
+Accept: application/json
+
+{
+  "plate_number": "ABC_2222",
+  "station_id": 1,
+  "capacity": 32
+}

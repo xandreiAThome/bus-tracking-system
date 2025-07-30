@@ -1,101 +1,123 @@
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
 
+/**
+ * Get all seats.
+ */
 export async function getAllSeats() {
   try {
     const seats = await prisma.seat.findMany();
-    if (!seats.length) {
-      return Response.json({ message: "No available seats" }, { status: 404 });
-    }
-    return Response.json({ seats }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return seats.length > 0 ? seats : null;
+  } catch (error) {
+    console.error("Error fetching all seats:", error);
+    throw error;
   }
 }
 
+/**
+ * Get a single seat by ID.
+ */
 export async function getSeat(id: number) {
   try {
     const seat = await prisma.seat.findUnique({ where: { id } });
-    if (!seat) {
-      return Response.json(
-        { message: `Seat with id: ${id} not found` },
-        { status: 404 }
-      );
-    }
-    return Response.json({ seat }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+    return seat || null;
+  } catch (error) {
+    console.error(`Error fetching seat with ID ${id}:`, error);
+    throw error;
   }
 }
 
+/**
+ * Create a new seat.
+ */
 export async function addSeat(seat_number: string, bus_id: number) {
   try {
+    // Fetch bus capacity
+    const bus = await prisma.bus.findUnique({
+      where: { id: bus_id },
+      select: { capacity: true },
+    });
+
+    if (!bus) {
+      // Bus doesn't exist
+      throw new Error(`Bus with id ${bus_id} not found`);
+    }
+
+    // Count current seats for this bus
+    const currentSeatCount = await prisma.seat.count({
+      where: { bus_id },
+    });
+
+    // Check if capacity is reached
+    if (currentSeatCount >= bus.capacity) {
+      // Capacity full - don't add seat
+      throw new Error(
+        `Cannot add seat: bus with id ${bus_id} has reached its capacity of ${bus.capacity}`
+      );
+    }
+
+    // Create the seat since capacity allows
     const created = await prisma.seat.create({
       data: {
         seat_number,
         bus_id,
       },
     });
-    return Response.json(
-      { message: "Seat created successfully", created },
-      { status: 201 }
-    );
-  } catch (err: any) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
-}
 
-export async function deleteSeat(id: number) {
-  try {
-    const deleted = await prisma.seat.delete({ where: { id } });
-    return Response.json(
-      { message: `Seat deleted successfully`, id: deleted.id },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    if (err.code === "P2025") {
-      return Response.json(
-        { message: `Seat with id: ${id} not found` },
-        { status: 404 }
-      );
-    }
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
-}
-
-export async function getSeatCountByBus(bus_id: number) {
-  try {
-    const seatCount = await prisma.seat.count({ where: { bus_id } });
-    return {bus_id: bus_id, seat_count: seatCount};
+    return created;
   } catch (error) {
+    console.error("Error creating seat:", error);
     throw error;
   }
 }
 
+/**
+ * Delete a seat by ID.
+ */
+export async function deleteSeat(id: number) {
+  try {
+    const deleted = await prisma.seat.delete({ where: { id } });
+    return deleted;
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      // Not found
+      return null;
+    }
+    console.error(`Error deleting seat with ID ${id}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get the number of seats for a specific bus.
+ */
+export async function getSeatCountByBus(bus_id: number) {
+  try {
+    const count = await prisma.seat.count({ where: { bus_id } });
+    return { bus_id, seat_count: count };
+  } catch (error) {
+    console.error(`Error getting seat count for bus ${bus_id}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Get all seats for a specific bus, ordered.
+ */
 export async function getSeatsByBus(bus_id: number, order: "asc" | "desc") {
   try {
     const seats = await prisma.seat.findMany({
       where: { bus_id },
       orderBy: { seat_number: order },
     });
-    return {bus_id: bus_id, seats}
+    return { bus_id, seats };
   } catch (error) {
-    throw error
+    console.error(`Error fetching seats for bus ${bus_id}:`, error);
+    throw error;
   }
 }
 
 /**
- * Updates a seat in the database
- *
- * @param {number} id - The ID of the seat to update
- * @param {object} updateData - The fields to update
- * @param {string} [updateData.seat_number] - The new seat number (optional)
- * @param {number} [updateData.bus_id] - The new bus ID (optional)
- * @param {string} [updateData.status] - The new status (optional)
+ * Update a seat's properties.
  */
 export async function updateSeat(
   id: number,
@@ -116,29 +138,20 @@ export async function updateSeat(
     if (status !== undefined) updateData.status = status;
 
     if (Object.keys(updateData).length === 0) {
-      return Response.json(
-        { message: "No valid fields to update" },
-        { status: 400 }
-      );
+      return null;
     }
 
-    const updatedSeat = await prisma.seat.update({
+    const updated = await prisma.seat.update({
       where: { id },
       data: updateData,
     });
 
-    return Response.json(
-      { message: "Seat updated successfully", seat: updatedSeat },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    if (err.code === "P2025") {
-      return Response.json(
-        { message: `Seat with id ${id} not found` },
-        { status: 404 }
-      );
+    return updated;
+  } catch (error: any) {
+    if (error.code === "P2025") {
+      return null;
     }
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    console.error(`Error updating seat with ID ${id}:`, error);
+    throw error;
   }
 }

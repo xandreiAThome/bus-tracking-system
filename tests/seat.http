@@ -1,5 +1,5 @@
 ### GET request
-GET http://localhost:3000/api/seat
+GET http://localhost:3000/api/seat/1
 Accept: application/json
 
 ### POST request
@@ -7,7 +7,7 @@ POST http://localhost:3000/api/seat
 Content-Type: application/json
 
 {
-  "seat_number": "142",
+  "seat_number": "1D3",
   "bus_id": 1
 }
 
@@ -51,4 +51,5 @@ Content-Type: application/json
 GET http://localhost:3000/api/seat/2
 
 ### DELETE request
-DELETE http://localhost:3000/api/seat/2
+DELETE http://localhost:3000/api/seat/151
+
