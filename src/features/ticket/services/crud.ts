@@ -19,6 +19,21 @@ export async function getAllTickets() {
   }
 }
 
+export async function getALlTicketsFromTrip(trip_id: number) {
+  try {
+    const tickets = await prisma.ticket.findMany({ where: { trip_id } });
+    if (!tickets || tickets.length === 0) {
+      return Response.json(
+        { message: `No tickets found for trip_id ${trip_id}` },
+        { status: 404 }
+      );
+    }
+    return Response.json({ tickets }, { status: 200 });
+  } catch (err) {
+    return catchDBError(err);
+  }
+}
+
 export async function getTicket(id: number) {
   try {
     const tickets = await prisma.ticket.findUnique({

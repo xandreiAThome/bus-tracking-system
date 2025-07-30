@@ -1,45 +1,27 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
-import TripCard from "./tripCard";
-
-interface Trip {
-  id: number;
-  start_time: string;
-  end_time: string;
-  dest_station_id: number;
-  src_station_id: number;
-  bus_id: number;
-  driver_id: number;
-  status: string | null;
-  driver_name?: string;
-  src_station_name?: string;
-  dest_station_name?: string;
-}
+// import TripCard from "./tripCard";
+import { AggregatedTripType } from "../types/types";
 
 function TripsList() {
   const [isLoading, setIsLoading] = useState(true);
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<AggregatedTripType[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTrips = async () => {
       try {
-        const response = await fetch("/api/trip", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+        const response = await fetch("/api/trip");
 
         if (!response.ok) {
           throw new Error(response.statusText || "Failed to fetch trips");
         }
 
         const data = await response.json();
-        const tripsData = Array.isArray(data.trips)
-          ? data.trips
-          : Array.isArray(data)
-            ? data
-            : [];
+        console.log(data);
+
+        // Handle the API response structure
+        const tripsData = data.data || [];
         setTrips(tripsData);
       } catch (err) {
         console.error("Error fetching trips:", err);
@@ -87,34 +69,11 @@ function TripsList() {
 
   return (
     <div className="flex flex-col overflow-y-auto gap-y-4">
-      {trips.map(trip => (
-        <TripCard
-          key={trip.id}
-          tripId={trip.id}
-          route={
-            trip.src_station_name && trip.dest_station_name
-              ? `${trip.src_station_name} → ${trip.dest_station_name}`
-              : `Station ${trip.src_station_id} → Station ${trip.dest_station_id}`
-          }
-          time={formatTime(trip.start_time)}
-          driver={trip.driver_name || `Driver ID: ${trip.driver_id}`}
-          status={trip.status || "boarding"}
-        />
-      ))}
+      {/* {trips.map(trip => (
+        <TripCard key={trip.id} {...trip} />
+      ))} */}
     </div>
   );
-}
-
-// Helper function to format time
-function formatTime(timeString: string): string {
-  try {
-    return new Date(timeString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return timeString;
-  }
 }
 
 export default TripsList;

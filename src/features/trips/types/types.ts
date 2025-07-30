@@ -6,7 +6,7 @@ interface TripType {
   id: number;
   start_time: Date | null;
   end_time: Date | null;
-  dest: number;
+  dest_station_id: number;
   src_station_id: number;
   bus_id: number;
   driver_id: number;

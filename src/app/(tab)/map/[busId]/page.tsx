@@ -3,8 +3,8 @@ import WebSocketWrapper from "@/features/map/components/WebSocketWrapper";
 export default async function Page({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ busId: string }>;
 }) {
-  const { id: busId } = await params;
+  const { busId: busId } = await params;
   return <WebSocketWrapper busId={busId} />;
 }

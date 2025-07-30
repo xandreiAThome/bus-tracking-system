@@ -34,7 +34,6 @@ export async function getAllTrips() {
   }
   return mappedTrips;
 }
-
 /**
  * Gets a specific trip by ID
  */

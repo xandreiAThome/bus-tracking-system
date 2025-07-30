@@ -16,7 +16,7 @@ export async function GET(
 ) {
   const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
-  return getDriver(id);
+  return await getDriver(id);
 }
 
 /**
