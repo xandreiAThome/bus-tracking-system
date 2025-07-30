@@ -1,11 +1,11 @@
 # Get a cashier by ID
-GET http://localhost:3000/api/cashier/1
+GET http://localhost:3000/api/cashier/8
 Accept: application/json
 
 ###
 
 # Update a cashier by ID (partial update)
-PATCH http://localhost:3000/api/cashier/1
+PATCH http://localhost:3000/api/cashier/8
 Content-Type: application/json
 Accept: application/json
 
@@ -17,7 +17,7 @@ Accept: application/json
 ###
 
 # Delete a cashier by ID
-DELETE http://localhost:3000/api/cashier/2
+DELETE http://localhost:3000/api/cashier/8
 Accept: application/json
 
 ###

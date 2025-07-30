@@ -77,11 +77,13 @@ export async function PATCH(
   const { id } = await params;
   
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 });
   }
   try {
-    const body = await req.json()
-    if (body.length() === 0) {
+    const body = await req.json();
+    const { first_name, last_name, user_id, station_id } = body;
+
+    if (!first_name && !last_name && !user_id && !station_id) {
       return NextResponse.json(
         { message: "At least one field (first_name, last_name, user_id, station_id) must be provided" },
         { status: 400 }

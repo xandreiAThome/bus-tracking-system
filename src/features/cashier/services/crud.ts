@@ -9,9 +9,9 @@ export async function getCashier(id: number) {
   try {
     const cashier = await prisma.cashier.findUnique({ where: { id } });
     if (!cashier) {
-      return Response.json({ message: "Cashier not found" }, { status: 404 });
+      return null
     }
-    return Response.json({ cashier }, { status: 200 });
+    return cashier;
   } catch (err) {
     console.error("Prisma Error:", err);
     return catchDBError(err);
