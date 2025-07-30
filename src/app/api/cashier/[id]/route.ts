@@ -10,9 +10,11 @@ import {
  *
  * Fetches a single cashier by ID.
  */
-export async function GET(req: Request, context: { params: { id: string } }) {
-  const { params } = await Promise.resolve(context);
-  const id = validateIdParam(params.id);
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
   return getCashier(id);
 }
@@ -24,10 +26,9 @@ export async function GET(req: Request, context: { params: { id: string } }) {
  */
 export async function DELETE(
   req: Request,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { params } = await Promise.resolve(context);
-  const id = validateIdParam(params.id);
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
   return deleteCashier(id);
 }
@@ -44,9 +45,11 @@ export async function DELETE(
  *   station_id: number
  * }
  */
-export async function PATCH(req: Request, context: { params: { id: string } }) {
-  const { params } = await Promise.resolve(context);
-  const id = validateIdParam(params.id);
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const id = validateIdParam((await params).id);
   if (id instanceof Response) return id;
 
   try {

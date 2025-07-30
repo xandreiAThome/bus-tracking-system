@@ -32,9 +32,12 @@ import { NextRequest, NextResponse } from "next/server";
  * @returns {Response} 404 Not Found - If no passenger ticket exists for the given ticket ID.
  * @returns {Response} 500 Internal Server Error - For unexpected errors.
  */
-export async function GET(_: NextRequest, context: { params: { id: string } }) {
+export async function GET(
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const id = validateIdParam(context.params.id);
+    const id = validateIdParam((await params).id);
     if (id instanceof Response) {
       // If validateIdParam returns a Response, wrap it in NextResponse
       return NextResponse.json(await id.json(), { status: id.status });
@@ -94,7 +97,7 @@ export async function GET(_: NextRequest, context: { params: { id: string } }) {
  */
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const id = validateIdParam((await params).id);
   if (id instanceof Response) {

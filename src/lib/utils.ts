@@ -1,9 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import {
-  PrismaClientKnownRequestError,
-  PrismaClientValidationError,
-} from "@prisma/client/runtime/library";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,6 +50,7 @@ export function validateIdParam(idParam: string | null): number | Response {
  * @param err is the error
  * @returns An HTTP Error Response
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function catchDBError(err: any) {
   const errorName = err?.constructor?.name;
   console.error("DB Error:", err, err?.constructor?.name);

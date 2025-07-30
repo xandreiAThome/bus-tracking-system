@@ -1,4 +1,4 @@
-import { editTrip } from "@/features/trip/services/crud";
+import { editTrip } from "@/features/trips/services/crud";
 import { validateIdParam } from "@/lib/utils";
 import { deleteTicket, getTicket } from "@features/ticket/services/crud";
 import { NextResponse } from "next/server";
@@ -36,10 +36,10 @@ import { NextResponse } from "next/server";
  */
 export async function GET(
   request: Request,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = validateIdParam(context.params.id);
+    const id = validateIdParam((await params).id);
     if (id instanceof Response) {
       // If validateIdParam returns a Response, wrap it in NextResponse
       return NextResponse.json(await id.json(), { status: id.status });
@@ -94,7 +94,7 @@ export async function GET(
  */
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const id = validateIdParam((await params).id);
   if (id instanceof Response) {
@@ -137,7 +137,7 @@ export async function PATCH(
  */
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const id = validateIdParam((await params).id);
   if (id instanceof Response) {

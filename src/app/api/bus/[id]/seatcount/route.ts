@@ -22,7 +22,7 @@ import { getSeatCountByBus } from "@features/seat/services/crud";
  */
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const id = validateIdParam((await params).id);
   if (id instanceof Response) {
