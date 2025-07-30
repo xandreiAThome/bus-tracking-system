@@ -168,7 +168,7 @@ export default function CreateTripModal({
         </Button>
       </DrawerTrigger>
 
-      <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
+      <DrawerContent className="p-6 max-w-4xl mx-auto flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">
             Create Trip

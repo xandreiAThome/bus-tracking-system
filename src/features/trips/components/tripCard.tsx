@@ -34,8 +34,6 @@ export default function TripCard({ trip, onSuccessEdit }: TripCardProps) {
     status: false,
   });
 
-  console.log(trip.id, trip.start_time);
-
   // Extract data from props (assuming props now includes the relations)
   const { src_station, dest_station, driver, bus } = trip;
 

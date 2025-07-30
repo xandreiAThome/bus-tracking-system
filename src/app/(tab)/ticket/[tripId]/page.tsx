@@ -10,7 +10,8 @@ import { SeatType } from "@/features/seat/types/types";
 import { AggregatedTripType } from "@/features/trips/types/types";
 
 export default function Page() {
-  const params = useParams();
+  const { tripId } = useParams();
+
   const [trip, setTrip] = useState<AggregatedTripType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [price, setPrice] = useState("");
@@ -50,10 +51,10 @@ export default function Page() {
   useEffect(() => {
     let ignore = false;
     async function fetchTripAndSeats() {
-      if (!params?.id) return;
+      if (!tripId) return;
       setIsLoading(true);
       try {
-        const tripRes = await fetch(`/api/trip/${params.id}`);
+        const tripRes = await fetch(`/api/trip/${tripId}`);
         if (!tripRes.ok) throw new Error("Failed to fetch trip");
         const tripData = await tripRes.json();
         const tripObj: AggregatedTripType = {
@@ -90,7 +91,7 @@ export default function Page() {
     return () => {
       ignore = true;
     };
-  }, [params?.id]);
+  }, [tripId]);
 
   const getSeat = (query: { id?: number; number?: number }) => {
     if (query.id !== undefined) {

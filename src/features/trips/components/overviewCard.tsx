@@ -17,10 +17,9 @@ export default function OverviewCard() {
         throw new Error(response.statusText || "Failed to fetch trips");
       }
       const data = await response.json();
-      console.log(data);
 
       const tripsData = Array.isArray(data.trips) ? data.trips : [];
-      console.log(tripsData);
+
       setTrips(tripsData);
     } catch (err) {
       console.error("Error fetching trips:", err);

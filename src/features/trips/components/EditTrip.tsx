@@ -33,7 +33,6 @@ export default function EditTripModal({ trip, onSuccess }: EditTripModalProps) {
   const [drivers, setDrivers] = useState<DriverType[]>([]);
   const [buses, setBuses] = useState<BusType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   // trip is now passed as a prop, do not keep in state
   const [driverId, setDriverId] = useState("");
   const [busId, setBusId] = useState("");
@@ -43,7 +42,6 @@ export default function EditTripModal({ trip, onSuccess }: EditTripModalProps) {
   const [endTime, setEndTime] = useState<Date>(new Date());
 
   useEffect(() => {
-    if (!isOpen) return;
     setIsLoading(true);
     // Set form fields from trip prop
     setDriverId(trip.driver?.id ? String(trip.driver.id) : "");
@@ -59,6 +57,7 @@ export default function EditTripModal({ trip, onSuccess }: EditTripModalProps) {
         const stationsRes = await fetch("/api/station");
         if (!stationsRes.ok) throw new Error("Failed to fetch stations");
         const stationsData = await stationsRes.json();
+        console.log(stationsData + "dahjbwfdhjbawhjf");
         setStations(stationsData.data || stationsData.stations || []);
 
         const driversRes = await fetch("/api/driver");
@@ -78,7 +77,7 @@ export default function EditTripModal({ trip, onSuccess }: EditTripModalProps) {
       }
     };
     fetchData();
-  }, [isOpen, trip]);
+  }, [trip]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +114,6 @@ export default function EditTripModal({ trip, onSuccess }: EditTripModalProps) {
       }
       alert("Trip updated successfully!");
       if (onSuccess) onSuccess();
-      setIsOpen(false);
     } catch (err) {
       console.error("Error updating trip:", err);
       alert(err instanceof Error ? err.message : "Failed to update trip");
@@ -129,7 +127,7 @@ export default function EditTripModal({ trip, onSuccess }: EditTripModalProps) {
           <SquarePen className="h-5 w-5" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="p-6 max-w-3xl mx-auto flex flex-col">
+      <DrawerContent className="p-2 max-w-4xl mx-auto flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">
             Edit Trip
