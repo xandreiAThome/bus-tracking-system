@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import TripCard from "./tripCard";
+// import TripCard from "./tripCard";
 import { AggregatedTripType } from "../types/types";
 
 function TripsList() {
@@ -69,9 +69,9 @@ function TripsList() {
 
   return (
     <div className="flex flex-col overflow-y-auto gap-y-4">
-      {trips.map(trip => (
+      {/* {trips.map(trip => (
         <TripCard key={trip.id} {...trip} />
-      ))}
+      ))} */}
     </div>
   );
 }
