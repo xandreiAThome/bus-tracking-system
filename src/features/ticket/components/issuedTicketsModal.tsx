@@ -9,59 +9,19 @@ import PassengerCard from "@features/ticket/components/passengerCard";
 import BaggageCard from "@features/ticket/components/baggageCard";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-interface Ticket {
-  seat: number;
-  price: number;
-  passenger: string;
-  ticketNo: string;
-  dateTime: string;
-}
+import { AggregatedTicketType } from "../types/types";
 
 interface IssuedTicketsModalProps {
   openDrawer: boolean;
   setOpenDrawer: Dispatch<SetStateAction<boolean>>;
   tripId?: number; // Added tripId prop
-  tickets?: Ticket[]; // Allow passing tickets as prop
   onIssueTicket?: () => void; // Callback for issue ticket action
 }
-
-const defaultTickets: Ticket[] = [
-  {
-    seat: 4,
-    price: 115.0,
-    passenger: "Maria Leonora Theresa",
-    ticketNo: "#3901",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
-  {
-    seat: 5,
-    price: 115.0,
-    passenger: "Astherielle Rafael",
-    ticketNo: "#3902",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
-  {
-    seat: 6,
-    price: 115.0,
-    passenger: "Kidlat Adlawan",
-    ticketNo: "#3903",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
-  {
-    seat: 7,
-    price: 115.0,
-    passenger: "Kidlat Adlawan",
-    ticketNo: "#3904",
-    dateTime: "JUL 24 2025 12:25 PM",
-  },
-];
 
 export default function IssuedTicketsModal({
   openDrawer,
   setOpenDrawer,
   tripId,
-  tickets = defaultTickets,
   onIssueTicket,
 }: IssuedTicketsModalProps) {
   const handleIssueTicket = () => {
@@ -69,10 +29,18 @@ export default function IssuedTicketsModal({
       onIssueTicket();
     } else {
       // Default behavior if no handler provided
-      window.location.href = `/ticket/${tripId || ''}`;
+      window.location.href = `/ticket/${tripId || ""}`;
     }
     setOpenDrawer(false);
   };
+
+  const [passengerTickets, setPassengerTickets] = useState<
+    AggregatedTicketType[]
+  >([]);
+
+  useEffect(() => {
+    fetch("/api/ticket/byTrip");
+  }, []);
 
   return (
     <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>

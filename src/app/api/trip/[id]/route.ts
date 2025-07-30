@@ -112,8 +112,15 @@ export async function PATCH(
     return id;
   }
 
-  const { start_time, end_time, bus_id, src_station, dest_station, driver_id, status } =
-    await req.json();
+  const {
+    start_time,
+    end_time,
+    bus_id,
+    src_station,
+    dest_station,
+    driver_id,
+    status,
+  } = await req.json();
 
   // At least one field must be provided
   if (

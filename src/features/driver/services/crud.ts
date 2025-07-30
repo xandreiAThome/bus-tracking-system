@@ -39,7 +39,7 @@ export async function getDriver(id: number): Promise<Response> {
         "SELECT * FROM driver WHERE id = ?",
         [id]
       );
-      
+
       if (!drivers || drivers.length === 0) {
         return Response.json(
           { message: `Driver with id ${id} not found` },
@@ -53,10 +53,7 @@ export async function getDriver(id: number): Promise<Response> {
     }
   } catch (err) {
     console.error("DB Error:", err);
-    return Response.json(
-      { error: 'Database error' },
-      { status: 500 }
-    );
+    return Response.json({ error: "Database error" }, { status: 500 });
   }
 }
 

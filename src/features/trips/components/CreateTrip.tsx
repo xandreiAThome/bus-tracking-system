@@ -46,13 +46,14 @@ interface CreateTripModalProps {
   onTripCreated?: () => void;
 }
 
-
-export default function CreateTripModal({ onTripCreated }: CreateTripModalProps) {
+export default function CreateTripModal({
+  onTripCreated,
+}: CreateTripModalProps) {
   const [stations, setStations] = useState<Station[]>([]);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     driver: "",
     source: "",
@@ -60,7 +61,7 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
     bus: "",
     hour: "12",
     minute: "00",
-    meridiem: "a.m." as "a.m." | "p.m."
+    meridiem: "a.m." as "a.m." | "p.m.",
   });
 
   const drivers: Driver[] = [
@@ -75,17 +76,17 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
       setIsLoading(true);
       try {
         const [stationsRes, busesRes] = await Promise.all([
-          fetch('/api/station'),
-          fetch('/api/bus')
+          fetch("/api/station"),
+          fetch("/api/bus"),
         ]);
 
         if (!stationsRes.ok || !busesRes.ok) {
-          throw new Error('Failed to fetch data');
+          throw new Error("Failed to fetch data");
         }
 
         const [stationsData, busesData] = await Promise.all([
           stationsRes.json(),
-          busesRes.json()
+          busesRes.json(),
         ]);
 
         setStations(stationsData.stations || stationsData);
@@ -100,24 +101,29 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
     fetchData();
   }, []);
 
-  const handleTimeChange = (type: 'hour' | 'minute', operation: 'increment' | 'decrement') => {
+  const handleTimeChange = (
+    type: "hour" | "minute",
+    operation: "increment" | "decrement"
+  ) => {
     setFormData(prev => {
       const current = parseInt(prev[type]);
       let newValue: number;
 
-      if (type === 'hour') {
-        newValue = operation === 'increment' 
-          ? (current % 12) + 1 
-          : (current - 2 + 12) % 12 + 1;
+      if (type === "hour") {
+        newValue =
+          operation === "increment"
+            ? (current % 12) + 1
+            : ((current - 2 + 12) % 12) + 1;
       } else {
-        newValue = operation === 'increment' 
-          ? (current + 1) % 60 
-          : (current - 1 + 60) % 60;
+        newValue =
+          operation === "increment"
+            ? (current + 1) % 60
+            : (current - 1 + 60) % 60;
       }
 
       return {
         ...prev,
-        [type]: newValue.toString().padStart(2, "0")
+        [type]: newValue.toString().padStart(2, "0"),
       };
     });
   };
@@ -129,16 +135,16 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
     }
   };
 
-  const handleInputBlur = (type: 'hour' | 'minute') => {
+  const handleInputBlur = (type: "hour" | "minute") => {
     setFormData(prev => {
       const num = parseInt(prev[type]);
-      const min = type === 'hour' ? 1 : 0;
-      const max = type === 'hour' ? 12 : 59;
-      
+      const min = type === "hour" ? 1 : 0;
+      const max = type === "hour" ? 12 : 59;
+
       const clamped = Math.max(min, Math.min(max, isNaN(num) ? min : num));
       return {
         ...prev,
-        [type]: clamped.toString().padStart(2, "0")
+        [type]: clamped.toString().padStart(2, "0"),
       };
     });
   };
@@ -147,7 +153,8 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { driver, bus, source, destination, hour, minute, meridiem } = formData;
+    const { driver, bus, source, destination, hour, minute, meridiem } =
+      formData;
 
     if (!driver || !bus || !source || !destination) {
       alert("Please fill in all required fields.");
@@ -178,7 +185,7 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
         bus_id: parseInt(bus),
         src_station: parseInt(source),
         dest_station: parseInt(destination),
-        driver_id: parseInt(driver)
+        driver_id: parseInt(driver),
       };
 
       const res = await fetch("/api/trip", {
@@ -202,7 +209,7 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
         bus: "",
         hour: "12",
         minute: "00",
-        meridiem: "a.m."
+        meridiem: "a.m.",
       });
 
       // Execute callback if provided
@@ -248,11 +255,13 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
           className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1 w-full"
         >
           {/* Driver Selection */}
-          <div >
+          <div>
             <Label>Driver</Label>
-            <Select 
-              value={formData.driver} 
-              onValueChange={value => setFormData(prev => ({ ...prev, driver: value }))}
+            <Select
+              value={formData.driver}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, driver: value }))
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Driver" />
@@ -270,9 +279,11 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
           {/* Source Station */}
           <div>
             <Label>Source Station</Label>
-            <Select 
-              value={formData.source} 
-              onValueChange={value => setFormData(prev => ({ ...prev, source: value }))}
+            <Select
+              value={formData.source}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, source: value }))
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Source" />
@@ -290,9 +301,11 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
           {/* Destination Station */}
           <div>
             <Label>Destination Station</Label>
-            <Select 
-              value={formData.destination} 
-              onValueChange={value => setFormData(prev => ({ ...prev, destination: value }))}
+            <Select
+              value={formData.destination}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, destination: value }))
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Destination" />
@@ -310,9 +323,11 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
           {/* Bus Selection */}
           <div>
             <Label>Bus</Label>
-            <Select 
-              value={formData.bus} 
-              onValueChange={value => setFormData(prev => ({ ...prev, bus: value }))}
+            <Select
+              value={formData.bus}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, bus: value }))
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Bus" />
@@ -333,9 +348,9 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
             <div className="flex items-center gap-2">
               {/* Hour */}
               <div className="flex items-center border rounded">
-                <button 
-                  type="button" 
-                  onClick={() => handleTimeChange('hour', 'decrement')} 
+                <button
+                  type="button"
+                  onClick={() => handleTimeChange("hour", "decrement")}
                   className="px-2 py-1"
                 >
                   -
@@ -344,13 +359,13 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
                   name="hour"
                   value={formData.hour}
                   onChange={handleInputChange}
-                  onBlur={() => handleInputBlur('hour')}
+                  onBlur={() => handleInputBlur("hour")}
                   className="w-10 text-center outline-none"
                   aria-label="Hour"
                 />
-                <button 
-                  type="button" 
-                  onClick={() => handleTimeChange('hour', 'increment')} 
+                <button
+                  type="button"
+                  onClick={() => handleTimeChange("hour", "increment")}
                   className="px-2 py-1"
                 >
                   +
@@ -361,9 +376,9 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
 
               {/* Minute */}
               <div className="flex items-center border rounded">
-                <button 
-                  type="button" 
-                  onClick={() => handleTimeChange('minute', 'decrement')} 
+                <button
+                  type="button"
+                  onClick={() => handleTimeChange("minute", "decrement")}
                   className="px-2 py-1"
                 >
                   -
@@ -372,13 +387,13 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
                   name="minute"
                   value={formData.minute}
                   onChange={handleInputChange}
-                  onBlur={() => handleInputBlur('minute')}
+                  onBlur={() => handleInputBlur("minute")}
                   className="w-10 text-center outline-none"
                   aria-label="Minute"
                 />
-                <button 
-                  type="button" 
-                  onClick={() => handleTimeChange('minute', 'increment')} 
+                <button
+                  type="button"
+                  onClick={() => handleTimeChange("minute", "increment")}
                   className="px-2 py-1"
                 >
                   +
@@ -388,10 +403,12 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
               {/* AM/PM */}
               <select
                 value={formData.meridiem}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  meridiem: e.target.value as "a.m." | "p.m."
-                }))}
+                onChange={e =>
+                  setFormData(prev => ({
+                    ...prev,
+                    meridiem: e.target.value as "a.m." | "p.m.",
+                  }))
+                }
                 className="border rounded px-2 py-1"
               >
                 <option value="a.m.">a.m.</option>
@@ -400,8 +417,8 @@ export default function CreateTripModal({ onTripCreated }: CreateTripModalProps)
             </div>
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
           >
             Create New Trip

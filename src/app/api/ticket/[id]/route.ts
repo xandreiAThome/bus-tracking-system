@@ -106,10 +106,7 @@ export async function PATCH(
     return editTrip(id, body);
   } catch (err) {
     console.error("Error parsing request body:", err);
-    return Response.json(
-      { message: "Invalid request body" },
-      { status: 400 }
-    );
+    return Response.json({ message: "Invalid request body" }, { status: 400 });
   }
 }
 

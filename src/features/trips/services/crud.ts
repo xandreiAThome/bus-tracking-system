@@ -18,10 +18,10 @@ export async function getAllTrips() {
     });
 
     if (trips.length === 0) {
-      return { 
-        success: false, 
-        message: "No available trips", 
-        status: 404 
+      return {
+        success: false,
+        message: "No available trips",
+        status: 404,
       };
     }
 
@@ -36,17 +36,17 @@ export async function getAllTrips() {
       driver: trip.driver,
     }));
 
-    return { 
-      success: true, 
-      data: mappedTrips, 
-      status: 200 
+    return {
+      success: true,
+      data: mappedTrips,
+      status: 200,
     };
   } catch (err) {
     console.error("DB Error:", err);
-    return { 
-      success: false, 
-      error: "Database error", 
-      status: 500 
+    return {
+      success: false,
+      error: "Database error",
+      status: 500,
     };
   }
 }

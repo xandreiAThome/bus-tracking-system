@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,50 +16,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import {
-  AlignJustify,
-  SquareArrowOutUpRight,
-  SquarePen,
-  Map,
-} from "lucide-react";
+import { AlignJustify, SquareArrowOutUpRight, Map } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
-import EditTripModal from './EditTrip';
-import { AggregatedTripType } from '../types/types';
+import EditTripModal from "./EditTrip";
+import { AggregatedTripType } from "../types/types";
 
 export default function TripCard(props: AggregatedTripType) {
-  const [status, setStatus] = useState(props.status || "boarding");
+  const [status, setStatus] = useState<"boarding" | "transit" | "complete">(
+    props.status ?? "boarding"
+  );
   const [openDrawer, setOpenDrawer] = useState(false);
   const [loading, setLoading] = useState({
-    status: false
+    status: false,
   });
 
-  console.log(props.id ,props.start_time)
+  console.log(props.id, props.start_time);
 
   // Extract data from props (assuming props now includes the relations)
-  const { 
-    src_station, 
-    dest_station, 
-    driver,
-    bus
-  } = props;
+  const { src_station, dest_station, driver, bus } = props;
 
   async function handleStatusChange(newStatus: string) {
     try {
       setLoading(prev => ({ ...prev, status: true }));
-      
+
       const response = await fetch(`/api/trip/${props.id}`, {
-        method: 'PATCH',
+        method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ status: newStatus }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update trip status');
+        throw new Error("Failed to update trip status");
       }
 
-      setStatus(newStatus);
+      setStatus(newStatus as "boarding" | "transit" | "complete");
     } catch (error) {
       console.error("Error updating trip status:", error);
     } finally {
@@ -93,7 +85,8 @@ export default function TripCard(props: AggregatedTripType) {
             {/* Left Side: Place and Time */}
             <div className="flex gap-2">
               <span className="font-semibold text-[#456A3B]">
-                {src_station?.name || "Unknown"} → {dest_station?.name || "Unknown"}
+                {src_station?.name || "Unknown"} →{" "}
+                {dest_station?.name || "Unknown"}
               </span>
               <span>{formatTime(props.start_time)}</span>
             </div>
@@ -115,7 +108,9 @@ export default function TripCard(props: AggregatedTripType) {
           </div>
         </div>
         <div className="text-[#456A3B]">
-          {driver ? `${driver.first_name} ${driver.last_name}` : "Driver unknown"}
+          {driver
+            ? `${driver.first_name} ${driver.last_name}`
+            : "Driver unknown"}
         </div>
         <div>
           <Select
@@ -177,22 +172,23 @@ export default function TripCard(props: AggregatedTripType) {
         </div>
       </Card>
 
-      {/* <IssuedTicketsModal
+      <IssuedTicketsModal
         openDrawer={openDrawer}
         setOpenDrawer={setOpenDrawer}
         tripId={props.id}
-      /> */}
+      />
     </div>
   );
 }
 
-function formatTime(timeString: Date): string {
+function formatTime(timeString: Date | null): string {
+  if (!timeString) return "Unknown time";
   try {
     return new Date(timeString).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
     });
   } catch {
-    return timeString.toString();
+    return timeString?.toString() ?? "Unknown time";
   }
 }

@@ -8,7 +8,7 @@ import { AggregatedTripType } from "../types/types";
 export default function OverviewCard() {
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<AggregatedTripType[]>([]);
-  const [error, setError] = useState<string | null>(null); 
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTrips = async () => {
@@ -20,11 +20,13 @@ export default function OverviewCard() {
         const data = await response.json();
 
         const tripsData = data.data || data.mappedTrips || [];
-        console.log(tripsData)
+        console.log(tripsData);
         setTrips(tripsData);
       } catch (err) {
         console.error("Error fetching trips:", err);
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -55,10 +57,10 @@ export default function OverviewCard() {
             <div className="text-center py-8 text-gray-500">No trips found</div>
           ) : (
             <div className="flex flex-col overflow-y-auto gap-y-4">
-              {trips.map((trip) => (
+              {trips.map(trip => (
                 <TripCard
-                  key={trip.id}          // ✅ add key prop
-                  id={trip.id}           // ✅ use actual trip.id
+                  key={trip.id} // ✅ add key prop
+                  id={trip.id} // ✅ use actual trip.id
                   start_time={trip.start_time}
                   end_time={trip.end_time}
                   dest_station={trip.dest_station}

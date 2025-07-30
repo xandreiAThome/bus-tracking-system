@@ -40,7 +40,11 @@ interface Station {
   name: string;
 }
 
-export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripModalProps) {
+export default function EditTripModal({
+  tripId,
+  onSuccess,
+  onClose,
+}: EditTripModalProps) {
   const [stations, setStations] = useState<Station[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [buses, setBuses] = useState<Bus[]>([]);
@@ -51,74 +55,90 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
     driver_id: "",
     bus_id: "",
     src_station_id: "",
-    dest_station_id: ""
+    dest_station_id: "",
   });
 
   const [startTime, setStartTime] = useState({
     hour: "12",
     minute: "00",
-    meridiem: "a.m." as "a.m." | "p.m."
+    meridiem: "a.m." as "a.m." | "p.m.",
   });
 
   const [endTime, setEndTime] = useState({
     hour: "1",
     minute: "00",
-    meridiem: "a.m." as "a.m." | "p.m."
+    meridiem: "a.m." as "a.m." | "p.m.",
   });
 
   // Time handling functions
-  const handleTimeChange = (timeType: 'start' | 'end', field: 'hour' | 'minute', operation: 'increment' | 'decrement') => {
-    const setTime = timeType === 'start' ? setStartTime : setEndTime;
-    const time = timeType === 'start' ? startTime : endTime;
+  const handleTimeChange = (
+    timeType: "start" | "end",
+    field: "hour" | "minute",
+    operation: "increment" | "decrement"
+  ) => {
+    const setTime = timeType === "start" ? setStartTime : setEndTime;
+    const time = timeType === "start" ? startTime : endTime;
 
     setTime(prev => {
       const current = parseInt(prev[field]);
       let newValue: number;
 
-      if (field === 'hour') {
-        newValue = operation === 'increment' 
-          ? (current % 12) + 1 
-          : (current - 2 + 12) % 12 + 1;
+      if (field === "hour") {
+        newValue =
+          operation === "increment"
+            ? (current % 12) + 1
+            : ((current - 2 + 12) % 12) + 1;
       } else {
-        newValue = operation === 'increment' 
-          ? (current + 1) % 60 
-          : (current - 1 + 60) % 60;
+        newValue =
+          operation === "increment"
+            ? (current + 1) % 60
+            : (current - 1 + 60) % 60;
       }
 
       return {
         ...prev,
-        [field]: newValue.toString().padStart(2, "0")
+        [field]: newValue.toString().padStart(2, "0"),
       };
     });
   };
 
-  const handleInputChange = (timeType: 'start' | 'end', field: 'hour' | 'minute', value: string) => {
-    const setTime = timeType === 'start' ? setStartTime : setEndTime;
-    
+  const handleInputChange = (
+    timeType: "start" | "end",
+    field: "hour" | "minute",
+    value: string
+  ) => {
+    const setTime = timeType === "start" ? setStartTime : setEndTime;
+
     if (/^\d{0,2}$/.test(value)) {
       setTime(prev => ({ ...prev, [field]: value }));
     }
   };
 
-  const handleInputBlur = (timeType: 'start' | 'end', field: 'hour' | 'minute') => {
-    const setTime = timeType === 'start' ? setStartTime : setEndTime;
-    const time = timeType === 'start' ? startTime : endTime;
+  const handleInputBlur = (
+    timeType: "start" | "end",
+    field: "hour" | "minute"
+  ) => {
+    const setTime = timeType === "start" ? setStartTime : setEndTime;
+    const time = timeType === "start" ? startTime : endTime;
 
     setTime(prev => {
       const num = parseInt(prev[field]);
-      const min = field === 'hour' ? 1 : 0;
-      const max = field === 'hour' ? 12 : 59;
-      
+      const min = field === "hour" ? 1 : 0;
+      const max = field === "hour" ? 12 : 59;
+
       const clamped = Math.max(min, Math.min(max, isNaN(num) ? min : num));
       return {
         ...prev,
-        [field]: clamped.toString().padStart(2, "0")
+        [field]: clamped.toString().padStart(2, "0"),
       };
     });
   };
 
-  const handleMeridiemChange = (timeType: 'start' | 'end', value: "a.m." | "p.m.") => {
-    const setTime = timeType === 'start' ? setStartTime : setEndTime;
+  const handleMeridiemChange = (
+    timeType: "start" | "end",
+    value: "a.m." | "p.m."
+  ) => {
+    const setTime = timeType === "start" ? setStartTime : setEndTime;
     setTime(prev => ({ ...prev, meridiem: value }));
   };
 
@@ -129,7 +149,7 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
       try {
         // Fetch trip data
         const tripRes = await fetch(`/api/trip/${tripId}`);
-        if (!tripRes.ok) throw new Error('Failed to fetch trip data');
+        if (!tripRes.ok) throw new Error("Failed to fetch trip data");
         const tripData = await tripRes.json();
 
         // Set form data
@@ -137,7 +157,7 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           driver_id: tripData.driver?.id?.toString() || "",
           bus_id: tripData.bus?.id?.toString() || "",
           src_station_id: tripData.src_station?.id?.toString() || "",
-          dest_station_id: tripData.dest_station?.id?.toString() || ""
+          dest_station_id: tripData.dest_station?.id?.toString() || "",
         });
 
         // Parse and set times
@@ -150,7 +170,7 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           setStartTime({
             hour: startHour.toString().padStart(2, "0"),
             minute: startDate.getMinutes().toString().padStart(2, "0"),
-            meridiem: startMeridiem
+            meridiem: startMeridiem,
           });
         }
 
@@ -163,28 +183,27 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           setEndTime({
             hour: endHour.toString().padStart(2, "0"),
             minute: endDate.getMinutes().toString().padStart(2, "0"),
-            meridiem: endMeridiem
+            meridiem: endMeridiem,
           });
         }
 
         // Fetch stations
-        const stationsRes = await fetch('/api/station');
-        if (!stationsRes.ok) throw new Error('Failed to fetch stations');
+        const stationsRes = await fetch("/api/station");
+        if (!stationsRes.ok) throw new Error("Failed to fetch stations");
         const stationsData = await stationsRes.json();
         setStations(stationsData.data || stationsData.stations || []);
 
         // Fetch drivers
-        const driversRes = await fetch('/api/driver');
-        if (!driversRes.ok) throw new Error('Failed to fetch drivers');
+        const driversRes = await fetch("/api/driver");
+        if (!driversRes.ok) throw new Error("Failed to fetch drivers");
         const driversData = await driversRes.json();
         setDrivers(driversData.data || driversData.drivers || []);
 
         // Fetch buses
-        const busesRes = await fetch('/api/bus');
-        if (!busesRes.ok) throw new Error('Failed to fetch buses');
+        const busesRes = await fetch("/api/bus");
+        if (!busesRes.ok) throw new Error("Failed to fetch buses");
         const busesData = await busesRes.json();
         setBuses(busesData.data || busesData.buses || []);
-
       } catch (error) {
         console.error("Error fetching data:", error);
         alert("Failed to load required data");
@@ -199,7 +218,12 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.driver_id && !formData.bus_id && !formData.src_station_id && !formData.dest_station_id) {
+    if (
+      !formData.driver_id &&
+      !formData.bus_id &&
+      !formData.src_station_id &&
+      !formData.dest_station_id
+    ) {
       alert("Please fill in at least one field");
       return;
     }
@@ -247,12 +271,18 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
         },
         body: JSON.stringify({
           ...formData,
-          driver_id: formData.driver_id ? parseInt(formData.driver_id) : undefined,
+          driver_id: formData.driver_id
+            ? parseInt(formData.driver_id)
+            : undefined,
           bus_id: formData.bus_id ? parseInt(formData.bus_id) : undefined,
-          src_station_id: formData.src_station_id ? parseInt(formData.src_station_id) : undefined,
-          dest_station_id: formData.dest_station_id ? parseInt(formData.dest_station_id) : undefined,
+          src_station_id: formData.src_station_id
+            ? parseInt(formData.src_station_id)
+            : undefined,
+          dest_station_id: formData.dest_station_id
+            ? parseInt(formData.dest_station_id)
+            : undefined,
           start_time: startDate.toISOString(),
-          end_time: endDate.toISOString()
+          end_time: endDate.toISOString(),
         }),
       });
 
@@ -280,23 +310,30 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
       </DrawerTrigger>
       <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
         <DrawerHeader>
-          <DrawerTitle className="text-center text-[#71AC61]">Edit Trip</DrawerTitle>
+          <DrawerTitle className="text-center text-[#71AC61]">
+            Edit Trip
+          </DrawerTitle>
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1"
+        >
           {/* Driver */}
           <div>
             <Label>Driver</Label>
-            <Select 
-              value={formData.driver_id} 
-              onValueChange={(value) => setFormData({...formData, driver_id: value})}
+            <Select
+              value={formData.driver_id}
+              onValueChange={value =>
+                setFormData({ ...formData, driver_id: value })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Driver" />
               </SelectTrigger>
               <SelectContent>
-                {drivers.map((driver) => (
+                {drivers.map(driver => (
                   <SelectItem key={driver.id} value={driver.id.toString()}>
                     {`${driver.first_name} ${driver.last_name}`}
                   </SelectItem>
@@ -308,15 +345,17 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           {/* Source Station */}
           <div>
             <Label>Source Station</Label>
-            <Select 
-              value={formData.src_station_id} 
-              onValueChange={(value) => setFormData({...formData, src_station_id: value})}
+            <Select
+              value={formData.src_station_id}
+              onValueChange={value =>
+                setFormData({ ...formData, src_station_id: value })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Source" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
+                {stations.map(station => (
                   <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
@@ -328,15 +367,17 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           {/* Destination Station */}
           <div>
             <Label>Destination Station</Label>
-            <Select 
-              value={formData.dest_station_id} 
-              onValueChange={(value) => setFormData({...formData, dest_station_id: value})}
+            <Select
+              value={formData.dest_station_id}
+              onValueChange={value =>
+                setFormData({ ...formData, dest_station_id: value })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station) => (
+                {stations.map(station => (
                   <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
@@ -348,15 +389,17 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
           {/* Bus */}
           <div>
             <Label>Bus</Label>
-            <Select 
-              value={formData.bus_id} 
-              onValueChange={(value) => setFormData({...formData, bus_id: value})}
+            <Select
+              value={formData.bus_id}
+              onValueChange={value =>
+                setFormData({ ...formData, bus_id: value })
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
-                {buses.map((bus) => (
+                {buses.map(bus => (
                   <SelectItem key={bus.id} value={bus.id.toString()}>
                     {bus.plate_number}
                   </SelectItem>
@@ -372,23 +415,29 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
               <div className="flex items-center gap-2">
                 {/* Hour */}
                 <div className="flex items-center border rounded">
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('start', 'hour', 'decrement')} 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTimeChange("start", "hour", "decrement")
+                    }
                     className="px-2 py-1"
                   >
                     -
                   </button>
                   <input
                     value={startTime.hour}
-                    onChange={(e) => handleInputChange('start', 'hour', e.target.value)}
-                    onBlur={() => handleInputBlur('start', 'hour')}
+                    onChange={e =>
+                      handleInputChange("start", "hour", e.target.value)
+                    }
+                    onBlur={() => handleInputBlur("start", "hour")}
                     className="w-10 text-center outline-none"
                     aria-label="Hour"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('start', 'hour', 'increment')} 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTimeChange("start", "hour", "increment")
+                    }
                     className="px-2 py-1"
                   >
                     +
@@ -399,23 +448,29 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
 
                 {/* Minute */}
                 <div className="flex items-center border rounded">
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('start', 'minute', 'decrement')} 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTimeChange("start", "minute", "decrement")
+                    }
                     className="px-2 py-1"
                   >
                     -
                   </button>
                   <input
                     value={startTime.minute}
-                    onChange={(e) => handleInputChange('start', 'minute', e.target.value)}
-                    onBlur={() => handleInputBlur('start', 'minute')}
+                    onChange={e =>
+                      handleInputChange("start", "minute", e.target.value)
+                    }
+                    onBlur={() => handleInputBlur("start", "minute")}
                     className="w-10 text-center outline-none"
                     aria-label="Minute"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('start', 'minute', 'increment')} 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTimeChange("start", "minute", "increment")
+                    }
                     className="px-2 py-1"
                   >
                     +
@@ -425,7 +480,12 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
                 {/* AM/PM */}
                 <select
                   value={startTime.meridiem}
-                  onChange={(e) => handleMeridiemChange('start', e.target.value as "a.m." | "p.m.")}
+                  onChange={e =>
+                    handleMeridiemChange(
+                      "start",
+                      e.target.value as "a.m." | "p.m."
+                    )
+                  }
                   className="border rounded px-2 py-1"
                 >
                   <option value="a.m.">a.m.</option>
@@ -440,23 +500,25 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
               <div className="flex items-center gap-2">
                 {/* Hour */}
                 <div className="flex items-center border rounded">
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('end', 'hour', 'decrement')} 
+                  <button
+                    type="button"
+                    onClick={() => handleTimeChange("end", "hour", "decrement")}
                     className="px-2 py-1"
                   >
                     -
                   </button>
                   <input
                     value={endTime.hour}
-                    onChange={(e) => handleInputChange('end', 'hour', e.target.value)}
-                    onBlur={() => handleInputBlur('end', 'hour')}
+                    onChange={e =>
+                      handleInputChange("end", "hour", e.target.value)
+                    }
+                    onBlur={() => handleInputBlur("end", "hour")}
                     className="w-10 text-center outline-none"
                     aria-label="Hour"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('end', 'hour', 'increment')} 
+                  <button
+                    type="button"
+                    onClick={() => handleTimeChange("end", "hour", "increment")}
                     className="px-2 py-1"
                   >
                     +
@@ -467,23 +529,29 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
 
                 {/* Minute */}
                 <div className="flex items-center border rounded">
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('end', 'minute', 'decrement')} 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTimeChange("end", "minute", "decrement")
+                    }
                     className="px-2 py-1"
                   >
                     -
                   </button>
                   <input
                     value={endTime.minute}
-                    onChange={(e) => handleInputChange('end', 'minute', e.target.value)}
-                    onBlur={() => handleInputBlur('end', 'minute')}
+                    onChange={e =>
+                      handleInputChange("end", "minute", e.target.value)
+                    }
+                    onBlur={() => handleInputBlur("end", "minute")}
                     className="w-10 text-center outline-none"
                     aria-label="Minute"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => handleTimeChange('end', 'minute', 'increment')} 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleTimeChange("end", "minute", "increment")
+                    }
                     className="px-2 py-1"
                   >
                     +
@@ -493,7 +561,12 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
                 {/* AM/PM */}
                 <select
                   value={endTime.meridiem}
-                  onChange={(e) => handleMeridiemChange('end', e.target.value as "a.m." | "p.m.")}
+                  onChange={e =>
+                    handleMeridiemChange(
+                      "end",
+                      e.target.value as "a.m." | "p.m."
+                    )
+                  }
                   className="border rounded px-2 py-1"
                 >
                   <option value="a.m.">a.m.</option>
@@ -503,8 +576,8 @@ export default function EditTripModal({ tripId, onSuccess, onClose }: EditTripMo
             </div>
           </div>
 
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
           >
             Update Trip

@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, SquarePen } from "lucide-react";
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface TicketCardProps {
   num: number;
@@ -49,7 +49,9 @@ export default function BaggageCard(props: TicketCardProps) {
             <button>
               <ShoppingBag />
             </button>
-            <span className="text-[#525252] font-medium text-lg">{baggage.item}</span>
+            <span className="text-[#525252] font-medium text-lg">
+              {baggage.item}
+            </span>
           </div>
           <div className="flex flex-row items-center gap-2">
             {/*Right Side*/}
