@@ -7,7 +7,7 @@ export default async function TripsOverview() {
 
   console.log(session?.user?.role);
   if (session?.user?.role === "driver") {
-    redirect("/map/1");
+    redirect("/gps-broadcast");
   }
   return (
     <>
