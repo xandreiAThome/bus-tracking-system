@@ -21,7 +21,8 @@ import { DriverType } from "@/features/driver/types/types";
 import { StationType } from "@/features/station/types/types";
 
 import { TripType } from "../types/types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { toast } from "sonner";
 import TimePicker from "./timePicker";
 
 type CreateTripPayload = Omit<
@@ -32,18 +33,19 @@ type CreateTripPayload = Omit<
   end_time: string;
 };
 
-interface CreateTripModalProps {
+export interface CreateTripModalProps {
   onTripCreated?: () => void;
+  stations: StationType[];
+  buses: AggregatedBusType[];
+  drivers: DriverType[];
 }
 
-export default function CreateTripModal({
+export function CreateTripModal({
   onTripCreated,
+  stations,
+  buses,
+  drivers,
 }: CreateTripModalProps) {
-  const [stations, setStations] = useState<StationType[]>([]);
-  const [buses, setBuses] = useState<AggregatedBusType[]>([]);
-  const [drivers, setDrivers] = useState<DriverType[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -57,39 +59,7 @@ export default function CreateTripModal({
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [endTime, setEndTime] = useState<Date>(new Date());
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [stationsRes, busesRes, driverRes] = await Promise.all([
-          fetch("/api/station"),
-          fetch("/api/bus"),
-          fetch("/api/driver"),
-        ]);
-
-        if (!stationsRes.ok || !busesRes.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const [stationsData, busesData, driversData] = await Promise.all([
-          stationsRes.json(),
-          busesRes.json(),
-          driverRes.json(),
-        ]);
-
-        setStations(stationsData.stations || stationsData);
-        setBuses(busesData.buses || busesData);
-        setDrivers(driversData.drivers || driversData);
-      } catch (err) {
-        console.error("Fetch error:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
+  // All data is passed as props from OverviewCard. No fetching here.
   // TimePicker logic is now handled in the TimePicker component
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,7 +106,7 @@ export default function CreateTripModal({
       setStartTime(new Date());
       setEndTime(new Date());
       setDrawerOpen(false);
-      alert("Trip created successfully!");
+      toast.success("Trip created successfully!");
       if (onTripCreated) {
         onTripCreated();
       }
@@ -152,13 +122,7 @@ export default function CreateTripModal({
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center p-4">
-        Loading data...
-      </div>
-    );
-  }
+  // No loading state here; handled by OverviewCard
 
   return (
     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
@@ -279,8 +243,9 @@ export default function CreateTripModal({
           <Button
             type="submit"
             className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
+            disabled={isSubmitting}
           >
-            Create New Trip
+            {isSubmitting ? "Creating..." : "Create New Trip"}
           </Button>
         </form>
       </DrawerContent>

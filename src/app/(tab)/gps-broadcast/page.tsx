@@ -2,12 +2,13 @@ import { auth } from "@/features/auth/services/auth";
 import { getDriverByUserId } from "@/features/driver/services/crud";
 import GPSBroadcastClient from "@/features/gps/components/GPSBroadcastClient";
 import { getTripsForDay } from "@/features/trips/services/crud";
+import { formatTime } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 export default async function GPSBroadcastPage() {
   // Helper to get time-based greeting
   function getGreeting() {
-    const hour = today.getHours();
+    const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
     if (hour < 18) return "Good afternoon";
     return "Good evening";
@@ -26,10 +27,10 @@ export default async function GPSBroadcastPage() {
       : null;
 
   const driverTrip = Array.isArray(trips)
-    ? trips.find(trip => trip.driver?.id === driver?.id)
+    ? trips.find(
+        trip => trip.driver?.id === driver?.id && trip.status !== "complete"
+      )
     : undefined;
-
-  console.log(driverTrip);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
@@ -59,13 +60,15 @@ export default async function GPSBroadcastPage() {
                 </span>
               </div>
               <h2 className="text-lg font-semibold text-green-700 mb-2">
-                Today&apos;s Trips
+                Today&apos;s Trip
               </h2>
               {driverTrip ? (
                 <ul>
                   <li key={driverTrip.id}>
                     {driverTrip.src_station?.name} →{" "}
                     {driverTrip.dest_station?.name} (Bus {driverTrip.bus?.id})
+                    {" | "}
+                    {formatTime(driverTrip.start_time)}
                   </li>
                 </ul>
               ) : (

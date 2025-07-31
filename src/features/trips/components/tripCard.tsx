@@ -20,13 +20,26 @@ import { AlignJustify, SquareArrowOutUpRight, Map } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
 import EditTripModal from "./EditTrip";
 import { AggregatedTripType } from "../types/types";
+import { AggregatedBusType } from "@/features/bus/types/types";
+import { DriverType } from "@/features/driver/types/types";
+import { StationType } from "@/features/station/types/types";
+import { formatTime } from "@/lib/utils";
 
 interface TripCardProps {
   trip: AggregatedTripType;
   onSuccessEdit: () => void;
+  stations: StationType[];
+  drivers: DriverType[];
+  buses: AggregatedBusType[];
 }
 
-export default function TripCard({ trip, onSuccessEdit }: TripCardProps) {
+export default function TripCard({
+  trip,
+  onSuccessEdit,
+  buses,
+  stations,
+  drivers,
+}: TripCardProps) {
   const [status, setStatus] = useState<"boarding" | "transit" | "complete">(
     trip.status ?? "boarding"
   );
@@ -142,12 +155,18 @@ export default function TripCard({ trip, onSuccessEdit }: TripCardProps) {
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
           <div className="flex gap-2 items-center">
-            <Link href={`/map/${trip.bus.id}`} aria-label="View on map">
+            <Link href={`/map/${trip.id}`} aria-label="View on map">
               <button className="p-1 rounded hover:bg-gray-100">
                 <Map className="h-5 w-5" />
               </button>
             </Link>
-            <EditTripModal trip={trip} onSuccess={onSuccessEdit} />
+            <EditTripModal
+              trip={trip}
+              onSuccess={onSuccessEdit}
+              stations={stations}
+              buses={buses}
+              drivers={drivers}
+            />
           </div>
 
           {/* Right Side:  */}
@@ -169,16 +188,4 @@ export default function TripCard({ trip, onSuccessEdit }: TripCardProps) {
       </Card>
     </div>
   );
-}
-
-function formatTime(timeString: Date | null): string {
-  if (!timeString) return "Unknown time";
-  try {
-    return new Date(timeString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return timeString?.toString() ?? "Unknown time";
-  }
 }

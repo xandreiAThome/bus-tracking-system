@@ -1,5 +1,5 @@
 import NavBar from "@/components/navbar";
-import { auth, signOut } from "@/features/auth/services/auth";
+import { signOut, auth } from "@/features/auth/services/auth";
 import { redirect } from "next/navigation";
 
 async function handleSignOut() {
@@ -12,15 +12,15 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // const session = await auth();
+  const session = await auth();
 
-  // if (!session?.user) {
-  //   redirect("/");
-  // }
+  if (!session?.user) {
+    redirect("/");
+  }
 
-  // if (session?.user?.role === "user") {
-  //   redirect("/unauthorized");
-  // }
+  if (session?.user?.role === "user") {
+    redirect("/unauthorized");
+  }
 
   return (
     <div className="h-full ">

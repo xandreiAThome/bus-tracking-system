@@ -12,6 +12,7 @@ import SeatButton from "./SeatButton";
 import { SeatType } from "@/features/seat/types/types";
 import { AggregatedTripType } from "@/features/trips/types/types";
 import { CashierType } from "@/features/cashier/types/types";
+import { formatTime } from "@/lib/utils";
 
 interface TicketPassengerFormProps {
   price: string;
@@ -93,7 +94,7 @@ const TicketPassengerForm: React.FC<TicketPassengerFormProps> = ({
             <p className="text-xs text-gray-500 mb-1">Trip</p>
             <h3 className="text-sm font-medium truncate">
               {trip ? (
-                `${trip.src_station?.name || "Unknown Station"} → ${trip.dest_station?.name || "Unknown Station"}`
+                `${trip.src_station?.name || "Unknown Station"} → ${trip.dest_station?.name || "Unknown Station"} | ${formatTime(trip.start_time)}`
               ) : (
                 <span className="text-gray-400">Loading trip...</span>
               )}
