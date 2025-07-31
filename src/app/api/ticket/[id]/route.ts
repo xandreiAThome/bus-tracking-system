@@ -1,148 +1,83 @@
+// src/app/api/ticket/[id]/route.ts
+
+import { validateIdParam, parseError } from "@/lib/utils";
+import { getTicketById, deleteTicket } from "@/features/ticket/services/crud";
 import { editTrip } from "@/features/trips/services/crud";
-import { validateIdParam } from "@/lib/utils";
-import { deleteTicket, getTicket } from "@features/ticket/services/crud";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 
 /**
  * GET /api/ticket/[id]
  *
- * Retrieves a ticket's information based on the `id` parameter in the URL path.
- *
- * Route param:
- * - id (string): Ticket ID (e.g., /api/ticket/1)
- *
- * Example request:
- * GET /api/ticket/1
- *
- * @param {Request} req - Incoming request object.
- * @param {Object} params - URL parameters object containing:
- *   @param {string} id - The ticket ID to retrieve.
- *
- * @returns {Response} 200 OK - Returns a JSON object with the ticket data:
- * {
- *   "ticket": {
- *     "id": number,
- *     "price": string,
- *     "trip_id": number,
- *     "cashier_id": number,
- *     "ticket_type": string
- *     // ...other fields
- *   }
- * }
- *
- * @returns {Response} 400 Bad Request - If `id` is invalid.
- * @returns {Response} 404 Not Found - If no ticket exists with the given ID.
- * @returns {Response} 500 Internal Server Error - For unexpected errors.
+ * Retrieves a ticket by ID.
  */
 export async function GET(
-  request: Request,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+  }
+
   try {
-    const id = validateIdParam((await params).id);
-    if (id instanceof Response) {
-      // If validateIdParam returns a Response, wrap it in NextResponse
-      return NextResponse.json(await id.json(), { status: id.status });
+    const ticket = await getTicketById(Number(id));
+    if (!ticket) {
+      return NextResponse.json({ message: "Ticket not found" }, { status: 404 });
     }
 
-    const ticket = await getTicket(id);
-    if (!ticket) {
-      return NextResponse.json(
-        { message: " ticket not found" },
-        { status: 404 }
-      );
-    }
     return NextResponse.json({ ticket }, { status: 200 });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
 /**
- * PATCH /api/trip/[id]
+ * PATCH /api/ticket/[id]
  *
- * Updates a trip's information based on the `id` parameter in the URL path.
- *
- * Route param:
- * - id (string): Trip ID (e.g., /api/trip/1)
- *
- * Example request body:
- * {
- *   "start_time": "2023-01-01T08:00:00Z",
- *   "driver_id": 42
- * }
- *
- * @param {Request} req - Incoming request object.
- * @param {Object} params - URL parameters object containing:
- *   @param {string} id - The trip ID to update.
- *
- * @returns {Response} 200 OK - Returns confirmation of update:
- * {
- *   "message": "Trip updated successfully",
- *   "updated": {
- *     // updated trip data
- *   }
- * }
- *
- * @returns {Response} 400 Bad Request - If `id` is invalid or request body is malformed.
- * @returns {Response} 404 Not Found - If no trip exists with the given ID.
- * @returns {Response} 500 Internal Server Error - For unexpected errors.
+ * Updates a trip by ticket ID (potentially misnamed endpoint).
  */
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
   }
 
   try {
     const body = await req.json();
-    return editTrip(id, body);
-  } catch (err) {
-    console.error("Error parsing request body:", err);
-    return Response.json({ message: "Invalid request body" }, { status: 400 });
+    const updatedTrip = await editTrip(Number(id), body);
+    return NextResponse.json({ message: "Trip updated successfully", updated: updatedTrip }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
 /**
  * DELETE /api/ticket/[id]
  *
- * Deletes a ticket based on the `id` parameter in the URL path.
- *
- * Route param:
- * - id (string): Ticket ID (e.g., /api/ticket/1)
- *
- * Example request:
- * DELETE /api/ticket/1
- *
- * @param {Request} req - Incoming request object.
- * @param {Object} params - URL parameters object containing:
- *   @param {string} id - The ticket ID to delete.
- *
- * @returns {Response} 200 OK - Returns confirmation of deletion:
- * {
- *   "message": "Ticket deleted successfully",
- *   "id": number
- * }
- *
- * @returns {Response} 400 Bad Request - If `id` is invalid.
- * @returns {Response} 404 Not Found - If no ticket exists with the given ID.
- * @returns {Response} 500 Internal Server Error - For unexpected errors.
+ * Deletes a ticket by ID.
  */
 export async function DELETE(
-  req: Request,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return deleteTicket(id);
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+  }
+
+  try {
+    const result = await deleteTicket(Number(id));
+    return NextResponse.json({ message: `Ticket with id ${id} deleted successfully.`, result }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
