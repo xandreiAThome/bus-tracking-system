@@ -9,10 +9,19 @@ Content-Type: application/json
 {
   "start_time": "2025-07-16 08:00:00",
   "end_time": "2025-07-16 12:00:00",
-  "src_station": 1,
-  "dest_station": 1,
+  "src_station_id": 1,
+  "dest_station_id": 1,
   "bus_id": 1,
   "driver_id": 1
+}
+
+###
+
+PATCH http://localhost:3000/api/trip/31
+Content-Type: application/json
+
+{
+  "status": "complete"
 }
 
 ### GET request
