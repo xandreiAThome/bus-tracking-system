@@ -64,14 +64,14 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const { start_time, end_time, bus_id, src_station, dest_station, driver_id } = body;
+    const { start_time, end_time, bus_id, src_station_id, dest_station_id, driver_id } = body;
 
     if (
       start_time === undefined &&
       end_time === undefined &&
       bus_id === undefined &&
-      src_station === undefined &&
-      dest_station === undefined &&
+      src_station_id === undefined &&
+      dest_station_id === undefined &&
       driver_id === undefined
     ) {
       return NextResponse.json(
@@ -85,8 +85,8 @@ export async function PATCH(
       start_time,
       end_time,
       bus_id,
-      src_station,
-      dest_station,
+      src_station_id,
+      dest_station_id,
       driver_id,
     );
 
