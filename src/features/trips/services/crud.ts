@@ -212,9 +212,6 @@ export const getTripsForMonth = async (month: number, year: number) => {
   return mappedTrips;
 };
 
-/**
- * Updates a trip by ID with provided fields
- */
 export async function editTrip(
   id: number,
   start_time?: string,
@@ -228,7 +225,6 @@ export async function editTrip(
   try {
     const updateData: any = {};
 
-    // Direct assignment since frontend handles conversions
     if (start_time !== undefined) updateData.start_time = start_time;
     if (end_time !== undefined) updateData.end_time = end_time;
     if (bus_id !== undefined) updateData.bus = { connect: { id: bus_id } };
@@ -246,16 +242,43 @@ export async function editTrip(
     }
     if (status !== undefined) updateData.status = status;
 
-    const updated = await prisma.trip.update({
-      where: { id },
-      data: updateData,
-      include: {
-        bus: true,
-        driver: true,
-        station_trip_src_station_idTostation: true,
-        station_trip_dest_station_idTostation: true,
-      },
-    });
+    let updated;
+
+    if (status === "complete") {
+      // Run in a transaction to ensure both update together
+      updated = await prisma.$transaction(async (tx) => {
+        const updatedTrip = await tx.trip.update({
+          where: { id },
+          data: updateData,
+          include: {
+            bus: true,
+            driver: true,
+            station_trip_src_station_idTostation: true,
+            station_trip_dest_station_idTostation: true,
+          },
+        });
+
+        // Update seats status associated with the trip's bus
+        await tx.seat.updateMany({
+          where: { bus_id: updatedTrip.bus.id },
+          data: { status: "available" }, // or whatever status fits your logic
+        });
+
+        return updatedTrip;
+      });
+    } else {
+      // Just update the trip normally
+      updated = await prisma.trip.update({
+        where: { id },
+        data: updateData,
+        include: {
+          bus: true,
+          driver: true,
+          station_trip_src_station_idTostation: true,
+          station_trip_dest_station_idTostation: true,
+        },
+      });
+    }
 
     return Response.json(
       {
