@@ -16,8 +16,33 @@ Content-Type: application/json
 }
 
 ### GET request
-GET http://localhost:3000/api/trip/1
+GET http://localhost:3000/api/trip/22
+
+### PATCH request
+PATCH http://localhost:3000/api/trip/22
+
+{
+  "start_time": "2025-07-31T08:00:00Z",
+  "end_time": "2025-07-31T12:00:00Z"
+}
+
 
 ### DELETE request
-DELETE http://localhost:3000/api/trip/2
+DELETE http://localhost:3000/api/trip/23
 
+###
+
+GET http://localhost:3000/api/trip/monthly?month=7&year=2025
+
+###
+
+GET http://localhost:3000/api/trip/daily
+
+###
+
+GET http://localhost:3000/api/trip/daily?date=2025-07-31
+
+
+###
+
+GET http://localhost:3000/api/trip/daily?date=2025-07-30

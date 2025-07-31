@@ -213,6 +213,16 @@ export function generateSeatNumbers(capacity: number): string[] {
   return seats;
 }
 
+function isPrismaClientValidationError(err: any): err is Prisma.PrismaClientValidationError {
+  return (
+    err &&
+    typeof err === "object" &&
+    "name" in err &&
+    err.name === "PrismaClientValidationError" &&
+    typeof err.message === "string"
+  );
+}
+
 function isPrismaClientKnownRequestError(err: any): err is Prisma.PrismaClientKnownRequestError {
   return (
     err &&
@@ -241,6 +251,8 @@ export function parseError(err: unknown): {
       case "2011":
         return { status: 400, message: "Missing required fields" };
     }
+  } else if (isPrismaClientValidationError(err)) {
+    return { status: 400, message: "Invalid input: some fields are missing or malformed"};
   } else if (err instanceof Error) {
     return { status: 500, message: err.message || "Internal Server Error" };
   }

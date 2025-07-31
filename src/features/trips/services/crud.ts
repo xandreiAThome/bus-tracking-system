@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
 import { AggregatedTripType } from "../types/types";
 
 /**
@@ -30,7 +29,7 @@ export async function getAllTrips() {
     driver: trip.driver,
   }));
   if (mappedTrips.length === 0) {
-    return Response.json({ message: "No available trips" }, { status: 404 });
+    return null;
   }
   return mappedTrips;
 }
@@ -54,10 +53,7 @@ export async function getTrip(id: number) {
   });
 
   if (!trip) {
-    return Response.json(
-      { message: `Trip with id: ${id} not found` },
-      { status: 404 }
-    );
+    return null
   }
   const mappedTrips: AggregatedTripType = {
     id: trip.id,
@@ -97,14 +93,9 @@ export async function addTrip(
         // status: ... if you want to set it
       },
     });
-
-    return Response.json(
-      { message: "Trip created successfully", created },
-      { status: 201 }
-    );
+    return created
   } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    throw err
   }
 }
 
@@ -117,27 +108,18 @@ export async function deleteTrip(id: number) {
       where: { id },
     });
 
-    return Response.json(
-      { message: `Trip deleted successfully`, id: deleted.id },
-      { status: 200 }
-    );
+    return deleted
   } catch (err: any) {
-    if (err.code === "P2025") {
-      // Prisma "Record not found" error
-      return Response.json(
-        { message: `Trip with id ${id} not found` },
-        { status: 404 }
-      );
-    }
-
-    console.error("DB Error:", err);
-    return catchDBError(err);
+    throw err
   }
 }
 
 export const getTripsForDay = async (date: Date) => {
-  const start = new Date(date.setHours(0, 0, 0, 0));
-  const end = new Date(date.setHours(24, 0, 0, 0));
+  const start = new Date(date);
+  start.setUTCHours(0, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setUTCHours(24, 0, 0, 0);
 
   const trips = await prisma.trip.findMany({
     where: {
@@ -159,7 +141,7 @@ export const getTripsForDay = async (date: Date) => {
   });
 
   if (trips.length === 0) {
-    return Response.json({ message: "No available trips" }, { status: 404 });
+    return null;
   }
   const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
     id: trip.id,
@@ -198,7 +180,7 @@ export const getTripsForMonth = async (month: number, year: number) => {
   });
 
   if (trips.length === 0) {
-    return Response.json({ message: "No available trips" }, { status: 404 });
+    return null;
   }
   const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
     id: trip.id,
@@ -258,37 +240,8 @@ export async function editTrip(
       },
     });
 
-    return Response.json(
-      {
-        message: "Trip updated successfully",
-        trip: {
-          id: updated.id,
-          start_time: updated.start_time,
-          end_time: updated.end_time,
-          bus_id: updated.bus?.id,
-          driver_id: updated.driver?.id,
-          src_station_id: updated.station_trip_src_station_idTostation?.id,
-          dest_station_id: updated.station_trip_dest_station_idTostation?.id,
-          status: updated.status,
-        },
-      },
-      { status: 200 }
-    );
+    return updated;
   } catch (err: any) {
-    if (err.code === "P2025") {
-      return Response.json(
-        { message: `Trip with id ${id} not found` },
-        { status: 404 }
-      );
-    }
-    if (err.code === "P2003") {
-      return Response.json(
-        { message: "Invalid reference: One of the provided IDs doesn't exist" },
-        { status: 400 }
-      );
-    }
-
-    console.error("Database error:", err);
-    return Response.json({ message: "Internal server error" }, { status: 500 });
+    throw err;
   }
 }
