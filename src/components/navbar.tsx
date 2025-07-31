@@ -18,7 +18,7 @@ export default function NavBar({ handleSignOut }: NavBarProps) {
   return (
     <header
       className={cn(
-        "p-2 bg-black/10 sm:bg-black/0 absolute flex w-full",
+        "p-2 bg-black/10 sm:bg-black/0 absolute flex w-full z-10",
         pathname !== "/tripsOverview" ? "justify-between" : "justify-end"
       )}
     >
@@ -27,7 +27,7 @@ export default function NavBar({ handleSignOut }: NavBarProps) {
       )}
 
       <Sheet>
-        <SheetTrigger>
+        <SheetTrigger onClick={() => console.log("niawufbawfb")}>
           <AlignJustify className="text-green-700" />
         </SheetTrigger>
         <SheetContent className="px-8 py-10 text-lg text-green-800 font-bold">

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { toast, Toaster } from "sonner";
 import { useParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,7 @@ import TicketBaggageForm from "@/features/ticket/components/TicketBaggageForm";
 import { CashierType } from "@/features/cashier/types/types";
 import { SeatType } from "@/features/seat/types/types";
 import { AggregatedTripType } from "@/features/trips/types/types";
+import { Card } from "@/components/ui/card";
 
 export default function Page() {
   const { tripId } = useParams();
@@ -136,10 +138,10 @@ export default function Page() {
       if (!response.ok) {
         throw new Error(data.message || "Failed to create baggage ticket");
       }
-      window.alert("Baggage Ticket successfully created");
+      toast.success("Baggage Ticket successfully created");
     } catch (error) {
       console.error("Error:", error);
-      window.alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "An error occurred while creating baggage ticket"
@@ -158,7 +160,7 @@ export default function Page() {
       trip_id: trip?.id || null,
       cashier_id: Number(selectedCashier),
       ticket_type: "passenger",
-      passenger_name: "John Doe",
+      passenger_name: "_",
       seat_id: selectedSeat,
       seat_number: seatNumber,
     };
@@ -172,25 +174,30 @@ export default function Page() {
       if (!ticketResponse.ok) {
         throw new Error(ticketData.message || "Failed to create ticket");
       }
-      const seatResponse = await fetch(`/api/seat/${selectedSeat}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "occupied" }),
-      });
-      const seatData = await seatResponse.json();
-      if (!seatResponse.ok) {
-        throw new Error(
-          seatData.message || "Ticket created but failed to update seat status"
-        );
+
+      if (seatNumber) {
+        const seatResponse = await fetch(`/api/seat/${selectedSeat}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "occupied" }),
+        });
+        const seatData = await seatResponse.json();
+        if (!seatResponse.ok) {
+          throw new Error(
+            seatData.message ||
+              "Ticket created but failed to update seat status"
+          );
+        }
       }
+
       if (selectedSeat !== null) {
         setUnavailableSeats(prev => [...prev, selectedSeat]);
       }
       setSelectedSeat(null);
-      window.alert("Passenger Ticket successfully created");
+      toast.success("Passenger Ticket successfully created");
     } catch (error) {
       console.error("Error:", error);
-      window.alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "An error occurred while creating ticket"
@@ -202,8 +209,13 @@ export default function Page() {
 
   if (isLoading)
     return (
-      <div className="min-h-screen bg-[#71AC61] flex items-center justify-center">
-        Loading...
+      <div className="h-full flex items-center justify-center p-5 min-h-screen">
+        <Card className="w-full max-w-2xl mx-auto p-8 flex flex-col items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#71AC61] mb-4"></div>
+          <div className="text-lg text-gray-600 font-semibold">
+            Loading data...
+          </div>
+        </Card>
       </div>
     );
   if (!trip)
@@ -215,7 +227,8 @@ export default function Page() {
 
   return (
     <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
-      <h1 className="text-lg font-semibold text-center mt-5 text-[#FFFFFF]">
+      <Toaster richColors position="top-center" />
+      <h1 className="text-2xl font-semibold text-center mt-5 text-[#FFFFFF]">
         Issue Tickets
       </h1>
       <Tabs

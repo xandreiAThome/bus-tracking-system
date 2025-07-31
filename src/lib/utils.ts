@@ -218,3 +218,15 @@ export function generateSeatNumbers(capacity: number): string[] {
   }
   return seats;
 }
+
+export function formatTime(timeString: Date | null): string {
+  if (!timeString) return "Unknown time";
+  try {
+    return new Date(timeString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return timeString?.toString() ?? "Unknown time";
+  }
+}
