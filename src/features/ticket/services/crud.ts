@@ -1,146 +1,107 @@
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
 import { validateDecimal6_2 } from "@/lib/utils";
 
+/* ========== TICKET BASE CRUD ========== */
+
 export async function getAllTickets() {
-  try {
-    const tickets = await prisma.ticket.findMany({
-      include: {
-        baggage_ticket: true,
-        passenger_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching baggage tickets:", error);
-    throw new Error("Failed to retrieve baggage tickets.");
-  }
+  return await prisma.ticket.findMany({
+    include: {
+      baggage_ticket: true,
+      passenger_ticket: true,
+      cashier: true,
+    },
+  });
 }
 
-export async function getTicket(id: number) {
-  try {
-    const tickets = await prisma.ticket.findUnique({
-      where: {
-        id: id,
-      },
-      include: {
-        baggage_ticket: true,
-        passenger_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching baggage tickets:", error);
-    throw new Error("Failed to retrieve baggage tickets.");
-  }
+export async function getTicketById(id: number) {
+  return await prisma.ticket.findUnique({
+    where: { id },
+    include: {
+      baggage_ticket: true,
+      passenger_ticket: true,
+      cashier: true,
+    },
+  });
 }
 
-export async function addTicket(
+export async function createTicket(
   price: string,
   trip_id: number,
   cashier_id: number,
   ticket_type: string
 ) {
-  try {
-    if (!validateDecimal6_2(price)) {
-      return Response.json({ message: "Price is invalid" }, { status: 400 });
-    }
-
-    const ticket = await prisma.ticket.create({
-      data: {
-        price: price,
-        trip_id,
-        cashier_id,
-        ticket_type: ticket_type as any,
-      },
-    });
-
-    return Response.json(
-      { message: "Ticket created successfully", id: ticket.id },
-      { status: 201 }
-    );
-  } catch (err) {
-    return catchDBError(err);
+  if (!validateDecimal6_2(price)) {
+    throw new Error("Price must be a valid DECIMAL(6,2)");
   }
+
+  const ticket = await prisma.ticket.create({
+    data: {
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type: ticket_type as any,
+    },
+  });
+
+  return ticket;
+}
+
+export async function updateTicket(
+  id: number,
+  price: string,
+  trip_id: number,
+  cashier_id: number,
+  ticket_type: string
+) {
+  if (!validateDecimal6_2(price)) {
+    throw new Error("Price must be a valid DECIMAL(6,2)");
+  }
+
+  return await prisma.ticket.update({
+    where: { id },
+    data: {
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type: ticket_type as any,
+    },
+  });
 }
 
 export async function deleteTicket(id: number) {
-  try {
-    await prisma.passenger_ticket.deleteMany({ where: { ticket_id: id } });
-    await prisma.baggage_ticket.deleteMany({ where: { ticket_id: id } });
+  return await prisma.$transaction(async (tx) => {
+    await tx.passenger_ticket.deleteMany({ where: { ticket_id: id } });
+    await tx.baggage_ticket.deleteMany({ where: { ticket_id: id } });
 
-    const deleted = await prisma.ticket.delete({ where: { id } });
-
-    return Response.json(
-      { message: `Ticket deleted successfully`, id: deleted.id },
-      { status: 200 }
-    );
-  } catch (err) {
-    return catchDBError(err);
-  }
+    const deleted = await tx.ticket.delete({ where: { id } });
+    return deleted;
+  });
 }
-export async function addPassengerTicket(
+
+/* ========== PASSENGER TICKET ========== */
+
+export async function createPassengerTicket(
   ticket_id: number,
   passenger_name: string,
   discount: string | null
 ) {
-  try {
-    const created = await prisma.passenger_ticket.create({
-      data: {
-        ticket_id,
-        passenger_name,
-        discount: discount as any,
-      },
-    });
-
-    return Response.json(
-      { message: "Passenger ticket created successfully", created },
-      { status: 201 }
-    );
-  } catch (err) {
-    return catchDBError(err);
-  }
+  return await prisma.passenger_ticket.create({
+    data: {
+      ticket_id,
+      passenger_name,
+      discount: discount as any,
+    },
+  });
 }
 
-export async function getPassengerTicketByTicketId(id: number) {
-  try {
-    const tickets = await prisma.ticket.findUnique({
-      where: {
-        id: id,
-        NOT: {
-          passenger_ticket: null, // Ensures only tickets with baggage_ticket are included
-        },
-      },
-      include: {
-        passenger_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching passenger tickets:", error);
-    throw new Error("Failed to retrieve passenger tickets.");
-  }
-}
-
-export async function createPassengerTicket(
-  price: string,
-  trip_id: number,
-  cashier_id: number,
-  ticket_type: string,
-  passenger_name: string,
-  discount: string | null
-) {
-  const ticketRes = await addTicket(price, trip_id, cashier_id, ticket_type);
-  if (ticketRes.status !== 201) return ticketRes;
-
-  const { id } = await ticketRes.json();
-  return addPassengerTicket(id, passenger_name, discount);
+export async function getPassengerTicketByTicketId(ticket_id: number) {
+  return await prisma.ticket.findUnique({
+    where: { id: ticket_id },
+    include: {
+      passenger_ticket: true,
+      cashier: true,
+    },
+  });
 }
 
 export async function updatePassengerTicket(
@@ -148,21 +109,15 @@ export async function updatePassengerTicket(
   passenger_name: string,
   discount: string | null
 ) {
-  try {
-    const updated = await prisma.passenger_ticket.update({
-      where: { id },
-      data: { passenger_name, discount: discount as any },
-    });
-
-    return Response.json(
-      { message: "Passenger ticket updated successfully" },
-      { status: 200 }
-    );
-  } catch (err) {
-    return catchDBError(err);
-  }
+  return await prisma.passenger_ticket.update({
+    where: { id },
+    data: { passenger_name, discount: discount as any },
+  });
 }
-export async function addBaggageTicket(
+
+/* ========== BAGGAGE TICKET ========== */
+
+export async function createBaggageTicket(
   ticket_id: number,
   sender_no: number,
   dispatcher_no: number,
@@ -170,72 +125,26 @@ export async function addBaggageTicket(
   receiver_name: string,
   item: string
 ) {
-  try {
-    const created = await prisma.baggage_ticket.create({
-      data: {
-        ticket_id,
-        sender_no: String(sender_no),
-        dispatcher_no: String(dispatcher_no),
-        sender_name,
-        receiver_name,
-        item,
-      },
-    });
-
-    return Response.json(
-      { message: "Baggage ticket created successfully", created },
-      { status: 201 }
-    );
-  } catch (err) {
-    return catchDBError(err);
-  }
+  return await prisma.baggage_ticket.create({
+    data: {
+      ticket_id,
+      sender_no: String(sender_no),
+      dispatcher_no: String(dispatcher_no),
+      sender_name,
+      receiver_name,
+      item,
+    },
+  });
 }
 
-export async function getBaggageTicketByTicketId(id: number) {
-  try {
-    const tickets = await prisma.ticket.findUnique({
-      where: {
-        id: id,
-        NOT: {
-          baggage_ticket: null, // Ensures only tickets with baggage_ticket are included
-        },
-      },
-      include: {
-        baggage_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching baggage tickets:", error);
-    throw new Error("Failed to retrieve baggage tickets.");
-  }
-}
-
-export async function createBaggageTicket(
-  price: string,
-  trip_id: number,
-  cashier_id: number,
-  ticket_type: string,
-  sender_no: number,
-  dispatcher_no: number,
-  sender_name: string,
-  receiver_name: string,
-  item: string
-) {
-  const ticketRes = await addTicket(price, trip_id, cashier_id, ticket_type);
-  if (ticketRes.status !== 201) return ticketRes;
-
-  const { id } = await ticketRes.json();
-  return addBaggageTicket(
-    id,
-    sender_no,
-    dispatcher_no,
-    sender_name,
-    receiver_name,
-    item
-  );
+export async function getBaggageTicketByTicketId(ticket_id: number) {
+  return await prisma.ticket.findUnique({
+    where: { id: ticket_id },
+    include: {
+      baggage_ticket: true,
+      cashier: true,
+    },
+  });
 }
 
 export async function updateBaggageTicket(
@@ -246,58 +155,59 @@ export async function updateBaggageTicket(
   receiver_name: string,
   item: string
 ) {
-  try {
-    await prisma.baggage_ticket.update({
-      where: { id },
-      data: {
-        sender_no: String(sender_no),
-        dispatcher_no: String(dispatcher_no),
-        sender_name,
-        receiver_name,
-        item,
-      },
-    });
-
-    return Response.json(
-      { message: "Baggage ticket updated successfully" },
-      { status: 200 }
-    );
-  } catch (err) {
-    return catchDBError(err);
-  }
+  return await prisma.baggage_ticket.update({
+    where: { id },
+    data: {
+      sender_no: String(sender_no),
+      dispatcher_no: String(dispatcher_no),
+      sender_name,
+      receiver_name,
+      item,
+    },
+  });
 }
-export async function updateTicket(
-  id: number,
+
+/* ========== COMBINED CREATION ========== */
+
+export async function createFullPassengerTicket(
   price: string,
   trip_id: number,
   cashier_id: number,
-  ticket_type: string
+  ticket_type: string,
+  passenger_name: string,
+  discount: string | null
 ) {
-  try {
-    if (!validateDecimal6_2(price)) {
-      return Response.json({ message: "Price is invalid" }, { status: 400 });
-    }
-
-    const ticket = await prisma.ticket.update({
-      where: { id },
-      data: {
-        price,
-        trip_id,
-        cashier_id,
-        ticket_type: ticket_type as any,
-      },
-    });
-
-    return Response.json(
-      { message: `Ticket with id ${ticket.id} updated successfully` },
-      { status: 200 }
-    );
-  } catch (err) {
-    return catchDBError(err);
-  }
+  const ticket = await createTicket(price, trip_id, cashier_id, ticket_type);
+  const passenger = await createPassengerTicket(ticket.id, passenger_name, discount);
+  return { ticket_id: ticket.id, passenger };
 }
 
-export async function putPassengerTicket(
+export async function createFullBaggageTicket(
+  price: string,
+  trip_id: number,
+  cashier_id: number,
+  ticket_type: string,
+  sender_no: number,
+  dispatcher_no: number,
+  sender_name: string,
+  receiver_name: string,
+  item: string
+) {
+  const ticket = await createTicket(price, trip_id, cashier_id, ticket_type);
+  const baggage = await createBaggageTicket(
+    ticket.id,
+    sender_no,
+    dispatcher_no,
+    sender_name,
+    receiver_name,
+    item
+  );
+  return { ticket_id: ticket.id, baggage };
+}
+
+/* ========== COMBINED UPDATES ========== */
+
+export async function updateFullPassengerTicket(
   id: number,
   price: string,
   trip_id: number,
@@ -306,13 +216,12 @@ export async function putPassengerTicket(
   passenger_name: string,
   discount: string | null
 ) {
-  const res = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
-  if (res.status !== 200) return res;
-
-  return updatePassengerTicket(id, passenger_name, discount);
+  const ticket = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
+  const passenger = await updatePassengerTicket(id, passenger_name, discount);
+  return { ticket_id: ticket.id, passenger };
 }
 
-export async function putBaggageTicket(
+export async function updateFullBaggageTicket(
   id: number,
   price: string,
   trip_id: number,
@@ -324,10 +233,8 @@ export async function putBaggageTicket(
   receiver_name: string,
   item: string
 ) {
-  const res = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
-  if (res.status !== 200) return res;
-
-  return updateBaggageTicket(
+  const ticket = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
+  const baggage = await updateBaggageTicket(
     id,
     sender_no,
     dispatcher_no,
@@ -335,97 +242,53 @@ export async function putBaggageTicket(
     receiver_name,
     item
   );
+  return { ticket_id: ticket.id, baggage };
 }
 
-export async function getAllPassengerTickets() {
-  try {
-    const tickets = await prisma.ticket.findMany({
-      where: {
-        NOT: {
-          passenger_ticket: null, // Ensures only tickets with baggage_ticket are included
-        },
-      },
-      include: {
-        passenger_ticket: true,
-        cashier: true,
-      },
-    });
+/* ========== FILTERED QUERIES ========== */
 
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching passenger tickets:", error);
-    throw new Error("Failed to retrieve passenger tickets.");
-  }
+export async function getAllPassengerTickets() {
+  return await prisma.ticket.findMany({
+    where: { NOT: { passenger_ticket: null } },
+    include: {
+      passenger_ticket: true,
+      cashier: true,
+    },
+  });
 }
 
 export async function getAllBaggageTickets() {
-  try {
-    const tickets = await prisma.ticket.findMany({
-      where: {
-        NOT: {
-          baggage_ticket: null, // Ensures only tickets with baggage_ticket are included
-        },
-      },
-      include: {
-        baggage_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching baggage tickets:", error);
-    throw new Error("Failed to retrieve baggage tickets.");
-  }
+  return await prisma.ticket.findMany({
+    where: { NOT: { baggage_ticket: null } },
+    include: {
+      baggage_ticket: true,
+      cashier: true,
+    },
+  });
 }
 
-/**
- * Get passenger tickets by trip ID
- */
+export async function getPassengerTicketsByTripId(trip_id: number) {
+  return await prisma.ticket.findMany({
+    where: {
+      trip_id,
+      NOT: { passenger_ticket: null },
+    },
+    include: {
+      passenger_ticket: true,
+      cashier: true,
+    },
+  });
+}
 
-export const getPassengerTicketsByTripId = async (tripId: number) => {
-  try {
-    const tickets = await prisma.ticket.findMany({
-      where: {
-        trip_id: tripId,
-        NOT: {
-          passenger_ticket: null, // Ensures only tickets with baggage_ticket are included
-        },
-      },
-      include: {
-        passenger_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching passenger tickets:", error);
-    throw new Error("Failed to retrieve passenger tickets.");
-  }
-};
-
-/**
- * Get baggage tickets by trip ID
- */
-export const getBaggageTicketsByTripId = async (tripId: number) => {
-  try {
-    const tickets = await prisma.ticket.findMany({
-      where: {
-        trip_id: tripId,
-        NOT: {
-          baggage_ticket: null, // Ensures only tickets with baggage_ticket are included
-        },
-      },
-      include: {
-        baggage_ticket: true,
-        cashier: true,
-      },
-    });
-
-    return tickets;
-  } catch (error) {
-    console.error("Error fetching baggage tickets:", error);
-    throw new Error("Failed to retrieve baggage tickets.");
-  }
-};
+export async function getBaggageTicketsByTripId(trip_id: number) {
+  return await prisma.ticket.findMany({
+    where: {
+      trip_id,
+      NOT: { baggage_ticket: null },
+    },
+    include: {
+      baggage_ticket: true,
+      cashier: true,
+    },
+  });
+}
