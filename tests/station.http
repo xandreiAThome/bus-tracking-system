@@ -9,27 +9,33 @@ POST http://localhost:3000/api/station
 Content-Type: application/json
 
 {
-  "name": "Terminal C"
+  "name": "Terminal A"
 }
 
 ###
 
-### Get a station by ID (replace `1` with actual ID)
-GET http://localhost:3000/api/station/2
+### Get a station by ID
+GET http://localhost:3000/api/station/1
 Accept: application/json
 
 ###
 
-### Get a station by name (URL-encoded if needed)
-GET http://localhost:3000/api/station/name/Central%20Station
-Accept: application/json
+### Update a station by ID
+PATCH http://localhost:3000/api/station/1
+Content-Type: application/json
 
-### Get a station by name (URL-encoded if needed)
-GET http://localhost:3000/api/station/name/Terminal%20C
+{
+  "name": "Terminal B"
+}
+
+###
+
+### Delete a station by ID
+DELETE http://localhost:3000/api/station/1
 Accept: application/json
 
 ###
 
-### Delete a station by ID (replace `1` with actual ID)
-DELETE http://localhost:3000/api/station/4
+### Get a station by name
+GET http://localhost:3000/api/station/name/Terminal%20A
 Accept: application/json

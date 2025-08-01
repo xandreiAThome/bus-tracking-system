@@ -1,55 +1,37 @@
-### GET request
+### Get all seats
+GET http://localhost:3000/api/seat
+Accept: application/json
+
+###
+
+### Create a new seat
+POST http://localhost:3000/api/seat
+Content-Type: application/json
+
+{
+  "seat_number": "A1",
+  "bus_id": 1
+}
+
+###
+
+### Get a seat by ID
 GET http://localhost:3000/api/seat/1
 Accept: application/json
 
-### POST request
-POST http://localhost:3000/api/seat
+###
+
+### Update a seat by ID
+PATCH http://localhost:3000/api/seat/1
 Content-Type: application/json
 
 {
-  "seat_number": "1D3",
-  "bus_id": 1
+  "seat_number": "A2",
+  "status": "occupied"
 }
 
-### POST request
-POST http://localhost:3000/api/seat
-Content-Type: application/json
+###
 
-{
-  "seat_number": "1",
-  "bus_id": 2
-}
-
-### POST request
-POST http://localhost:3000/api/seat
-Content-Type: application/json
-
-{
-  "seat_number": "2",
-  "bus_id": 1
-}
-
-### POST request
-POST http://localhost:3000/api/seat
-Content-Type: application/json
-
-{
-  "seat_number": "3",
-  "bus_id": 1
-}
-
-### POST request
-POST http://localhost:3000/api/seat
-Content-Type: application/json
-
-{
-  "seat_number": "4",
-  "bus_id": 1
-}
-
-### GET request
-GET http://localhost:3000/api/seat/2
-
-### DELETE request
-DELETE http://localhost:3000/api/seat/151
-
+### Delete a seat by ID
+DELETE http://localhost:3000/api/seat/1
+Accept: application/json
