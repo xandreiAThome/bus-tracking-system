@@ -8,22 +8,22 @@ import {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const idStr = params.id;
-  if (!validateIdParam(idStr)) {
+  const { id } = await params;
+  if (!validateIdParam(id)) {
     return NextResponse.json(
       { message: "Invalid [id] parameter" },
       { status: 400 }
     );
   }
-  const id = Number(idStr);
+  const userId = Number(id);
 
   try {
-    const user = await getUser(id);
+    const user = await getUser(userId);
     if (!user) {
       return NextResponse.json(
-        { message: `Cannot find user with id ${id}` },
+        { message: `Cannot find user with id ${userId}` },
         { status: 404 }
       );
     }
@@ -36,21 +36,24 @@ export async function GET(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const idStr = params.id;
-  if (!validateIdParam(idStr)) {
+  const { id } = await params;
+  if (!validateIdParam(id)) {
     return NextResponse.json(
       { message: "Invalid [id] parameter" },
       { status: 400 }
     );
   }
-  const id = Number(idStr);
+  const userId = Number(id);
 
   try {
-    const deleted = await deleteUser(id);
+    const deleted = await deleteUser(userId);
     return NextResponse.json(
-      { message: `User with id ${id} deleted successfully`, result: deleted },
+      {
+        message: `User with id ${userId} deleted successfully`,
+        result: deleted,
+      },
       { status: 200 }
     );
   } catch (error) {
@@ -61,16 +64,16 @@ export async function DELETE(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const idStr = params.id;
-  if (!validateIdParam(idStr)) {
+  const { id } = await params;
+  if (!validateIdParam(id)) {
     return NextResponse.json(
       { message: "Invalid [id] parameter" },
       { status: 400 }
     );
   }
-  const id = Number(idStr);
+  const userId = Number(id);
 
   try {
     const body = await req.json();
@@ -83,9 +86,9 @@ export async function PATCH(
       );
     }
 
-    const updated = await updateUserRole(id, role);
+    const updated = await updateUserRole(userId, role);
     return NextResponse.json(
-      { message: `Updated cashier with id ${id}`, result: updated },
+      { message: `Updated cashier with id ${userId}`, result: updated },
       { status: 200 }
     );
   } catch (error) {
