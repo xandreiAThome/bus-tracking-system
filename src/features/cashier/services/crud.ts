@@ -3,27 +3,17 @@ import { prisma } from "@/lib/prisma";
  * Get a single cashier by ID
  */
 export async function getCashier(id: number) {
-  try {
-    const cashier = await prisma.cashier.findUnique({ where: { id } });
-    if (!cashier) {
-      return null;
-    }
-    return cashier;
-  } catch (error) {
-    throw error;
-  }
+  const cashier = await prisma.cashier.findUnique({ where: { id } });
+
+  return cashier;
 }
 
 /**
  * Delete a cashier by ID
  */
 export async function deleteCashier(id: number) {
-  try {
-    const deleted = await prisma.cashier.delete({ where: { id } });
-    return deleted;
-  } catch (error) {
-    throw error;
-  }
+  const deleted = await prisma.cashier.delete({ where: { id } });
+  return deleted;
 }
 
 /**
@@ -38,30 +28,22 @@ export async function editCashier(
     station_id?: number;
   }
 ) {
-  try {
-    const updated = await prisma.cashier.update({
-      where: { id },
-      data,
-    });
-    return updated;
-  } catch (error) {
-    throw error;
-  }
+  const updated = await prisma.cashier.update({
+    where: { id },
+    data,
+  });
+  return updated;
 }
 
 /**
  * Get all cashiers
  */
 export async function getAllCashiers() {
-  try {
-    const cashiers = await prisma.cashier.findMany();
-    if (!cashiers.length) {
-      return null;
-    }
-    return cashiers;
-  } catch (error) {
-    throw error;
+  const cashiers = await prisma.cashier.findMany();
+  if (!cashiers.length) {
+    return null;
   }
+  return cashiers;
 }
 
 /**
@@ -73,17 +55,13 @@ export async function addCashier(
   user_id: number,
   station_id: number
 ) {
-  try {
-    const created = await prisma.cashier.create({
-      data: {
-        first_name,
-        last_name,
-        user_id,
-        station_id,
-      },
-    });
-    return created;
-  } catch (error) {
-    throw error;
-  }
+  const created = await prisma.cashier.create({
+    data: {
+      first_name,
+      last_name,
+      user_id,
+      station_id,
+    },
+  });
+  return created;
 }

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export async function getAllStations() {
   const stations = await prisma.station.findMany();
   if (!stations || stations.length === 0) {
-    throw new Error("No stations found");
+    return null;
   }
   return stations;
 }
@@ -19,9 +19,7 @@ export async function getStation(id: number) {
   const station = await prisma.station.findUnique({
     where: { id },
   });
-  if (!station) {
-    return null;
-  }
+
   return station;
 }
 
@@ -33,9 +31,7 @@ export async function getStationByName(name: string) {
   const station = await prisma.station.findFirst({
     where: { name },
   });
-  if (!station) {
-    return null;
-  }
+
   return station;
 }
 
