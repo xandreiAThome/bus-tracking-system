@@ -179,7 +179,7 @@ export async function createFullPassengerTicket(
 ) {
   const ticket = await createTicket(price, trip_id, cashier_id, ticket_type);
   const passenger = await createPassengerTicket(ticket.id, passenger_name, discount);
-  return { ticket_id: ticket.id, passenger };
+  return { ticket, passenger };
 }
 
 export async function createFullBaggageTicket(
@@ -202,7 +202,7 @@ export async function createFullBaggageTicket(
     receiver_name,
     item
   );
-  return { ticket_id: ticket.id, baggage };
+  return { ticket, baggage };
 }
 
 /* ========== COMBINED UPDATES ========== */
@@ -218,7 +218,7 @@ export async function updateFullPassengerTicket(
 ) {
   const ticket = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
   const passenger = await updatePassengerTicket(id, passenger_name, discount);
-  return { ticket_id: ticket.id, passenger };
+  return { ticket, passenger };
 }
 
 export async function updateFullBaggageTicket(
@@ -242,7 +242,7 @@ export async function updateFullBaggageTicket(
     receiver_name,
     item
   );
-  return { ticket_id: ticket.id, baggage };
+  return { ticket, baggage };
 }
 
 /* ========== FILTERED QUERIES ========== */
