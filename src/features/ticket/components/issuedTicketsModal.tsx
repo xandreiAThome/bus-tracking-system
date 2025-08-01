@@ -35,7 +35,9 @@ export default function IssuedTicketsModal({
     fetch(`/api/ticket/passenger/trip/${tripId}`)
       .then(res => res.json())
       .then(data => {
-        setPassengerTickets(Array.isArray(data.tickets) ? data.tickets : []);
+        setPassengerTickets(
+          Array.isArray(data.passenger_tickets) ? data.passenger_tickets : []
+        );
       })
       .catch(() => setPassengerTickets([]))
       .finally(() => setIsLoading(false));
@@ -45,7 +47,9 @@ export default function IssuedTicketsModal({
     fetch(`/api/ticket/baggage/trip/${tripId}`)
       .then(res => res.json())
       .then(data => {
-        setBaggageTickets(Array.isArray(data.tickets) ? data.tickets : []);
+        setBaggageTickets(
+          Array.isArray(data.baggage_tickets) ? data.baggage_tickets : []
+        );
       })
       .catch(() => setBaggageTickets([]))
       .finally(() => setIsLoading(false));

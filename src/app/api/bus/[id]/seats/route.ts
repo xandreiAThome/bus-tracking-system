@@ -49,7 +49,7 @@ export async function GET(
   }
   try {
     const result = await getSeatsByBus(Number(id), validatedSortOrder);
-    return NextResponse.json({ seats: result }, { status: 200 });
+    return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

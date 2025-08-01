@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { PrismaClient, Prisma } from "@/generated/prisma";
+import { Prisma } from "@/generated/prisma";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -146,4 +146,16 @@ export function parseError(err: unknown): {
     return { status: 500, message: err.message || "Internal Server Error" };
   }
   return { status: 500, message: "Internal Server Error" };
+}
+
+export function formatTime(timeString: Date | null): string {
+  if (!timeString) return "Unknown time";
+  try {
+    return new Date(timeString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return timeString?.toString() ?? "Unknown time";
+  }
 }
