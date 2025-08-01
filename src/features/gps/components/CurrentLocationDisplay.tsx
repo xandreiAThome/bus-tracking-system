@@ -33,7 +33,7 @@ export default function CurrentLocationDisplay({
           Current Location
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-0 sm:px-6">
         {/* Map Display */}
         <MapComponent
           locations={[
@@ -51,7 +51,7 @@ export default function CurrentLocationDisplay({
         />
 
         {/* Coordinates Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm px-6 sm:px-0">
           <div>
             <span className="font-medium">Latitude:</span>
             <div className="font-mono">

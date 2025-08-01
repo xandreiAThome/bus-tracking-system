@@ -13,7 +13,6 @@ interface BaggageTicketType {
 interface PassengerTicketType {
   id: number;
   seat: string;
-  price: number;
   discount: number | null;
 }
 

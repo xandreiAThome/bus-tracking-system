@@ -13,6 +13,7 @@ export async function getAllTickets() {
   });
 }
 
+<<<<<<< HEAD
 export async function getTicketById(id: number) {
   return await prisma.ticket.findUnique({
     where: { id },
@@ -22,6 +23,41 @@ export async function getTicketById(id: number) {
       cashier: true,
     },
   });
+=======
+export async function getALlTicketsFromTrip(trip_id: number) {
+  try {
+    const tickets = await prisma.ticket.findMany({ where: { trip_id } });
+    if (!tickets || tickets.length === 0) {
+      return Response.json(
+        { message: `No tickets found for trip_id ${trip_id}` },
+        { status: 404 }
+      );
+    }
+    return Response.json({ tickets }, { status: 200 });
+  } catch (err) {
+    return catchDBError(err);
+  }
+}
+
+export async function getTicket(id: number) {
+  try {
+    const tickets = await prisma.ticket.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        baggage_ticket: true,
+        passenger_ticket: true,
+        cashier: true,
+      },
+    });
+
+    return tickets;
+  } catch (error) {
+    console.error("Error fetching baggage tickets:", error);
+    throw new Error("Failed to retrieve baggage tickets.");
+  }
+>>>>>>> ceb35a3c54e48dce22f9a960f208bec9025322f1
 }
 
 export async function createTicket(

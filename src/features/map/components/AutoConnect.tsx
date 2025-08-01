@@ -23,6 +23,7 @@ interface AutoConnectProps {
   };
   busId: string;
   userId: string;
+  plateNumber: string;
 }
 
 export function AutoConnect({
@@ -35,6 +36,7 @@ export function AutoConnect({
   busId,
   subscribe,
   userId,
+  plateNumber,
 }: AutoConnectProps) {
   const initialized = useRef(false);
   const [busTrackedOnline, setBusTrackedOnline] = useState(false);
@@ -53,12 +55,14 @@ export function AutoConnect({
   }, [clientInfo]);
 
   useEffect(() => {
+    if (!connected) {
+      initialized.current = false;
+    }
     // Only run initialization once
     if (!initialized.current) {
-      initialized.current = true;
       connect();
+      initialized.current = true;
     }
-
     // Cleanup on unmount
     return () => {
       disconnect();
@@ -125,7 +129,7 @@ export function AutoConnect({
             ></div>
             <span>
               {busTrackedOnline
-                ? `Bus ${busId} Online`
+                ? `${plateNumber} Online`
                 : `Searching Bus ${busId}...`}
             </span>
           </div>

@@ -19,7 +19,7 @@ export default async function AdminDashboard() {
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-green-700 text-center drop-shadow">
         Admin Dashboard
       </h1>
-      <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg p-2 sm:p-6 border border-green-200">
+      <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg p-2 sm:p-6 border border-green-200">
         <Tabs defaultValue="users" className="w-full">
           <TabsList className="flex w-full justify-center gap-2 bg-green-100 rounded mb-4">
             <TabsTrigger

@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -16,168 +15,111 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AggregatedBusType } from "@/features/bus/types/types";
+import { DriverType } from "@/features/driver/types/types";
+import { StationType } from "@/features/station/types/types";
 import { SquarePen } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { AggregatedTripType } from "../types/types";
+import TimePicker from "./timePicker";
+import { toast } from "sonner";
 
 interface EditTripModalProps {
-  tripId: number;
+  trip: AggregatedTripType;
   onSuccess?: () => void;
-  onClose?: () => void;
-}
-
-interface Driver {
-  id: string;
-  name: string;
-}
-
-interface Bus {
-  id: string;
-  plate_number: string;
-}
-
-interface Station {
-  id: number;
-  name: string;
+  stations: StationType[];
+  drivers: DriverType[];
+  buses: AggregatedBusType[];
 }
 
 export default function EditTripModal({
-  tripId,
+  trip,
   onSuccess,
-  onClose,
+  stations,
+  drivers,
+  buses,
 }: EditTripModalProps) {
-  const [stations, setStations] = useState<Station[]>([]);
-  const [isLoadingStations, setIsLoadingStations] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const drivers = [
-    { id: "1", name: "Mark Reyes" },
-    { id: "2", name: "Anthony Cruz" },
-    { id: "3", name: "Jared Thompson" },
-    { id: "4", name: "Samuel Diaz" },
-  ];
-
-  const [driver, setDriver] = useState("");
-  const [source, setSource] = useState("");
-  const [destination, setDestination] = useState("");
-  const [bus, setBus] = useState("");
-  const [hour, setHour] = useState("00");
-  const [minute, setMinute] = useState("00");
-  const [meridiem, setMeridiem] = useState("a.m.");
-  const [isLoading, setIsLoading] = useState(true);
-  const [buses, setBuses] = useState<Bus[]>([]);
+  const [driverId, setDriverId] = useState("");
+  const [busId, setBusId] = useState("");
+  const [srcStationId, setSrcStationId] = useState("");
+  const [destStationId, setDestStationId] = useState("");
+  const [startTime, setStartTime] = useState<Date>(new Date());
+  const [endTime, setEndTime] = useState<Date>(new Date());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    const fetchStations = async () => {
-      try {
-        const responseStations = await fetch("/api/station");
-        if (!responseStations.ok) throw new Error("Failed to fetch stations");
-        const dataStations = await responseStations.json();
-        setStations(dataStations.stations);
-
-        const response = await fetch("/api/bus");
-        if (!response.ok) throw new Error("Failed to fetch busses");
-        const data = await response.json();
-        setBuses(data.buses || data);
-      } catch (error) {
-        console.error("Error fetching stations:", error);
-        alert("Failed to load stations");
-      } finally {
-        setIsLoadingStations(false);
-      }
-    };
-
-    fetchStations();
-  }, [isOpen]);
-
-  const incrementHour = () => {
-    const newHour = (parseInt(hour) + 1) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
-  };
-
-  const decrementHour = () => {
-    const newHour = (parseInt(hour) - 1 + 12) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
-  };
-
-  const incrementMinute = () => {
-    const newMinute = (parseInt(minute) + 1) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
-
-  const decrementMinute = () => {
-    const newMinute = (parseInt(minute) - 1 + 60) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
+    // Set form fields from trip prop
+    setDriverId(trip.driver?.id ? String(trip.driver.id) : "");
+    setBusId(trip.bus?.id ? String(trip.bus.id) : "");
+    setSrcStationId(trip.src_station?.id ? String(trip.src_station.id) : "");
+    setDestStationId(trip.dest_station?.id ? String(trip.dest_station.id) : "");
+    setStartTime(trip.start_time ? new Date(trip.start_time) : new Date());
+    setEndTime(trip.end_time ? new Date(trip.end_time) : new Date());
+  }, [trip]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!driver || !bus || !source || !destination) {
-      alert("Please fill in all fields.");
+    setIsSubmitting(true);
+    if (!driverId && !busId && !srcStationId && !destStationId) {
+      alert("Please fill in at least one field");
+      setIsSubmitting(false);
       return;
     }
-
-    const today = new Date();
-    const [year, month, day] = [
-      today.getFullYear(),
-      (today.getMonth() + 1).toString().padStart(2, "0"),
-      today.getDate().toString().padStart(2, "0"),
-    ];
-
-    let h = parseInt(hour);
-    if (meridiem === "p.m." && h < 12) h += 12;
-    if (meridiem === "a.m." && h === 12) h = 0;
-
-    const date = new Date(
-      `${year}-${month}-${day}T${h.toString().padStart(2, "0")}:${minute.padStart(2, "0")}:00Z`
-    );
-
-    const start_time = date.toISOString();
-    const end_time = new Date(date.getTime() + 60 * 60 * 1000).toISOString();
-
-    const payload = {
-      start_time,
-      end_time,
-      bus_id: parseInt(bus),
-      src_station_id: parseInt(source),
-      dest_station_id: parseInt(destination),
-      driver_id: parseInt(driver),
-    };
-
+    if (!startTime || !endTime) {
+      alert("Please select start and end time");
+      setIsSubmitting(false);
+      return;
+    }
+    if (endTime <= startTime) {
+      alert("End time must be after start time");
+      setIsSubmitting(false);
+      return;
+    }
     try {
-      const res = await fetch(`/api/trip/${tripId}`, {
+      const res = await fetch(`/api/trip/${trip.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          driver_id: driverId
+            ? parseInt(driverId)
+            : (trip.driver?.id ?? undefined),
+          bus_id: busId ? parseInt(busId) : (trip.bus?.id ?? undefined),
+          src_station: srcStationId
+            ? parseInt(srcStationId)
+            : (trip.src_station?.id ?? undefined),
+          dest_station: destStationId
+            ? parseInt(destStationId)
+            : (trip.dest_station?.id ?? undefined),
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+        }),
       });
-
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to update trip");
       }
-
-      alert("Trip updated successfully!");
+      toast.success("Trip updated succesfully");
+      setDrawerOpen(false);
       if (onSuccess) onSuccess();
-      setIsOpen(false);
-      if (onClose) onClose();
     } catch (err) {
       console.error("Error updating trip:", err);
-      alert(err instanceof Error ? err.message : "Network error occurred");
+      alert(err instanceof Error ? err.message : "Failed to update trip");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+    <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
       <DrawerTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Edit trip">
           <SquarePen className="h-5 w-5" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
+      <DrawerContent className="p-2 max-w-4xl mx-auto flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">
             Edit Trip
@@ -191,17 +133,15 @@ export default function EditTripModal({
         >
           {/* Driver */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Driver
-            </Label>
-            <Select value={driver} onValueChange={setDriver}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Driver</Label>
+            <Select value={driverId} onValueChange={setDriverId}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Driver" />
               </SelectTrigger>
               <SelectContent>
                 {drivers.map(driver => (
-                  <SelectItem key={driver.id} value={driver.id}>
-                    {driver.name}
+                  <SelectItem key={driver.id} value={driver.id.toString()}>
+                    {`${driver.first_name} ${driver.last_name}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -210,15 +150,13 @@ export default function EditTripModal({
 
           {/* Source Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Source Station
-            </Label>
-            <Select value={source} onValueChange={setSource}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Source Station</Label>
+            <Select value={srcStationId} onValueChange={setSrcStationId}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Source" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station: Station) => (
+                {stations.map(station => (
                   <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
@@ -229,15 +167,13 @@ export default function EditTripModal({
 
           {/* Destination Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Destination Station
-            </Label>
-            <Select value={destination} onValueChange={setDestination}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Destination Station</Label>
+            <Select value={destStationId} onValueChange={setDestStationId}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
-                {stations.map((station: Station) => (
+                {stations.map(station => (
                   <SelectItem key={station.id} value={station.id.toString()}>
                     {station.name}
                   </SelectItem>
@@ -248,11 +184,9 @@ export default function EditTripModal({
 
           {/* Bus */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Bus
-            </Label>
-            <Select value={bus} onValueChange={setBus}>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Bus</Label>
+            <Select value={busId} onValueChange={setBusId}>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
@@ -265,97 +199,27 @@ export default function EditTripModal({
             </Select>
           </div>
 
-          {/* Time Picker */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementHour}
-                  className="text-lg px-2"
-                >
-                  -
-                </button>
-                <input
-                  value={hour}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setHour(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(hour);
-                    setHour(
-                      (isNaN(n) ? 0 : Math.max(1, Math.min(12, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
-                  className="w-10 text-center outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={incrementHour}
-                  className="text-lg px-2"
-                >
-                  +
-                </button>
-              </div>
+          <div className="flex justify-around">
+            <TimePicker
+              time={startTime}
+              setTime={setStartTime}
+              label="Start Time"
+            ></TimePicker>
 
-              <span className="text-xl">:</span>
-
-              <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementMinute}
-                  className="text-lg px-2"
-                >
-                  -
-                </button>
-                <input
-                  value={minute}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setMinute(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(minute);
-                    setMinute(
-                      (isNaN(n) ? 0 : Math.min(59, Math.max(0, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
-                  className="w-10 text-center outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={incrementMinute}
-                  className="text-lg px-2"
-                >
-                  +
-                </button>
-              </div>
-
-              <select
-                value={meridiem}
-                onChange={e => setMeridiem(e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="a.m.">a.m.</option>
-                <option value="p.m.">p.m.</option>
-              </select>
-            </div>
+            <TimePicker
+              time={endTime}
+              setTime={setEndTime}
+              label="End Time"
+            ></TimePicker>
           </div>
 
-          <button
+          <Button
             type="submit"
-            className="bg-[#71AC61] text-white py-2 rounded mt-4 hover:brightness-110 transition"
+            className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
+            disabled={isSubmitting}
           >
-            Update Trip
-          </button>
+            {isSubmitting ? "Updating..." : "Update Trip"}
+          </Button>
         </form>
       </DrawerContent>
     </Drawer>

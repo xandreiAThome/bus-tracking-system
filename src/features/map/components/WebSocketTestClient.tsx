@@ -117,6 +117,7 @@ export default function WebSocketTestClient() {
               connecting={connecting}
               clientInfo={clientInfo}
               busId={"1"}
+              plateNumber="unknown"
               userId={userId}
             />
 
