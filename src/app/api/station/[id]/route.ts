@@ -64,12 +64,9 @@ export async function PATCH(
       );
     }
 
-    const station = await editStation(Number(id), { name });
+    const updated = await editStation(Number(id), { name });
     return NextResponse.json(
-      {
-        message: `Successfully updated station with id: ${id}`,
-        result: station,
-      },
+      { message: `Updated station with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

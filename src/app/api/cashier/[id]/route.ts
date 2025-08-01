@@ -110,9 +110,9 @@ export async function PATCH(
         { status: 400 }
       );
     }
-    const result = await editCashier(Number(id), body);
+    const updated = await editCashier(Number(id), body);
     return NextResponse.json(
-      { message: `Successfully updated cashier with id: ${id}`, result },
+      { message: `Updated cashier with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

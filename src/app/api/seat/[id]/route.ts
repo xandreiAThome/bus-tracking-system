@@ -88,13 +88,12 @@ export async function PATCH(
     const updated = await updateSeat(numericId, body);
     if (!updated) {
       return NextResponse.json(
-        { message: `Seat with id ${id} not found or no changes made` },
+        { message: `Seat with id ${id} not found` },
         { status: 404 }
       );
     }
-
     return NextResponse.json(
-      { message: `Seat with id ${id} updated successfully`, result: updated },
+      { message: `Updated seat with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

@@ -112,10 +112,7 @@ export async function PATCH(
       user_id,
     });
     return NextResponse.json(
-      {
-        message: `Successfully updated driver with id: ${id}`,
-        result: updated,
-      },
+      { message: `Updated driver with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

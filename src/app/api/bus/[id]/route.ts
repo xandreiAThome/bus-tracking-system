@@ -98,21 +98,18 @@ export async function PATCH(
       capacity === undefined
     ) {
       return NextResponse.json(
-        {
-          message:
-            "At least one field (plate_number, station_id, capacity) must be provided",
-        },
+        { message: "At least one field (plate_number, station_id, capacity) must be provided" },
         { status: 400 }
       );
     }
 
-    const result = await editBus(Number(id), {
+    const updated = await editBus(Number(id), {
       plate_number,
       station_id,
       capacity,
     });
     return NextResponse.json(
-      { message: `Successfully updated bus with id: ${id}`, result },
+      { message: `Updated bus with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

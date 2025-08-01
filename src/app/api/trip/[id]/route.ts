@@ -102,7 +102,7 @@ export async function PATCH(
       );
     }
 
-    const result = await editTrip(
+    const updated = await editTrip(
       Number(id),
       start_time,
       end_time,
@@ -113,7 +113,7 @@ export async function PATCH(
     );
 
     return NextResponse.json(
-      { message: `Trip with id ${id} updated successfully.`, result },
+      { message: `Updated trip with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

@@ -83,9 +83,9 @@ export async function PATCH(
       );
     }
 
-    const updatedUser = await updateUserRole(id, role);
+    const updated = await updateUserRole(id, role);
     return NextResponse.json(
-      { message: "User updated successfully", updatedUser },
+      { message: `Updated cashier with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

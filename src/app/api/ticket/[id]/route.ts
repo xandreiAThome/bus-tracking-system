@@ -59,9 +59,9 @@ export async function PATCH(
 
   try {
     const body = await req.json();
-    const updatedTrip = await editTrip(Number(id), body);
+    const updated = await editTrip(Number(id), body);
     return NextResponse.json(
-      { message: "Trip updated successfully", updated: updatedTrip },
+      { message: `Updated trip with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {
