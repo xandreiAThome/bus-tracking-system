@@ -96,7 +96,7 @@ export async function PUT(
       );
     }
 
-    const result = await updateFullBaggageTicket(
+    const updated = await updateFullBaggageTicket(
       Number(id),
       price,
       trip_id,
@@ -110,7 +110,7 @@ export async function PUT(
     );
 
     return NextResponse.json(
-      { message: "Baggage ticket updated successfully", result },
+      { message: `Updated baggage ticket with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {

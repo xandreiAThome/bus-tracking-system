@@ -89,7 +89,7 @@ export async function PUT(
       );
     }
 
-    const result = await updateFullPassengerTicket(
+    const updated = await updateFullPassengerTicket(
       Number(id),
       price,
       trip_id,
@@ -100,10 +100,7 @@ export async function PUT(
     );
 
     return NextResponse.json(
-      {
-        message: `Successfully updated passenger ticket with id: ${id}`,
-        result,
-      },
+      { message: `Updated passenger ticket with id ${id}`, result: updated },
       { status: 200 }
     );
   } catch (error) {
