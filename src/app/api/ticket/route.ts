@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const result = await createFullPassengerTicket(
+      const created = await createFullPassengerTicket(
         price,
         Number(trip_id),
         Number(cashier_id),
@@ -66,7 +66,10 @@ export async function POST(req: NextRequest) {
         discount ?? null
       );
 
-      return NextResponse.json(result, { status: 201 });
+      return NextResponse.json(
+        { message: "Passenger Ticket created successfully", result: created },
+        { status: 201 }
+      );
     }
 
     // Baggage ticket validation
@@ -87,7 +90,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const result = await createFullBaggageTicket(
+      const created = await createFullBaggageTicket(
         price,
         Number(trip_id),
         Number(cashier_id),
@@ -99,7 +102,10 @@ export async function POST(req: NextRequest) {
         item
       );
 
-      return NextResponse.json(result, { status: 201 });
+      return NextResponse.json(
+        { message: "Baggage Ticket created successfully", result: created },
+        { status: 201 }
+      );
     }
 
     // Fallback for unexpected ticket_type

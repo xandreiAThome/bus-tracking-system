@@ -53,13 +53,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const response = await addBus(
+    const created = await addBus(
       plate_number,
       Number(station_id),
       Number(capacity)
     );
 
-    return NextResponse.json(response, { status: 201 });
+    return NextResponse.json(
+      { message: "Driver created successfully", result: created},
+      { status: 201 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

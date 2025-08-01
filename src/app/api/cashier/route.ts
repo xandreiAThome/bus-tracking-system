@@ -39,8 +39,11 @@ export async function POST(req: Request) {
     );
   }
   try {
-    const result = await addCashier(first_name, last_name, user_id, station_id);
-    return NextResponse.json(result, { status: 201 });
+    const created = await addCashier(first_name, last_name, user_id, station_id);
+    return NextResponse.json(
+      { message: "Cashier created successfully", result: created},
+      { status: 201 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });
