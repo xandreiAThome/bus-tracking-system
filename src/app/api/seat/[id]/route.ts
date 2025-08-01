@@ -17,12 +17,15 @@ export async function GET(
   try {
     const seat = await getSeat(numericId);
     if (!seat) {
-      return NextResponse.json({ message: `Seat with id ${id} not found` }, { status: 404 });
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
     }
     return NextResponse.json(seat, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -41,7 +44,10 @@ export async function DELETE(
   try {
     const deleted = await deleteSeat(numericId);
     if (!deleted) {
-      return NextResponse.json({ message: `Seat with id ${id} not found` }, { status: 404 });
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
     }
     return NextResponse.json(
       { message: `Seat deleted successfully`, result: deleted },
@@ -49,7 +55,7 @@ export async function DELETE(
     );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -78,7 +84,10 @@ export async function PATCH(
 
     const updated = await updateSeat(numericId, body);
     if (!updated) {
-      return NextResponse.json({ message: `Seat with id ${id} not found or no changes made` }, { status: 404 });
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found or no changes made` },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(
@@ -87,6 +96,6 @@ export async function PATCH(
     );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }

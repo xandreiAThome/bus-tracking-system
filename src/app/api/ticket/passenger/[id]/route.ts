@@ -17,7 +17,10 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -49,7 +52,10 @@ export async function PUT(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -94,7 +100,10 @@ export async function PUT(
     );
 
     return NextResponse.json(
-      { message: `Successfully updated passenger ticket with id: ${id}`, result },
+      {
+        message: `Successfully updated passenger ticket with id: ${id}`,
+        result,
+      },
       { status: 200 }
     );
   } catch (error) {

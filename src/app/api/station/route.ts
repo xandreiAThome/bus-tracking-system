@@ -11,7 +11,10 @@ export async function GET() {
   try {
     const stations = await getAllStations();
     if (!stations || stations.length === 0) {
-      return NextResponse.json({ message: "No stations found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "No stations found" },
+        { status: 404 }
+      );
     }
     return NextResponse.json(stations, { status: 200 });
   } catch (error) {
@@ -30,11 +33,17 @@ export async function POST(req: NextRequest) {
     const { name } = await req.json();
 
     if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json({ message: "Invalid or missing 'name' field" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid or missing 'name' field" },
+        { status: 400 }
+      );
     }
 
     const created = await addStation(name);
-    return NextResponse.json({ message: "Station created successfully", result: created }, { status: 201 });
+    return NextResponse.json(
+      { message: "Station created successfully", result: created },
+      { status: 201 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

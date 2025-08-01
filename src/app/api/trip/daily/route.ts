@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTripsForDay } from "@/features/trips/services/crud";
-import { parseError } from "@/lib/utils"
+import { parseError } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   const dateParam = req.nextUrl.searchParams.get("date");
@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
 
     const trips = await getTripsForDay(date);
     if (trips === null) {
-      return NextResponse.json({ message: "Cannot find trips" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Cannot find trips" },
+        { status: 404 }
+      );
     }
     return NextResponse.json({ trips });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

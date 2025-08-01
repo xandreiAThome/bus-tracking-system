@@ -18,13 +18,19 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
     const result = await getDriver(Number(id));
     if (!result) {
-      return NextResponse.json({ message: "Driver not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Driver not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(result, { status: 200 });
@@ -46,7 +52,10 @@ export async function DELETE(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -73,7 +82,10 @@ export async function PATCH(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -94,9 +106,16 @@ export async function PATCH(
       );
     }
 
-    const updated = await editDriver(Number(id), { first_name, last_name, user_id });
+    const updated = await editDriver(Number(id), {
+      first_name,
+      last_name,
+      user_id,
+    });
     return NextResponse.json(
-      { message: `Successfully updated driver with id: ${id}`, result: updated },
+      {
+        message: `Successfully updated driver with id: ${id}`,
+        result: updated,
+      },
       { status: 200 }
     );
   } catch (error) {

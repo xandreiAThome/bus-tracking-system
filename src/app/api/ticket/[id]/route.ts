@@ -17,13 +17,19 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
     const ticket = await getTicketById(Number(id));
     if (!ticket) {
-      return NextResponse.json({ message: "Ticket not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Ticket not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ ticket }, { status: 200 });
@@ -45,13 +51,19 @@ export async function PATCH(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
     const body = await req.json();
     const updatedTrip = await editTrip(Number(id), body);
-    return NextResponse.json({ message: "Trip updated successfully", updated: updatedTrip }, { status: 200 });
+    return NextResponse.json(
+      { message: "Trip updated successfully", updated: updatedTrip },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });
@@ -70,12 +82,18 @@ export async function DELETE(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
     const result = await deleteTicket(Number(id));
-    return NextResponse.json({ message: `Ticket with id ${id} deleted successfully.`, result }, { status: 200 });
+    return NextResponse.json(
+      { message: `Ticket with id ${id} deleted successfully.`, result },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

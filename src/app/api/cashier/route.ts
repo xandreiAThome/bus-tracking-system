@@ -10,10 +10,10 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET() {
   try {
     const result = await getAllCashiers();
-    return NextResponse.json(result, {status: 201});
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -40,9 +40,9 @@ export async function POST(req: Request) {
   }
   try {
     const result = await addCashier(first_name, last_name, user_id, station_id);
-    return NextResponse.json(result, {status: 201});
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }

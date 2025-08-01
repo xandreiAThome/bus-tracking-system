@@ -69,7 +69,7 @@ export async function updateTicket(
 }
 
 export async function deleteTicket(id: number) {
-  return await prisma.$transaction(async (tx) => {
+  return await prisma.$transaction(async tx => {
     await tx.passenger_ticket.deleteMany({ where: { ticket_id: id } });
     await tx.baggage_ticket.deleteMany({ where: { ticket_id: id } });
 
@@ -178,7 +178,11 @@ export async function createFullPassengerTicket(
   discount: string | null
 ) {
   const ticket = await createTicket(price, trip_id, cashier_id, ticket_type);
-  const passenger = await createPassengerTicket(ticket.id, passenger_name, discount);
+  const passenger = await createPassengerTicket(
+    ticket.id,
+    passenger_name,
+    discount
+  );
   return { ticket, passenger };
 }
 
@@ -216,7 +220,13 @@ export async function updateFullPassengerTicket(
   passenger_name: string,
   discount: string | null
 ) {
-  const ticket = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
+  const ticket = await updateTicket(
+    id,
+    price,
+    trip_id,
+    cashier_id,
+    ticket_type
+  );
   const passenger = await updatePassengerTicket(id, passenger_name, discount);
   return { ticket, passenger };
 }
@@ -233,7 +243,13 @@ export async function updateFullBaggageTicket(
   receiver_name: string,
   item: string
 ) {
-  const ticket = await updateTicket(id, price, trip_id, cashier_id, ticket_type);
+  const ticket = await updateTicket(
+    id,
+    price,
+    trip_id,
+    cashier_id,
+    ticket_type
+  );
   const baggage = await updateBaggageTicket(
     id,
     sender_no,

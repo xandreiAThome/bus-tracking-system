@@ -1,7 +1,7 @@
 import { getAllTrips } from "@/features/trips/services/crud";
 import { addTrip } from "@/features/trips/services/crud";
 import { NextResponse } from "next/server";
-import { parseError } from "@/lib/utils"
+import { parseError } from "@/lib/utils";
 
 /**
  * GET /api/trip
@@ -31,9 +31,12 @@ export async function GET() {
   try {
     const trips = await getAllTrips();
     if (trips === null) {
-      return NextResponse.json({ message: "Cannot find trips" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Cannot find trips" },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({trips}, {status: 200});
+    return NextResponse.json({ trips }, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error) {
     const { status, message } = parseError(error);
@@ -61,8 +64,14 @@ export async function GET() {
  * @returns {Response} 500 - Internal server/database error.
  */
 export async function POST(req: Request) {
-  const { start_time, end_time, bus_id, src_station_id, dest_station_id, driver_id } =
-    await req.json();
+  const {
+    start_time,
+    end_time,
+    bus_id,
+    src_station_id,
+    dest_station_id,
+    driver_id,
+  } = await req.json();
 
   if (
     !start_time ||
@@ -87,9 +96,11 @@ export async function POST(req: Request) {
       dest_station_id,
       driver_id
     );
-    return NextResponse.json({message: "Trip successfully created", result: created}, {status: 201});
-  }
-  catch (error) {
+    return NextResponse.json(
+      { message: "Trip successfully created", result: created },
+      { status: 201 }
+    );
+  } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });
   }

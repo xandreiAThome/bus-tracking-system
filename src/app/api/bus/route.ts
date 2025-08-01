@@ -2,8 +2,8 @@
 
 import { getAllBuses } from "@/features/bus/services/crud";
 import { addBus } from "@/features/bus/services/crud";
-import { parseError } from "@/lib/utils"
-import { NextResponse, NextRequest } from 'next/server';
+import { parseError } from "@/lib/utils";
+import { NextResponse, NextRequest } from "next/server";
 
 /**
  * GET /api/bus
@@ -19,7 +19,7 @@ export async function GET() {
     return NextResponse.json({ buses }, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
       Number(capacity)
     );
 
-    return NextResponse.json(response, {status: 201});
+    return NextResponse.json(response, { status: 201 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }

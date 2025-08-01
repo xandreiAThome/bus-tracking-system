@@ -14,7 +14,10 @@ export async function GET(
   const { tripId } = await params;
 
   if (!validateIdParam(tripId)) {
-    return NextResponse.json({ message: "Invalid [tripId] parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [tripId] parameter" },
+      { status: 400 }
+    );
   }
 
   try {

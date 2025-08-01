@@ -1,6 +1,6 @@
 import { getAllSeats, addSeat } from "@features/seat/services/crud";
 import { NextRequest, NextResponse } from "next/server";
-import { parseError } from "@/lib/utils"
+import { parseError } from "@/lib/utils";
 
 /**
  * GET /api/seat
@@ -9,12 +9,15 @@ export async function GET() {
   try {
     const result = await getAllSeats();
     if (!result) {
-      return NextResponse.json({ message: "No available seats" }, { status: 404 });
+      return NextResponse.json(
+        { message: "No available seats" },
+        { status: 404 }
+      );
     }
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -39,6 +42,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }

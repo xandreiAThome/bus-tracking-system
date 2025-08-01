@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { PrismaClient, Prisma } from '@/generated/prisma'
+import { PrismaClient, Prisma } from "@/generated/prisma";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -213,7 +213,9 @@ export function generateSeatNumbers(capacity: number): string[] {
   return seats;
 }
 
-function isPrismaClientValidationError(err: any): err is Prisma.PrismaClientValidationError {
+function isPrismaClientValidationError(
+  err: any
+): err is Prisma.PrismaClientValidationError {
   return (
     err &&
     typeof err === "object" &&
@@ -223,24 +225,27 @@ function isPrismaClientValidationError(err: any): err is Prisma.PrismaClientVali
   );
 }
 
-function isPrismaClientKnownRequestError(err: any): err is Prisma.PrismaClientKnownRequestError {
+function isPrismaClientKnownRequestError(
+  err: any
+): err is Prisma.PrismaClientKnownRequestError {
   return (
     err &&
     typeof err === "object" &&
     "code" in err &&
     typeof err.code === "string" &&
-    (err.name === "PrismaClientKnownRequestError" || err.name === "PrismaClientRustPanicError") // optional
+    (err.name === "PrismaClientKnownRequestError" ||
+      err.name === "PrismaClientRustPanicError") // optional
   );
 }
 export function parseError(err: unknown): {
   status: number;
   message: string;
 } {
-  console.log(err)
+  console.log(err);
   if (isPrismaClientKnownRequestError(err)) {
     switch (err.code) {
       case "P2000":
-        return { status: 400, message: "Input for column/s too long"};
+        return { status: 400, message: "Input for column/s too long" };
       case "P2002":
         return { status: 409, message: "Duplicate entry" };
       case "P2001":
@@ -252,9 +257,12 @@ export function parseError(err: unknown): {
         return { status: 400, message: "Missing required fields" };
     }
   } else if (isPrismaClientValidationError(err)) {
-    return { status: 400, message: "Invalid input: some fields are missing or malformed"};
+    return {
+      status: 400,
+      message: "Invalid input: some fields are missing or malformed",
+    };
   } else if (err instanceof Error) {
     return { status: 500, message: err.message || "Internal Server Error" };
   }
-  return { status: 500, message: 'Internal Server Error' };
+  return { status: 500, message: "Internal Server Error" };
 }

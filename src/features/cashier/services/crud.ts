@@ -6,11 +6,11 @@ export async function getCashier(id: number) {
   try {
     const cashier = await prisma.cashier.findUnique({ where: { id } });
     if (!cashier) {
-      return null
+      return null;
     }
     return cashier;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 
@@ -20,9 +20,9 @@ export async function getCashier(id: number) {
 export async function deleteCashier(id: number) {
   try {
     const deleted = await prisma.cashier.delete({ where: { id } });
-    return deleted
+    return deleted;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 
@@ -43,9 +43,9 @@ export async function editCashier(
       where: { id },
       data,
     });
-    return updated
+    return updated;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 
@@ -56,11 +56,11 @@ export async function getAllCashiers() {
   try {
     const cashiers = await prisma.cashier.findMany();
     if (!cashiers.length) {
-      return null
+      return null;
     }
-    return cashiers
+    return cashiers;
   } catch (error) {
-    throw error
+    throw error;
   }
 }
 
@@ -82,8 +82,8 @@ export async function addCashier(
         station_id,
       },
     });
-    return created
+    return created;
   } catch (error) {
-    throw error
+    throw error;
   }
 }

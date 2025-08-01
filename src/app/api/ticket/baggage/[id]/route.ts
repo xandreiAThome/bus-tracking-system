@@ -24,7 +24,10 @@ export async function GET(
     const baggageTicket = await getBaggageTicketByTicketId(Number(id));
 
     if (!baggageTicket) {
-      return NextResponse.json({ message: "Baggage ticket not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Baggage ticket not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({ baggageTicket }, { status: 200 });

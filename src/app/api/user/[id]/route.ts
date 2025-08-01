@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateIdParam, parseError } from "@/lib/utils";
-import { deleteUser, updateUserRole, getUser } from "@/features/user/services/crud";
+import {
+  deleteUser,
+  updateUserRole,
+  getUser,
+} from "@/features/user/services/crud";
 
 export async function GET(
   req: NextRequest,
@@ -8,7 +12,10 @@ export async function GET(
 ) {
   const idStr = params.id;
   if (!validateIdParam(idStr)) {
-    return NextResponse.json({ message: "Invalid [id] parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
+      { status: 400 }
+    );
   }
   const id = Number(idStr);
 
@@ -30,13 +37,19 @@ export async function DELETE(
 ) {
   const idStr = params.id;
   if (!validateIdParam(idStr)) {
-    return NextResponse.json({ message: "Invalid [id] parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
+      { status: 400 }
+    );
   }
   const id = Number(idStr);
 
   try {
     await deleteUser(id);
-    return NextResponse.json({ message: `User with id ${id} deleted successfully` }, { status: 200 });
+    return NextResponse.json(
+      { message: `User with id ${id} deleted successfully` },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });
@@ -49,7 +62,10 @@ export async function PATCH(
 ) {
   const idStr = params.id;
   if (!validateIdParam(idStr)) {
-    return NextResponse.json({ message: "Invalid [id] parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
+      { status: 400 }
+    );
   }
   const id = Number(idStr);
 
@@ -58,11 +74,17 @@ export async function PATCH(
     const { role } = body;
 
     if (!role) {
-      return NextResponse.json({ message: "No fields to update" }, { status: 400 });
+      return NextResponse.json(
+        { message: "No fields to update" },
+        { status: 400 }
+      );
     }
 
     const updatedUser = await updateUserRole(id, role);
-    return NextResponse.json({ message: "User updated successfully", updatedUser }, { status: 200 });
+    return NextResponse.json(
+      { message: "User updated successfully", updatedUser },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

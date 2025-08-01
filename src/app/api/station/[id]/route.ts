@@ -16,13 +16,19 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
     const station = await getStation(Number(id));
     if (!station) {
-      return NextResponse.json({ message: `Station with id ${id} not found` }, { status: 404 });
+      return NextResponse.json(
+        { message: `Station with id ${id} not found` },
+        { status: 404 }
+      );
     }
     return NextResponse.json(station, { status: 200 });
   } catch (error) {
@@ -41,7 +47,10 @@ export async function PATCH(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -49,11 +58,20 @@ export async function PATCH(
     const { name } = body;
 
     if (!name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json({ message: "Invalid station name" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid station name" },
+        { status: 400 }
+      );
     }
 
     const station = await editStation(Number(id), { name });
-    return NextResponse.json({ message: `Successfully updated station with id: ${id}`, result: station }, { status: 200 });
+    return NextResponse.json(
+      {
+        message: `Successfully updated station with id: ${id}`,
+        result: station,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });
@@ -70,12 +88,18 @@ export async function DELETE(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
     const deleted = await deleteStation(Number(id));
-    return NextResponse.json({ message: "Station deleted successfully", result: deleted}, { status: 200 });
+    return NextResponse.json(
+      { message: "Station deleted successfully", result: deleted },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

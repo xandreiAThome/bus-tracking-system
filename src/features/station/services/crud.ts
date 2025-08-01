@@ -20,7 +20,7 @@ export async function getStation(id: number) {
     where: { id },
   });
   if (!station) {
-    return null
+    return null;
   }
   return station;
 }

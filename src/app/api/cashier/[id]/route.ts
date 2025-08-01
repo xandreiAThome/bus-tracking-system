@@ -4,7 +4,7 @@ import {
   deleteCashier,
   editCashier,
 } from "@/features/cashier/services/crud";
-import { NextResponse, NextRequest } from "next/server"
+import { NextResponse, NextRequest } from "next/server";
 
 /**
  * GET /api/cashier/[id]
@@ -18,17 +18,23 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const result = await getCashier(Number(id));
     if (result === null) {
-      return NextResponse.json({ message: "Cannot find cashier" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Cannot find cashier" },
+        { status: 404 }
+      );
     }
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -44,17 +50,26 @@ export async function DELETE(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const result = await deleteCashier(Number(id));
     if (result === null) {
-      return NextResponse.json({ message: "Cannot find cashier" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Cannot find cashier" },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ message: `Deleted cashier with id ${id}`, result }, { status: 200 });
+    return NextResponse.json(
+      { message: `Deleted cashier with id ${id}`, result },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -75,9 +90,12 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  
+
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const body = await req.json();
@@ -85,15 +103,20 @@ export async function PATCH(
 
     if (!first_name && !last_name && !user_id && !station_id) {
       return NextResponse.json(
-        { message: "At least one field (first_name, last_name, user_id, station_id) must be provided" },
+        {
+          message:
+            "At least one field (first_name, last_name, user_id, station_id) must be provided",
+        },
         { status: 400 }
       );
     }
     const result = await editCashier(Number(id), body);
-    return NextResponse.json({ message: `Successfully updated cashier with id: ${id}`, result }, {status: 200})
+    return NextResponse.json(
+      { message: `Successfully updated cashier with id: ${id}`, result },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
-

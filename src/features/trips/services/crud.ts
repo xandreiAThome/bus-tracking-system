@@ -52,7 +52,7 @@ export async function getTrip(id: number) {
   });
 
   if (!trip) {
-    return null
+    return null;
   }
   const mappedTrips: AggregatedTripType = {
     id: trip.id,
@@ -92,9 +92,9 @@ export async function addTrip(
         // status: ... if you want to set it
       },
     });
-    return created
+    return created;
   } catch (err: any) {
-    throw err
+    throw err;
   }
 }
 
@@ -107,9 +107,9 @@ export async function deleteTrip(id: number) {
       where: { id },
     });
 
-    return deleted
+    return deleted;
   } catch (err: any) {
-    throw err
+    throw err;
   }
 }
 

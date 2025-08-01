@@ -16,7 +16,10 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const result = await getBusById(Number(id));
@@ -26,7 +29,7 @@ export async function GET(
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -42,14 +45,20 @@ export async function DELETE(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const result = await deleteBus(Number(id));
-    return NextResponse.json({ message: `Deleted bus with id ${id} and its associated seats`, result }, { status: 200 });
+    return NextResponse.json(
+      { message: `Deleted bus with id ${id} and its associated seats`, result },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -71,7 +80,10 @@ export async function PATCH(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const body = await req.json();
@@ -83,15 +95,25 @@ export async function PATCH(
       capacity === undefined
     ) {
       return NextResponse.json(
-        { message: "At least one field (plate_number, station_id, capacity) must be provided" },
+        {
+          message:
+            "At least one field (plate_number, station_id, capacity) must be provided",
+        },
         { status: 400 }
       );
     }
 
-    const result = await editBus(Number(id), { plate_number, station_id, capacity });
-    return NextResponse.json({ message: `Successfully updated bus with id: ${id}`, result }, {status: 200})
+    const result = await editBus(Number(id), {
+      plate_number,
+      station_id,
+      capacity,
+    });
+    return NextResponse.json(
+      { message: `Successfully updated bus with id: ${id}`, result },
+      { status: 200 }
+    );
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }

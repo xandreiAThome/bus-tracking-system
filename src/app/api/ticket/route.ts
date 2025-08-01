@@ -77,13 +77,8 @@ export async function POST(req: NextRequest) {
 
     // Baggage ticket validation
     if (ticket_type === "baggage") {
-      const {
-        sender_no,
-        dispatcher_no,
-        sender_name,
-        receiver_name,
-        item,
-      } = payload;
+      const { sender_no, dispatcher_no, sender_name, receiver_name, item } =
+        payload;
 
       if (
         !sender_no ||

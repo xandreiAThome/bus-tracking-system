@@ -11,7 +11,10 @@ export async function GET() {
   try {
     const result = await getAllDrivers();
     if (!result) {
-      return NextResponse.json({ message: "No drivers found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "No drivers found" },
+        { status: 404 }
+      );
     }
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

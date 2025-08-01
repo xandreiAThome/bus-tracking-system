@@ -1,6 +1,6 @@
 import { validateIdParam, validateSortOrder, parseError } from "@/lib/utils";
 import { getSeatsByBus } from "@features/seat/services/crud";
-import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server";
 /**
  * GET /api/bus/[id]/seats
  *
@@ -42,13 +42,16 @@ export async function GET(
   const validatedSortOrder = validateSortOrder(rawSortOrder);
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid [id] Parameter"}, { status: 400 })
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
   try {
     const result = await getSeatsByBus(Number(id), validatedSortOrder);
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
-    return NextResponse.json({message}, {status});
+    return NextResponse.json({ message }, { status });
   }
 }
