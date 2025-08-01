@@ -8,6 +8,7 @@ import { StationType } from "@/features/station/types/types";
 import { useEffect, useState } from "react";
 import { AggregatedTripType } from "../types/types";
 import { Toaster } from "sonner";
+import { format } from "date-fns";
 
 export default function OverviewCard() {
   const [isMetaLoading, setIsMetaLoading] = useState(true);
@@ -95,6 +96,9 @@ export default function OverviewCard() {
             <CardTitle className="mt-2 text-xl font-extrabold text-[#456A3B]">
               Trips Overview
             </CardTitle>
+            <div className="mt-1 text-green-700 font-semibold text-base">
+              {format(new Date(), "MMMM dd, yyyy")}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="flex-1 mt-4">
