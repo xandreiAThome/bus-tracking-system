@@ -56,15 +56,15 @@ export async function DELETE(
     );
   }
   try {
-    const result = await deleteCashier(Number(id));
-    if (result === null) {
+    const deleted = await deleteCashier(Number(id));
+    if (deleted === null) {
       return NextResponse.json(
         { message: "Cannot find cashier" },
         { status: 404 }
       );
     }
     return NextResponse.json(
-      { message: `Deleted cashier with id ${id}`, result },
+      { message: `Deleted cashier with id ${id}`, result: deleted },
       { status: 200 }
     );
   } catch (error) {

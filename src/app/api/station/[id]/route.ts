@@ -97,7 +97,7 @@ export async function DELETE(
   try {
     const deleted = await deleteStation(Number(id));
     return NextResponse.json(
-      { message: "Station deleted successfully", result: deleted },
+      { message: `Deleted station with id ${id}`, result: deleted },
       { status: 200 }
     );
   } catch (error) {

@@ -89,9 +89,9 @@ export async function DELETE(
   }
 
   try {
-    const result = await deleteTicket(Number(id));
+    const deleted = await deleteTicket(Number(id));
     return NextResponse.json(
-      { message: `Ticket with id ${id} deleted successfully.`, result },
+      { message: `Ticket with id ${id} deleted successfully.`, result: deleted },
       { status: 200 }
     );
   } catch (error) {

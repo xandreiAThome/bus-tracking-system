@@ -48,9 +48,9 @@ export async function DELETE(
   const id = Number(idStr);
 
   try {
-    const result = await deleteUser(id);
+    const deleted = await deleteUser(id);
     return NextResponse.json(
-      { message: `User with id ${id} deleted successfully`, result },
+      { message: `User with id ${id} deleted successfully`, result: deleted },
       { status: 200 }
     );
   } catch (error) {

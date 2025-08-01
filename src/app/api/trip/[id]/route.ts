@@ -50,9 +50,9 @@ export async function DELETE(
   }
 
   try {
-    const result = await deleteTrip(Number(id));
+    const deleted = await deleteTrip(Number(id));
     return NextResponse.json(
-      { message: `Trip with id ${id} deleted successfully.`, result },
+      { message: `Trip with id ${id} deleted successfully.`, result: deleted },
       { status: 200 }
     );
   } catch (error) {

@@ -53,7 +53,7 @@ export async function DELETE(
       );
     }
     return NextResponse.json(
-      { message: `Seat deleted successfully`, result: deleted },
+      { message: `Deleted seat with id ${id}`, result: deleted },
       { status: 200 }
     );
   } catch (error) {
