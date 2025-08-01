@@ -172,7 +172,7 @@ export default function TripCard({
           {/* Right Side:  */}
           <div className="flex flex-col items-end">
             <div className="flex flex-row gap-1 justify-end items-baseline">
-              <span className="font-bold">15/40</span>
+              <span className="font-bold">0/0</span>
               <span>
                 <SquareArrowOutUpRight />
               </span>
