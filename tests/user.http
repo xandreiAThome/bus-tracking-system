@@ -1,7 +1,7 @@
 ###
 
 # Update a user by ID (partial update)
-PATCH http://localhost:3000/api/user/13
+PATCH http://localhost:3000/api/user/1
 Content-Type: application/json
 Accept: application/json
 
@@ -12,7 +12,7 @@ Accept: application/json
 ###
 
 # Delete a user by ID
-DELETE http://localhost:3000/api/user/13
+DELETE http://localhost:3000/api/user/1
 Accept: application/json
 
 ###
@@ -24,5 +24,5 @@ Accept: application/json
 ###
 
 # Get a user by ID
-GET http://localhost:3000/api/user/13
+GET http://localhost:3000/api/user/1
 Accept: application/json

@@ -1,8 +1,7 @@
 // src/app/api/ticket/[id]/route.ts
 
 import { validateIdParam, parseError } from "@/lib/utils";
-import { getTicketById, deleteTicket } from "@/features/ticket/services/crud";
-import { editTrip } from "@/features/trips/services/crud";
+import { getTicketById, deleteTicket, updateTicket } from "@/features/ticket/services/crud";
 import { NextResponse, NextRequest } from "next/server";
 
 /**
@@ -33,37 +32,6 @@ export async function GET(
     }
 
     return NextResponse.json({ ticket }, { status: 200 });
-  } catch (error) {
-    const { status, message } = parseError(error);
-    return NextResponse.json({ message }, { status });
-  }
-}
-
-/**
- * PATCH /api/ticket/[id]
- *
- * Updates a trip by ticket ID (potentially misnamed endpoint).
- */
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-
-  if (!validateIdParam(id)) {
-    return NextResponse.json(
-      { message: "Invalid [id] Parameter" },
-      { status: 400 }
-    );
-  }
-
-  try {
-    const body = await req.json();
-    const updated = await editTrip(Number(id), body);
-    return NextResponse.json(
-      { message: `Updated trip with id ${id}`, result: updated },
-      { status: 200 }
-    );
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

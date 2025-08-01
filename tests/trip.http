@@ -20,18 +20,18 @@ Content-Type: application/json
 ###
 
 ### Get a specific trip by ID
-GET http://localhost:3000/api/trip/1
+GET http://localhost:3000/api/trip/3
 Accept: application/json
 
 ###
 
 ### Update a trip by ID
-PATCH http://localhost:3000/api/trip/1
+PATCH http://localhost:3000/api/trip/3
 Content-Type: application/json
 
 {
   "end_time": "2025-08-01T14:00:00Z",
-  "driver_id": 5
+  "driver_id": 1
 }
 
 ###
@@ -43,11 +43,11 @@ Accept: application/json
 ###
 
 ### Get trips for a specific day (query param: date)
-GET http://localhost:3000/api/trip/day?date=2025-08-01
+GET http://localhost:3000/api/trip/daily?date=2025-08-01
 Accept: application/json
 
 ###
 
 ### Get trips for a specific month and year
-GET http://localhost:3000/api/trip/month?month=8&year=2025
+GET http://localhost:3000/api/trip/monthly?month=8&year=2025
 Accept: application/json

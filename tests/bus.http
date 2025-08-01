@@ -23,7 +23,7 @@ Accept: application/json
 ###
 
 ### Delete a bus by ID
-DELETE http://localhost:3000/api/bus/1
+DELETE http://localhost:3000/api/bus/5
 Accept: application/json
 
 ###
@@ -35,13 +35,13 @@ Content-Type: application/json
 {
   "plate_number": "XYZ-5678",
   "station_id": 2,
-  "capacity": 50
+  "capacity": 0
 }
 
 ###
 
 ### Get seats by bus ID (sorted ascending)
-GET http://localhost:3000/api/bus/2/seats?sortOrder=asc
+GET http://localhost:3000/api/bus/4/seats?sortOrder=desc
 Accept: application/json
 
 ###

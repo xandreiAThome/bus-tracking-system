@@ -48,7 +48,7 @@ PATCH http://localhost:3000/api/ticket/1
 Content-Type: application/json
 
 {
-  "status": "delayed"
+  "price": "100"
 }
 
 ###
@@ -64,13 +64,13 @@ Accept: application/json
 ###
 
 ### Get baggage ticket by ID
-GET http://localhost:3000/api/ticket/baggage/1
+GET http://localhost:3000/api/ticket/baggage/8
 Accept: application/json
 
 ###
 
 ### Update baggage ticket by ID
-PUT http://localhost:3000/api/ticket/baggage/1
+PUT http://localhost:3000/api/ticket/baggage/2
 Content-Type: application/json
 
 {
@@ -98,13 +98,13 @@ Accept: application/json
 ###
 
 ### Get passenger ticket by ID
-GET http://localhost:3000/api/ticket/passenger/1
+GET http://localhost:3000/api/ticket/passenger/2
 Accept: application/json
 
 ###
 
 ### Update passenger ticket by ID
-PUT http://localhost:3000/api/ticket/passenger/1
+PUT http://localhost:3000/api/ticket/passenger/3
 Content-Type: application/json
 
 {

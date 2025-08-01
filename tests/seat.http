@@ -9,8 +9,8 @@ POST http://localhost:3000/api/seat
 Content-Type: application/json
 
 {
-  "seat_number": "A1",
-  "bus_id": 1
+  "seat_number": "A2",
+  "bus_id": 4
 }
 
 ###
@@ -22,7 +22,7 @@ Accept: application/json
 ###
 
 ### Update a seat by ID
-PATCH http://localhost:3000/api/seat/1
+PATCH http://localhost:3000/api/seat/15
 Content-Type: application/json
 
 {
@@ -33,5 +33,5 @@ Content-Type: application/json
 ###
 
 ### Delete a seat by ID
-DELETE http://localhost:3000/api/seat/1
+DELETE http://localhost:3000/api/seat/15
 Accept: application/json
