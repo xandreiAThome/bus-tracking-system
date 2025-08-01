@@ -10,6 +10,7 @@ import { AggregatedTripType } from "../types/types";
 import { Toaster } from "sonner";
 
 export default function OverviewCard() {
+  const [isMetaLoading, setIsMetaLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [trips, setTrips] = useState<AggregatedTripType[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +19,7 @@ export default function OverviewCard() {
   const [drivers, setDrivers] = useState<DriverType[]>([]);
 
   const fetchTrips = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(`/api/trip/daily`);
       if (!response.ok) {
@@ -31,11 +33,13 @@ export default function OverviewCard() {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchMeta = async () => {
-    setIsLoading(true);
+    setIsMetaLoading(true);
     try {
       const [stationsRes, busesRes, driverRes] = await Promise.all([
         fetch("/api/station"),
@@ -58,7 +62,7 @@ export default function OverviewCard() {
         err instanceof Error ? err.message : "An unknown error occurred"
       );
     } finally {
-      setIsLoading(false);
+      setIsMetaLoading(false);
     }
   };
 
@@ -66,7 +70,7 @@ export default function OverviewCard() {
     Promise.all([fetchTrips(), fetchMeta()]);
   }, []);
 
-  if (isLoading) {
+  if (isMetaLoading) {
     return (
       <div className="h-full flex items-center justify-center p-5 min-h-screen">
         <Card className="w-full max-w-2xl mx-auto p-8 flex flex-col items-center justify-center">
@@ -94,15 +98,21 @@ export default function OverviewCard() {
           </div>
         </CardHeader>
         <CardContent className="flex-1 mt-4">
-          {trips.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">No trips found</div>
+          {isLoading ? (
+            <div className="text-center text-green-700 font-bold">
+              Loading trips...
+            </div>
+          ) : trips.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 font-bold">
+              No trips found
+            </div>
           ) : (
             <div className="flex flex-col overflow-y-auto gap-y-4">
               {trips.map(trip => {
                 if (trip.status !== "complete")
                   return (
                     <TripCard
-                      key={trip.id} // ✅ add key prop
+                      key={trip.id}
                       onSuccessEdit={fetchTrips}
                       trip={trip}
                       stations={stations}
@@ -110,6 +120,7 @@ export default function OverviewCard() {
                       drivers={drivers}
                     />
                   );
+                return null;
               })}
             </div>
           )}
