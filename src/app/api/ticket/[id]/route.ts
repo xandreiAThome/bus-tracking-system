@@ -27,7 +27,7 @@ export async function GET(
     const ticket = await getTicketById(Number(id));
     if (!ticket) {
       return NextResponse.json(
-        { message: "Ticket not found" },
+        { message: `Cannot find ticket with id ${id}` },
         { status: 404 }
       );
     }

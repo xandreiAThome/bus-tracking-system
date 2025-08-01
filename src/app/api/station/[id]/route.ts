@@ -26,7 +26,7 @@ export async function GET(
     const station = await getStation(Number(id));
     if (!station) {
       return NextResponse.json(
-        { message: `Station with id ${id} not found` },
+        { message: `Cannot find station with id ${id}` },
         { status: 404 }
       );
     }

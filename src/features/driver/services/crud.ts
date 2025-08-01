@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function getAllDrivers() {
   const drivers = await prisma.driver.findMany();
-  return drivers.length > 0 ? drivers : null;
+  return drivers;
 }
 
 /**

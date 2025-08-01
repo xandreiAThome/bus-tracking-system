@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
  */
 export async function getAllSeats() {
   const seats = await prisma.seat.findMany();
-  return seats.length > 0 ? seats : null;
+  return seats;
 }
 
 /**

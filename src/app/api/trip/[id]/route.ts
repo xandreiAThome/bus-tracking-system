@@ -21,7 +21,10 @@ export async function GET(
   try {
     const trip = await getTrip(Number(id));
     if (!trip) {
-      return NextResponse.json({ message: "Trip not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: `Cannot find trip with id ${id}` },
+        { status: 404 }
+      );
     }
     return NextResponse.json(trip, { status: 200 });
   } catch (error) {

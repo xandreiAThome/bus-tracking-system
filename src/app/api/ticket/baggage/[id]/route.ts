@@ -1,6 +1,6 @@
 import { validateIdParam, parseError } from "@/lib/utils";
 import {
-  getBaggageTicketByTicketId,
+  getBaggageTicketById,
   updateFullBaggageTicket,
 } from "@features/ticket/services/crud";
 import { NextResponse, NextRequest } from "next/server";
@@ -8,7 +8,7 @@ import { NextResponse, NextRequest } from "next/server";
 /**
  * GET /api/ticket/baggage/[id]
  *
- * Fetches a baggage ticket by ticket ID.
+ * Fetches a baggage ticket by baggage_ticket ID.
  */
 export async function GET(
   _req: NextRequest,
@@ -17,20 +17,23 @@ export async function GET(
   const { id } = await params;
 
   if (!validateIdParam(id)) {
-    return NextResponse.json({ message: "Invalid ticket ID" }, { status: 400 });
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
   }
 
   try {
-    const baggageTicket = await getBaggageTicketByTicketId(Number(id));
+    const baggageTicket = await getBaggageTicketById(Number(id));
 
     if (!baggageTicket) {
       return NextResponse.json(
-        { message: "Baggage ticket not found" },
+        { message: `Cannot find baggage_ticket with id ${id}` },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ baggageTicket }, { status: 200 });
+    return NextResponse.json(baggageTicket, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

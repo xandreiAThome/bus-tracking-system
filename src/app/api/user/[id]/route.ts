@@ -22,9 +22,12 @@ export async function GET(
   try {
     const user = await getUser(id);
     if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: `Cannot find user with id ${id}` },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ user }, { status: 200 });
+    return NextResponse.json(user, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

@@ -31,7 +31,7 @@ export async function GET(
     const result = await getStationByName(decodedName);
     if (result === null) {
       return NextResponse.json(
-        { message: `Station with name ${decodedName} not found` },
+        { message: `Cannot find station with name ${decodedName}` },
         { status: 404 }
       );
     }

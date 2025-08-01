@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET() {
   try {
     const result = await getAllCashiers();
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json({ cashiers: result }, { status: 201 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

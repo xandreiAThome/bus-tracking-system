@@ -94,7 +94,7 @@ export async function createPassengerTicket(
   });
 }
 
-export async function getPassengerTicketByTicketId(ticket_id: number) {
+export async function getPassengerTicketById(ticket_id: number) {
   return await prisma.ticket.findUnique({
     where: { id: ticket_id },
     include: {
@@ -137,7 +137,7 @@ export async function createBaggageTicket(
   });
 }
 
-export async function getBaggageTicketByTicketId(ticket_id: number) {
+export async function getBaggageTicketById(ticket_id: number) {
   return await prisma.ticket.findUnique({
     where: { id: ticket_id },
     include: {

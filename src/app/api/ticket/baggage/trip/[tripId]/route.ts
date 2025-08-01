@@ -28,15 +28,7 @@ export async function GET(
     }
 
     const tickets = await getBaggageTicketsByTripId(parsedId);
-
-    if (!tickets || tickets.length === 0) {
-      return NextResponse.json(
-        { message: "No baggage tickets found for this trip." },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ baggageTickets: tickets }, { status: 200 });
+    return NextResponse.json({ baggage_tickets: tickets }, { status: 200 });
   } catch (error) {
     console.error("Error fetching baggage tickets by tripId:", error);
     return NextResponse.json(

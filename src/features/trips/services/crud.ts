@@ -28,9 +28,6 @@ export async function getAllTrips() {
     bus: trip.bus,
     driver: trip.driver,
   }));
-  if (mappedTrips.length === 0) {
-    return null;
-  }
   return mappedTrips;
 }
 /**
@@ -131,9 +128,6 @@ export const getTripsForDay = async (date: Date) => {
     },
   });
 
-  if (trips.length === 0) {
-    return null;
-  }
   const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
     id: trip.id,
     start_time: trip.start_time,
@@ -170,9 +164,6 @@ export const getTripsForMonth = async (month: number, year: number) => {
     },
   });
 
-  if (trips.length === 0) {
-    return null;
-  }
   const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
     id: trip.id,
     start_time: trip.start_time,

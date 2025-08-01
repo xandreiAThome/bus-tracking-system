@@ -1,6 +1,6 @@
 import { validateIdParam, parseError } from "@/lib/utils";
 import {
-  getPassengerTicketByTicketId,
+  getPassengerTicketById,
   updateFullPassengerTicket,
 } from "@features/ticket/services/crud";
 import { NextRequest, NextResponse } from "next/server";
@@ -24,16 +24,16 @@ export async function GET(
   }
 
   try {
-    const ticket = await getPassengerTicketByTicketId(Number(id));
+    const ticket = await getPassengerTicketById(Number(id));
 
     if (!ticket) {
       return NextResponse.json(
-        { message: "No passenger ticket found." },
+        { message: `Cannot find passenger_ticket with id ${id}` },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ passengerTicket: ticket }, { status: 200 });
+    return NextResponse.json({ passenger_ticket: ticket }, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

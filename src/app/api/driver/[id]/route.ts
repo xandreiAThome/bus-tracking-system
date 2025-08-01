@@ -28,7 +28,7 @@ export async function GET(
     const result = await getDriver(Number(id));
     if (!result) {
       return NextResponse.json(
-        { message: "Driver not found" },
+        { message: `Cannot find driver with id ${id}` },
         { status: 404 }
       );
     }

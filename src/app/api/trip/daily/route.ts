@@ -14,13 +14,8 @@ export async function GET(req: NextRequest) {
     console.log(date);
 
     const trips = await getTripsForDay(date);
-    if (trips === null) {
-      return NextResponse.json(
-        { message: "Cannot find trips" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ trips });
+
+    return NextResponse.json({ trips }, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error) {
     const { status, message } = parseError(error);

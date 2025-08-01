@@ -8,13 +8,7 @@ import { parseError } from "@/lib/utils";
 export async function GET() {
   try {
     const result = await getAllSeats();
-    if (!result) {
-      return NextResponse.json(
-        { message: "No available seats" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json(result, { status: 200 });
+    return NextResponse.json({ seats: result }, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

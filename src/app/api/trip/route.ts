@@ -30,13 +30,8 @@ import { parseError } from "@/lib/utils";
 export async function GET() {
   try {
     const trips = await getAllTrips();
-    if (trips === null) {
-      return NextResponse.json(
-        { message: "Cannot find trips" },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ trips }, { status: 200 });
+
+    return NextResponse.json({ trips: trips }, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error) {
     const { status, message } = parseError(error);

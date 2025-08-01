@@ -24,7 +24,10 @@ export async function GET(
   try {
     const result = await getBusById(Number(id));
     if (result === null) {
-      return NextResponse.json({ message: "Cannot find bus" }, { status: 404 });
+      return NextResponse.json(
+        { message: `Cannot find bus with id ${id}` },
+        { status: 404 }
+      );
     }
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

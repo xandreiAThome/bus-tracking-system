@@ -13,10 +13,7 @@ import { NextResponse, NextRequest } from "next/server";
 export async function GET() {
   try {
     const buses = await getAllBuses();
-    if (!buses) {
-      return NextResponse.json({ message: "No buses found" }, { status: 404 });
-    }
-    return NextResponse.json({ buses }, { status: 200 });
+    return NextResponse.json({ buses: buses }, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });

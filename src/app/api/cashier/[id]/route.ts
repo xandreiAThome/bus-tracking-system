@@ -27,7 +27,7 @@ export async function GET(
     const result = await getCashier(Number(id));
     if (result === null) {
       return NextResponse.json(
-        { message: "Cannot find cashier" },
+        { message: `Cannot find cashier with id ${id}` },
         { status: 404 }
       );
     }

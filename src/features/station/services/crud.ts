@@ -5,9 +5,6 @@ import { prisma } from "@/lib/prisma";
  */
 export async function getAllStations() {
   const stations = await prisma.station.findMany();
-  if (!stations || stations.length === 0) {
-    return null;
-  }
   return stations;
 }
 

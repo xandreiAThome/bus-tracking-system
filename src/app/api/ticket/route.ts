@@ -16,13 +16,7 @@ import { NextResponse, NextRequest } from "next/server";
 export async function GET() {
   try {
     const tickets = await getAllTickets();
-    if (!tickets || tickets.length === 0) {
-      return NextResponse.json(
-        { message: "No tickets found." },
-        { status: 404 }
-      );
-    }
-    return NextResponse.json({ tickets }, { status: 200 });
+    return NextResponse.json({ tickets: tickets }, { status: 200 });
   } catch (error) {
     const { status, message } = parseError(error);
     return NextResponse.json({ message }, { status });
