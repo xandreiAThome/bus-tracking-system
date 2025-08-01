@@ -1,113 +1,68 @@
-/**
- * Edit a station by ID
- */
-export async function editStation(id: number, data: { name: string }) {
-  try {
-    const updated = await prisma.station.update({
-      where: { id },
-      data: { name: data.name },
-    });
-    return Response.json({ station: updated }, { status: 200 });
-  } catch (err: any) {
-    if (err.code === "P2025") {
-      return Response.json(
-        { message: `Station with id: ${id} not found` },
-        { status: 404 }
-      );
-    }
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
-}
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
 
 /**
- * Get all stations
+ * Get all stations from the database.
  */
 export async function getAllStations() {
-  try {
-    const stations = await prisma.station.findMany();
-    if (!stations.length) {
-      return Response.json({ message: "No stations found" }, { status: 404 });
-    }
-    return Response.json({ stations }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const stations = await prisma.station.findMany();
+  return stations;
 }
 
 /**
- * Get a station by ID
+ * Get a station by its ID.
+ * @param id - Station ID
  */
 export async function getStation(id: number) {
-  try {
-    const station = await prisma.station.findUnique({ where: { id } });
-    if (!station) {
-      return Response.json({ message: "Station not found" }, { status: 404 });
-    }
-    return Response.json({ station }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const station = await prisma.station.findUnique({
+    where: { id },
+  });
+
+  return station;
 }
 
 /**
- * Get a station by name
+ * Get a station by its name.
+ * @param name - Station name
  */
 export async function getStationByName(name: string) {
-  try {
-    const station = await prisma.station.findFirst({
-      where: { name },
-    });
-    if (!station) {
-      return Response.json({ message: "Station not found" }, { status: 404 });
-    }
-    return Response.json({ station }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const station = await prisma.station.findFirst({
+    where: { name },
+  });
+
+  return station;
 }
 
 /**
- * Create a new station
+ * Create a new station.
+ * @param name - Station name
  */
 export async function addStation(name: string) {
-  try {
-    const created = await prisma.station.create({
-      data: { name },
-    });
-    return Response.json(
-      { message: "Station created successfully", created },
-      { status: 201 }
-    );
-  } catch (err: any) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const created = await prisma.station.create({
+    data: { name },
+  });
+  return created;
 }
 
 /**
- * Delete a station by ID
+ * Edit a station's name by ID.
+ * @param id - Station ID
+ * @param data - Object with new station data (currently only `name`)
+ */
+export async function editStation(id: number, data: { name: string }) {
+  const updated = await prisma.station.update({
+    where: { id },
+    data: { name: data.name },
+  });
+  return updated;
+}
+
+/**
+ * Delete a station by ID.
+ * @param id - Station ID
  */
 export async function deleteStation(id: number) {
-  try {
-    const deleted = await prisma.station.delete({ where: { id } });
-    return Response.json(
-      { message: `Station deleted successfully`, id: deleted.id },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    if (err.code === "P2025") {
-      return Response.json(
-        { message: `Station with id: ${id} not found` },
-        { status: 404 }
-      );
-    }
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const deleted = await prisma.station.delete({
+    where: { id },
+  });
+  return deleted;
 }

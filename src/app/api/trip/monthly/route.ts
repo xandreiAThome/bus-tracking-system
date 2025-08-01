@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTripsForMonth } from "@/features/trips/services/crud";
+import { parseError } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
@@ -15,11 +16,10 @@ export async function GET(req: NextRequest) {
     }
 
     const trips = await getTripsForMonth(month, year);
-    return NextResponse.json({ trips });
+    return NextResponse.json({ trips }, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    console.error("Error fetching trips:", err);
-    const message = err.message || "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

@@ -19,6 +19,7 @@ export default function GPSBroadcastClient({
   userName,
   busId,
 }: GPSBroadcastClientProps) {
+  console.log(busId);
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isBroadcasting, setIsBroadcasting] = useState<boolean>(false);
   const [currentLocation, setCurrentLocation] = useState<{
@@ -61,6 +62,11 @@ export default function GPSBroadcastClient({
 
   useEffect(() => {
     connect();
+    if (connected && !isRegistered) {
+      register("bus_driver", userId, busId);
+      setIsRegistered(true);
+      console.log("AKBUWFHKWFB");
+    }
     setHasTriedInitialConnect(true);
     return () => {
       stopBroadcasting(true);
@@ -74,13 +80,11 @@ export default function GPSBroadcastClient({
   }, []);
 
   useEffect(() => {
-    // Auto-register and start broadcasting when connected
     if (connected && !isRegistered) {
       register("bus_driver", userId, busId);
       setIsRegistered(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, isRegistered]);
+  }, [connected, isRegistered, busId, userId]);
 
   useEffect(() => {
     // Auto-start broadcasting when connected and registered (unless manually stopped)

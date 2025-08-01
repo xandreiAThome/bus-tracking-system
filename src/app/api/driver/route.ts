@@ -1,5 +1,6 @@
-import { getAllDrivers } from "@/features/driver/services/crud";
-import { addDriver } from "@/features/driver/services/crud";
+import { getAllDrivers, addDriver } from "@/features/driver/services/crud";
+import { parseError } from "@/lib/utils";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/driver
@@ -7,29 +8,38 @@ import { addDriver } from "@/features/driver/services/crud";
  * Returns all drivers in the system.
  */
 export async function GET() {
-  return getAllDrivers();
+  try {
+    const result = await getAllDrivers();
+    return NextResponse.json({ drivers: result }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
  * POST /api/driver
  *
  * Creates a new driver.
- * Expected JSON body:
- * {
- *   first_name: string,
- *   last_name: string,
- *   user_id: number
- * }
  */
-export async function POST(req: Request) {
-  const { first_name, last_name, user_id } = await req.json();
+export async function POST(req: NextRequest) {
+  try {
+    const { first_name, last_name, user_id } = await req.json();
 
-  if (!first_name || !last_name || user_id == null) {
-    return Response.json(
-      { message: "Invalid input: one or more fields are missing" },
-      { status: 400 }
+    if (!first_name || !last_name || user_id == null) {
+      return NextResponse.json(
+        { message: "Invalid input: one or more fields are missing" },
+        { status: 400 }
+      );
+    }
+
+    const created = await addDriver(first_name, last_name, user_id);
+    return NextResponse.json(
+      { message: "Driver created successfully", result: created },
+      { status: 201 }
     );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
-
-  return addDriver(first_name, last_name, user_id);
 }

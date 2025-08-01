@@ -1,57 +1,45 @@
-import { getAllStations, addStation } from "@features/station/services/crud";
+import { getAllStations, addStation } from "@/features/station/services/crud";
+import { parseError } from "@/lib/utils";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/station
  *
  * Retrieves all stations from the database.
- *
- * @returns {Response} 200 OK - Returns a JSON object containing all stations:
- * {
- *   "stations": [
- *     {
- *       "id": number,
- *       "name": string
- *     },
- *     ...
- *   ]
- * }
- *
- * @returns {Response} 404 Not Found - If no stations exist.
- * @returns {Response} 500 Internal Server Error - For unexpected server or database errors.
  */
 export async function GET() {
-  return getAllStations();
+  try {
+    const stations = await getAllStations();
+    return NextResponse.json({ stations: stations }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
  * POST /api/station
  *
- * Creates a new station in the database.
- *
- * @param {Request} req - Incoming request with JSON body:
- * {
- *   name: string // The name of the station to create
- * }
- *
- * @returns {Response} 201 Created - Returns a confirmation message and the created station object:
- * {
- *   message: "Station created successfully",
- *   created: {
- *     id: number,
- *     name: string
- *   }
- * }
- *
- * @returns {Response} 400 Bad Request - If the `name` field is missing or invalid.
- * @returns {Response} 409 Conflict - If a station with the same name already exists.
- * @returns {Response} 500 Internal Server Error - For unexpected server or database errors.
+ * Creates a new station.
  */
-export async function POST(req: Request) {
-  const { name } = await req.json();
+export async function POST(req: NextRequest) {
+  try {
+    const { name } = await req.json();
 
-  if (!name) {
-    return Response.json({ message: "Missing 'name' field" }, { status: 400 });
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json(
+        { message: "Invalid or missing 'name' field" },
+        { status: 400 }
+      );
+    }
+
+    const created = await addStation(name);
+    return NextResponse.json(
+      { message: "Station created successfully", result: created },
+      { status: 201 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
-
-  return addStation(name);
 }

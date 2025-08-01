@@ -1,4 +1,6 @@
 import { getStationByName } from "@features/station/services/crud";
+import { NextResponse, NextRequest } from "next/server";
+import { parseError } from "@/lib/utils";
 
 /**
  * GET /api/station/name/[name]
@@ -11,32 +13,31 @@ import { getStationByName } from "@features/station/services/crud";
  * Example request:
  * GET /api/station/name/Terminal%20A
  *
- * @param {Request} req - The incoming request.
- * @param {Object} params - URL parameters object containing:
- *   @param {string} name - The station name to lookup.
- *
- * @returns {Response} 200 OK - Returns the station object:
- * {
- *   "station": {
- *     "id": number,
- *     "name": string
- *   }
- * }
- *
- * @returns {Response} 400 Bad Request - If the `name` param is missing or empty.
- * @returns {Response} 404 Not Found - If no station matches the given name.
- * @returns {Response} 500 Internal Server Error - For unexpected database or server errors.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  req: NextRequest,
+  { params }: { params: Promise<{ name: string }> }
 ) {
-  const paramName = (await params).id;
-  const name = decodeURIComponent(paramName || "").trim();
+  const { name } = await params;
+  const decodedName = decodeURIComponent(name);
 
-  if (!name) {
-    return Response.json({ message: "Missing station name" }, { status: 400 });
+  if (!decodedName) {
+    return NextResponse.json(
+      { message: "Missing station name parameter" },
+      { status: 400 }
+    );
   }
-
-  return getStationByName(name);
+  try {
+    const result = await getStationByName(decodedName);
+    if (result === null) {
+      return NextResponse.json(
+        { message: `Cannot find station with name ${decodedName}` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }

@@ -1,23 +1,57 @@
-### GET seat count by bus
-GET http://localhost:3000/api/bus/1/seatcount
+### Get all buses
+GET http://localhost:3000/api/bus
 Accept: application/json
 
-### GET seat count by bus
+###
+
+### Create a new bus
+POST http://localhost:3000/api/bus
+Content-Type: application/json
+
+{
+  "plate_number": "ABC-1234",
+  "station_id": 1,
+  "capacity": 45
+}
+
+###
+
+### Get a bus by ID
+GET http://localhost:3000/api/bus/1
+Accept: application/json
+
+###
+
+### Delete a bus by ID
+DELETE http://localhost:3000/api/bus/5
+Accept: application/json
+
+###
+
+### Update a bus by ID
+PATCH http://localhost:3000/api/bus/2
+Content-Type: application/json
+
+{
+  "plate_number": "XYZ-5678",
+  "station_id": 2,
+  "capacity": 0
+}
+
+###
+
+### Get seats by bus ID (sorted ascending)
+GET http://localhost:3000/api/bus/4/seats?sortOrder=desc
+Accept: application/json
+
+###
+
+### Get seats by bus ID (sorted descending)
+GET http://localhost:3000/api/bus/2/seats?sortOrder=desc
+Accept: application/json
+
+###
+
+### Get seat count by bus ID
 GET http://localhost:3000/api/bus/2/seatcount
-Accept: application/json
-
-### GET seats by bus
-GET http://localhost:3000/api/bus/2/seats
-Accept: application/json
-
-### GET seats by bus
-GET http://localhost:3000/api/bus/1/seats?sortOrder=DESC
-Accept: application/json
-
-### GET seats by bus
-GET http://localhost:3000/api/bus/2/seats
-Accept: application/json
-
-### GET seats by bus
-GET http://localhost:3000/api/bus/3/seats
 Accept: application/json

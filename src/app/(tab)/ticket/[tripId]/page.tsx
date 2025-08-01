@@ -60,13 +60,11 @@ export default function Page() {
         if (!tripRes.ok) throw new Error("Failed to fetch trip");
         const tripData = await tripRes.json();
         const tripObj: AggregatedTripType = {
-          ...tripData.trip,
-          start_time: tripData.trip.start_time
-            ? new Date(tripData.trip.start_time)
+          ...tripData,
+          start_time: tripData.start_time
+            ? new Date(tripData.start_time)
             : null,
-          end_time: tripData.trip.end_time
-            ? new Date(tripData.trip.end_time)
-            : null,
+          end_time: tripData.end_time ? new Date(tripData.end_time) : null,
         };
         if (!ignore) setTrip(tripObj);
 
@@ -74,7 +72,7 @@ export default function Page() {
         if (tripObj.bus && tripObj.bus.id) {
           const seatsRes = await fetch(`/api/bus/${tripObj.bus.id}/seats`);
           const seatsData = await seatsRes.json();
-          const seatList = seatsData.seats || seatsData;
+          const seatList = seatsData.seats;
           if (!ignore) {
             setSeats(seatList);
             const unavailable = seatList

@@ -1,6 +1,6 @@
-import { validateIdParam, validateSortOrder } from "@/lib/utils";
+import { validateIdParam, validateSortOrder, parseError } from "@/lib/utils";
 import { getSeatsByBus } from "@features/seat/services/crud";
-
+import { NextRequest, NextResponse } from "next/server";
 /**
  * GET /api/bus/[id]/seats
  *
@@ -14,10 +14,6 @@ import { getSeatsByBus } from "@features/seat/services/crud";
  *
  * Query params:
  * - sortOrder (string, optional): The sort order for seat numbers. Accepted values are `"asc"` or `"desc"`. Defaults to `"asc"`.
- *
- * @returns {Response} 200 - JSON response containing an array of seats sorted according to the specified order.
- * @returns {Response} 400 - If the bus ID is invalid.
- * @returns {Response} 500 - For internal server errors.
  *
  * @returns
  * 200 OK — JSON response containing an array of seats sorted according to the specified order.:
@@ -37,18 +33,25 @@ import { getSeatsByBus } from "@features/seat/services/crud";
  * @returns — 500 Internal Server Error — For unexpected database or server errors.
  */
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  const url = new URL(req.url);
-  const rawSortOrder = url.searchParams.get("sortOrder");
-
+  const { id } = await params;
+  const searchParams = req.nextUrl.searchParams;
+  const rawSortOrder = searchParams.get("sortOrder");
   const validatedSortOrder = validateSortOrder(rawSortOrder);
 
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getSeatsByBus(id, validatedSortOrder);
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const result = await getSeatsByBus(Number(id), validatedSortOrder);
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

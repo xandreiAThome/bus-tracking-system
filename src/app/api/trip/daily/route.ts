@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTripsForDay } from "@/features/trips/services/crud";
+import { parseError } from "@/lib/utils";
 
 export async function GET(req: NextRequest) {
   const dateParam = req.nextUrl.searchParams.get("date");
@@ -10,12 +11,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
+    console.log(date);
+
     const trips = await getTripsForDay(date);
-    return NextResponse.json({ trips });
+
+    return NextResponse.json({ trips }, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    console.error("Error fetching trips:", err);
-    const message = err.message || "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

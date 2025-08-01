@@ -1,6 +1,7 @@
 import { getAllTrips } from "@/features/trips/services/crud";
 import { addTrip } from "@/features/trips/services/crud";
 import { NextResponse } from "next/server";
+import { parseError } from "@/lib/utils";
 
 /**
  * GET /api/trip
@@ -30,12 +31,11 @@ export async function GET() {
   try {
     const trips = await getAllTrips();
 
-    return NextResponse.json(trips);
+    return NextResponse.json({ trips: trips }, { status: 200 });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    console.error("Error fetching trips:", err);
-    const message = err.message || "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
@@ -81,12 +81,22 @@ export async function POST(req: Request) {
       { status: 400 }
     );
   }
-  return addTrip(
-    start_time,
-    end_time,
-    bus_id,
-    src_station_id,
-    dest_station_id,
-    driver_id
-  );
+
+  try {
+    const created = await addTrip(
+      start_time,
+      end_time,
+      bus_id,
+      src_station_id,
+      dest_station_id,
+      driver_id
+    );
+    return NextResponse.json(
+      { message: "Trip successfully created", result: created },
+      { status: 201 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }

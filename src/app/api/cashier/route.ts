@@ -4,9 +4,17 @@
  * Returns all cashiers in the system.
  */
 import { getAllCashiers, addCashier } from "@features/cashier/services/crud";
+import { parseError } from "@/lib/utils";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
-  return getAllCashiers();
+  try {
+    const result = await getAllCashiers();
+    return NextResponse.json({ cashiers: result }, { status: 201 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -25,11 +33,19 @@ export async function POST(req: Request) {
   const { first_name, last_name, user_id, station_id } = await req.json();
 
   if (!first_name || !last_name || user_id == null || station_id == null) {
-    return Response.json(
+    return NextResponse.json(
       { message: "Invalid input: one or more fields are missing" },
       { status: 400 }
     );
   }
-
-  return addCashier(first_name, last_name, user_id, station_id);
+  try {
+    const created = await addCashier(first_name, last_name, user_id, station_id);
+    return NextResponse.json(
+      { message: "Cashier created successfully", result: created},
+      { status: 201 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }

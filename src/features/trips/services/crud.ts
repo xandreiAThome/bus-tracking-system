@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
 import { AggregatedTripType } from "../types/types";
 
 /**
@@ -29,9 +28,6 @@ export async function getAllTrips() {
     bus: trip.bus,
     driver: trip.driver,
   }));
-  if (mappedTrips.length === 0) {
-    return Response.json({ message: "No available trips" }, { status: 404 });
-  }
   return mappedTrips;
 }
 /**
@@ -53,10 +49,7 @@ export async function getTrip(id: number) {
   });
 
   if (!trip) {
-    return Response.json(
-      { message: `Trip with id: ${id} not found` },
-      { status: 404 }
-    );
+    return null;
   }
   const mappedTrips: AggregatedTripType = {
     id: trip.id,
@@ -82,61 +75,39 @@ export async function addTrip(
   dest_station: number,
   driver_id: number
 ) {
-  try {
-    const created = await prisma.trip.create({
-      data: {
-        start_time: start_time ? new Date(start_time) : null,
-        end_time: end_time ? new Date(end_time) : null,
-        bus: { connect: { id: bus_id } },
-        driver: { connect: { id: driver_id } },
-        station_trip_dest_station_idTostation: {
-          connect: { id: dest_station },
-        },
-        station_trip_src_station_idTostation: { connect: { id: src_station } },
-        // status: ... if you want to set it
+  const created = await prisma.trip.create({
+    data: {
+      start_time: start_time ? new Date(start_time) : null,
+      end_time: end_time ? new Date(end_time) : null,
+      bus: { connect: { id: bus_id } },
+      driver: { connect: { id: driver_id } },
+      station_trip_dest_station_idTostation: {
+        connect: { id: dest_station },
       },
-    });
-
-    return Response.json(
-      { message: "Trip created successfully", created },
-      { status: 201 }
-    );
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+      station_trip_src_station_idTostation: { connect: { id: src_station } },
+      // status: ... if you want to set it
+    },
+  });
+  return created;
 }
 
 /**
  * Deletes a trip by ID
  */
 export async function deleteTrip(id: number) {
-  try {
-    const deleted = await prisma.trip.delete({
-      where: { id },
-    });
+  const deleted = await prisma.trip.delete({
+    where: { id },
+  });
 
-    return Response.json(
-      { message: `Trip deleted successfully`, id: deleted.id },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    if (err.code === "P2025") {
-      // Prisma "Record not found" error
-      return Response.json(
-        { message: `Trip with id ${id} not found` },
-        { status: 404 }
-      );
-    }
-
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+  return deleted;
 }
 
 export const getTripsForDay = async (date: Date) => {
-  const start = new Date(date.setHours(0, 0, 0, 0));
-  const end = new Date(date.setHours(24, 0, 0, 0));
+  const start = new Date(date);
+  start.setUTCHours(0, 0, 0, 0);
+
+  const end = new Date(date);
+  end.setUTCHours(24, 0, 0, 0);
 
   const trips = await prisma.trip.findMany({
     where: {
@@ -157,9 +128,6 @@ export const getTripsForDay = async (date: Date) => {
     },
   });
 
-  if (trips.length === 0) {
-    return Response.json({ message: "No available trips" }, { status: 404 });
-  }
   const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
     id: trip.id,
     start_time: trip.start_time,
@@ -196,9 +164,6 @@ export const getTripsForMonth = async (month: number, year: number) => {
     },
   });
 
-  if (trips.length === 0) {
-    return Response.json({ message: "No available trips" }, { status: 404 });
-  }
   const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
     id: trip.id,
     start_time: trip.start_time,
@@ -222,53 +187,31 @@ export async function editTrip(
   driver_id?: number,
   status?: string | null
 ) {
-  try {
-    const updateData: any = {};
+  const updateData: any = {};
 
-    if (start_time !== undefined) updateData.start_time = start_time;
-    if (end_time !== undefined) updateData.end_time = end_time;
-    if (bus_id !== undefined) updateData.bus = { connect: { id: bus_id } };
-    if (driver_id !== undefined)
-      updateData.driver = { connect: { id: driver_id } };
-    if (src_station_id !== undefined) {
-      updateData.station_trip_src_station_idTostation = {
-        connect: { id: src_station_id },
-      };
-    }
-    if (dest_station_id !== undefined) {
-      updateData.station_trip_dest_station_idTostation = {
-        connect: { id: dest_station_id },
-      };
-    }
-    if (status !== undefined) updateData.status = status;
+  if (start_time !== undefined) updateData.start_time = start_time;
+  if (end_time !== undefined) updateData.end_time = end_time;
+  if (bus_id !== undefined) updateData.bus = { connect: { id: bus_id } };
+  if (driver_id !== undefined)
+    updateData.driver = { connect: { id: driver_id } };
+  if (src_station_id !== undefined) {
+    updateData.station_trip_src_station_idTostation = {
+      connect: { id: src_station_id },
+    };
+  }
+  if (dest_station_id !== undefined) {
+    updateData.station_trip_dest_station_idTostation = {
+      connect: { id: dest_station_id },
+    };
+  }
+  if (status !== undefined) updateData.status = status;
 
-    let updated;
+  let updated;
 
-    if (status === "complete") {
-      // Run in a transaction to ensure both update together
-      updated = await prisma.$transaction(async tx => {
-        const updatedTrip = await tx.trip.update({
-          where: { id },
-          data: updateData,
-          include: {
-            bus: true,
-            driver: true,
-            station_trip_src_station_idTostation: true,
-            station_trip_dest_station_idTostation: true,
-          },
-        });
-
-        // Update seats status associated with the trip's bus
-        await tx.seat.updateMany({
-          where: { bus_id: updatedTrip.bus.id },
-          data: { status: "available" }, // or whatever status fits your logic
-        });
-
-        return updatedTrip;
-      });
-    } else {
-      // Just update the trip normally
-      updated = await prisma.trip.update({
+  if (status === "complete") {
+    // Run in a transaction to ensure both update together
+    updated = await prisma.$transaction(async tx => {
+      const updatedTrip = await tx.trip.update({
         where: { id },
         data: updateData,
         include: {
@@ -278,39 +221,28 @@ export async function editTrip(
           station_trip_dest_station_idTostation: true,
         },
       });
-    }
 
-    return Response.json(
-      {
-        message: "Trip updated successfully",
-        trip: {
-          id: updated.id,
-          start_time: updated.start_time,
-          end_time: updated.end_time,
-          bus_id: updated.bus?.id,
-          driver_id: updated.driver?.id,
-          src_station_id: updated.station_trip_src_station_idTostation?.id,
-          dest_station_id: updated.station_trip_dest_station_idTostation?.id,
-          status: updated.status,
-        },
+      // Update seats status associated with the trip's bus
+      await tx.seat.updateMany({
+        where: { bus_id: updatedTrip.bus.id },
+        data: { status: "available" }, // or whatever status fits your logic
+      });
+
+      return updatedTrip;
+    });
+  } else {
+    // Just update the trip normally
+    updated = await prisma.trip.update({
+      where: { id },
+      data: updateData,
+      include: {
+        bus: true,
+        driver: true,
+        station_trip_src_station_idTostation: true,
+        station_trip_dest_station_idTostation: true,
       },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    if (err.code === "P2025") {
-      return Response.json(
-        { message: `Trip with id ${id} not found` },
-        { status: 404 }
-      );
-    }
-    if (err.code === "P2003") {
-      return Response.json(
-        { message: "Invalid reference: One of the provided IDs doesn't exist" },
-        { status: 400 }
-      );
-    }
-
-    console.error("Database error:", err);
-    return Response.json({ message: "Internal server error" }, { status: 500 });
+    });
   }
+
+  return updated;
 }

@@ -1,59 +1,22 @@
-import pool from "@/lib/db";
-import { catchDBError } from "@/lib/utils";
-import { RowDataPacket, ResultSetHeader } from "mysql2";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Get all buses from the database.
  */
 export async function getAllBuses() {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [buses] = await conn.query<RowDataPacket[]>("SELECT * FROM bus");
-
-      if (!buses || buses.length === 0) {
-        return Response.json({ message: "No buses found" }, { status: 404 });
-      }
-
-      return Response.json({ buses }, { status: 200 });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
-  }
+  const buses = await prisma.bus.findMany();
+  return buses;
 }
 
 /**
  * Get a specific bus by ID.
  * @param id - Bus ID
  */
-export async function getBusByID(id: number) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [buses] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM bus WHERE id = ?",
-        [id]
-      );
-      const bus = buses[0];
-
-      if (!bus) {
-        return Response.json(
-          { message: `Bus with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-
-      return Response.json({ bus }, { status: 200 });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+export async function getBusById(id: number) {
+  const bus = await prisma.bus.findUnique({
+    where: { id: id },
+  });
+  return bus;
 }
 
 /**
@@ -67,72 +30,42 @@ export async function addBus(
   station_id: number,
   capacity: number
 ) {
-  let conn;
-  try {
-    conn = await pool.getConnection();
-    await conn.beginTransaction();
+  const result = await prisma.$transaction(async tx => {
+    // Create bus
+    const bus = await tx.bus.create({
+      data: {
+        plate_number,
+        station_id,
+        capacity,
+      },
+    });
 
-    try {
-      const [busResult] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO bus (plate_number, station_id, capacity) VALUES (?, ?, ?)",
-        [plate_number, station_id, capacity]
-      );
-
-      if (busResult.affectedRows === 0) {
-        await conn.rollback();
-        return Response.json(
-          { message: "Failed to create bus" },
-          { status: 500 }
-        );
-      }
-
-      const busId = busResult.insertId;
-
-      const seatValues = [];
-      for (let i = 1; i <= capacity; i++) {
-        seatValues.push([
-          `S${i.toString().padStart(2, "0")}`,
-          busId,
-          "available",
-        ]);
-      }
-
-      const [seatResult] = await conn.query<ResultSetHeader>(
-        "INSERT INTO seat (seat_number, bus_id, status) VALUES ?",
-        [seatValues]
-      );
-
-      if (seatResult.affectedRows !== capacity) {
-        await conn.rollback();
-        return Response.json(
-          { message: "Failed to create all seats" },
-          { status: 500 }
-        );
-      }
-
-      await conn.commit();
-      return Response.json(
-        {
-          message: "Bus created successfully with seats",
-          busId,
-          seatsCreated: seatResult.affectedRows,
-        },
-        { status: 201 }
-      );
-    } catch (innerErr) {
-      await conn.rollback();
-      console.error("Transaction Error:", innerErr);
-      return Response.json(
-        { message: "Failed to create bus and seats" },
-        { status: 500 }
-      );
+    // Prepare seat data
+    const seatsData = [];
+    for (let i = 1; i <= capacity; i++) {
+      seatsData.push({
+        seat_number: `S${i.toString().padStart(2, "0")}`,
+        bus_id: bus.id,
+      });
     }
-  } catch (err: any) {
-    console.error("DB Connection Error:", err);
-    return catchDBError(err);
-  } finally {
-    if (conn) conn.release();
-  }
+
+    // Bulk create seats
+    const seats = await tx.seat.createMany({
+      data: seatsData,
+    });
+
+    // seats.count is the number of rows created
+    if (seats.count !== capacity) {
+      throw new Error("Failed to create all seats");
+    }
+
+    return { busId: bus.id, seatsCreated: seats.count, seats: seatsData };
+  });
+  return {
+    bus_id: result.busId,
+    seats_created: result.seatsCreated,
+    seats: result.seats,
+  };
 }
 
 /**
@@ -146,115 +79,46 @@ export async function editBus(
   id: number,
   fields: { plate_number?: string; station_id?: number; capacity?: number }
 ) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      // Build dynamic SQL and values
-      const updates = [];
-      const values = [];
-      if (fields.plate_number !== undefined) {
-        updates.push("plate_number = ?");
-        values.push(fields.plate_number);
-      }
-      if (fields.station_id !== undefined) {
-        updates.push("station_id = ?");
-        values.push(fields.station_id);
-      }
-      if (fields.capacity !== undefined) {
-        updates.push("capacity = ?");
-        values.push(fields.capacity);
-      }
-      if (updates.length === 0) {
-        return Response.json(
-          { message: "No fields to update" },
-          { status: 400 }
-        );
-      }
-      values.push(id);
-      const [result] = await conn.execute<ResultSetHeader>(
-        `UPDATE bus SET ${updates.join(", ")} WHERE id = ?`,
-        values
-      );
+  const data: Record<string, any> = {};
+  if (fields.plate_number !== undefined)
+    data.plate_number = fields.plate_number;
+  if (fields.station_id !== undefined) data.station_id = fields.station_id;
+  if (fields.capacity !== undefined) data.capacity = fields.capacity;
 
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: `Bus with id ${id} not found or no changes made` },
-          { status: 404 }
-        );
-      }
-
-      return Response.json(
-        { message: `Bus with id ${id} updated successfully` },
-        { status: 200 }
+  const updatedBus = await prisma.$transaction(async tx => {
+    const seatCount = await tx.seat.count({
+      where: { bus_id: id },
+    });
+    if (data.capacity < seatCount) {
+      throw new Error(
+        `Cannot reduce capacity to ${data.capacity} since bus with id: ${id} has ${seatCount} seats`
       );
-    } finally {
-      conn.release();
     }
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+    return await tx.bus.update({
+      where: { id },
+      data: data,
+    });
+  });
+
+  return updatedBus;
 }
 
 /**
- * Delete a bus and its associated seats and trips by ID.
+ * Delete a bus and its associated seats by ID.
  * @param id - Bus ID
  */
 export async function deleteBus(id: number) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      await conn.beginTransaction();
+  const result = await prisma.$transaction(async prismaTx => {
+    const deletedSeats = await prisma.seat.deleteMany({
+      where: { bus_id: id },
+    });
 
-      // Set bus_id to NULL in related seats
-      await conn.execute("UPDATE seat SET bus_id = NULL WHERE bus_id = ?", [
-        id,
-      ]);
+    const deletedBus = await prisma.bus.deleteMany({
+      where: { id: id },
+    });
 
-      // Set bus_id to NULL in related trips
-      await conn.execute("UPDATE trip SET bus_id = NULL WHERE bus_id = ?", [
-        id,
-      ]);
+    return { bus: deletedBus, seats: deletedSeats };
+  });
 
-      // Delete related seats
-      //await conn.execute('DELETE FROM seat WHERE bus_id = ?', [id])
-
-      // Delete related trips
-      //await conn.execute('DELETE FROM trip WHERE bus_id = ?', [id])
-
-      // Delete the bus itself
-      const [result] = await conn.execute<ResultSetHeader>(
-        "DELETE FROM bus WHERE id = ?",
-        [id]
-      );
-
-      if (result.affectedRows === 0) {
-        await conn.rollback();
-        return Response.json(
-          { message: `Bus with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-
-      await conn.commit();
-      return Response.json(
-        {
-          message: `Bus with id ${id} and related records deleted successfully`,
-        },
-        { status: 200 }
-      );
-    } catch (innerErr) {
-      await conn.rollback();
-      console.error("DB Transaction Error:", innerErr);
-      return Response.json(
-        { message: "Failed to delete bus and related data" },
-        { status: 500 }
-      );
-    } finally {
-      conn.release();
-    }
-  } catch (err: any) {
-    console.error("DB Connection Error:", err);
-    return catchDBError(err);
-  }
+  return result;
 }
