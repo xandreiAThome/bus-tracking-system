@@ -86,6 +86,7 @@ export async function PATCH(
       src_station_id,
       dest_station_id,
       driver_id,
+      status,
     } = body;
 
     if (
@@ -94,7 +95,8 @@ export async function PATCH(
       bus_id === undefined &&
       src_station_id === undefined &&
       dest_station_id === undefined &&
-      driver_id === undefined
+      driver_id === undefined &&
+      status === undefined
     ) {
       return NextResponse.json(
         { message: "At least one field must be provided" },
@@ -109,7 +111,8 @@ export async function PATCH(
       bus_id,
       src_station_id,
       dest_station_id,
-      driver_id
+      driver_id,
+      status
     );
 
     return NextResponse.json(
