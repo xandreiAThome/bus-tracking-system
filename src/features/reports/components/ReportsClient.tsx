@@ -14,6 +14,7 @@ import { PassengerTicketsTable } from "./passengerTicketsTable";
 import { BaggageTicketsTable } from "./baggageTicketsTable";
 import { AggregatedTicketType } from "@/features/ticket/types/types";
 import { AggregatedTripType } from "@/features/trips/types/types";
+import { format } from "date-fns";
 
 export default function ReportsClient() {
   const [selectedTrip, setSelectedTrip] = useState<number | null>(null);
@@ -24,15 +25,16 @@ export default function ReportsClient() {
     []
   );
   const [tripsList, setTripsList] = useState<AggregatedTripType[]>([]);
-  const [day, setDay] = useState<string>("");
+  const [day, setDay] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [loadingTrips, setLoadingTrips] = useState(false);
+  const [loadingTickets, setLoadingTickets] = useState(false);
 
   useEffect(() => {
     if (day) {
-      console.log(day);
+      setLoadingTrips(true);
       fetch(`/api/trip/daily?date=${day}`)
         .then(res => res.json())
         .then(data => {
-          // If API returns { trips: [...] }
           let trips = [];
           if (Array.isArray(data)) {
             trips = data;
@@ -41,24 +43,27 @@ export default function ReportsClient() {
           }
           setTripsList(trips);
           setSelectedTrip(trips[0]?.id || null);
-        });
+        })
+        .finally(() => setLoadingTrips(false));
     }
   }, [day]);
 
   useEffect(() => {
     if (selectedTrip) {
-      // Fetch passenger tickets
-      fetch(`/api/ticket/passenger/trip/${selectedTrip}`)
-        .then(res => res.json())
-        .then(data => {
-          setPassengerTickets(data.tickets || []);
-        });
-      // Fetch baggage tickets
-      fetch(`/api/ticket/baggage/trip/${selectedTrip}`)
-        .then(res => res.json())
-        .then(data => {
-          setBaggageTickets(data.tickets || []);
-        });
+      setLoadingTickets(true);
+      Promise.all([
+        fetch(`/api/ticket/passenger/trip/${selectedTrip}`).then(res =>
+          res.json()
+        ),
+        fetch(`/api/ticket/baggage/trip/${selectedTrip}`).then(res =>
+          res.json()
+        ),
+      ])
+        .then(([passengerData, baggageData]) => {
+          setPassengerTickets(passengerData.tickets || []);
+          setBaggageTickets(baggageData.tickets || []);
+        })
+        .finally(() => setLoadingTickets(false));
     }
   }, [selectedTrip]);
 
@@ -85,15 +90,24 @@ export default function ReportsClient() {
             <Select
               value={selectedTrip ? String(selectedTrip) : ""}
               onValueChange={val => setSelectedTrip(Number(val))}
+              disabled={loadingTrips}
             >
               <SelectTrigger
                 className="w-[220px] text-green-700 font-semibold"
                 aria-label="Select Trip"
               >
-                <SelectValue placeholder="Select a trip" />
+                <SelectValue
+                  placeholder={
+                    loadingTrips ? "Loading trips..." : "Select a trip"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {Array.isArray(tripsList) &&
+                {loadingTrips ? (
+                  <div className="p-4 text-center text-green-600">
+                    Loading trips...
+                  </div>
+                ) : Array.isArray(tripsList) && tripsList.length > 0 ? (
                   tripsList.map(trip => (
                     <SelectItem key={trip.id} value={String(trip.id)}>
                       Trip {trip.src_station.name} {"-> "}
@@ -102,40 +116,73 @@ export default function ReportsClient() {
                         ? new Date(trip.start_time).toLocaleString()
                         : ""}
                     </SelectItem>
-                  ))}
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-green-600">
+                    No trips found
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
-      <Tabs defaultValue="passenger" className="w-full">
-        <TabsList className="flex justify-center bg-green-100 rounded mb-4">
-          <TabsTrigger
-            value="passenger"
-            className="text-green-700 data-[state=active]:bg-green-600 data-[state=active]:text-white"
+      {loadingTrips || loadingTickets ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <svg
+            className="animate-spin h-8 w-8 text-green-600 mb-4"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
           >
-            Passenger Tickets
-          </TabsTrigger>
-          <TabsTrigger
-            value="baggage"
-            className="text-green-700 data-[state=active]:bg-green-600 data-[state=active]:text-white"
-          >
-            Baggage Tickets
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="passenger">
-          <PassengerTicketsTable
-            tickets={passengerTickets}
-            selectedTrip={tripsList.find(trip => trip.id === selectedTrip)}
-          />
-        </TabsContent>
-        <TabsContent value="baggage">
-          <BaggageTicketsTable
-            tickets={baggageTickets}
-            selectedTrip={tripsList.find(trip => trip.id === selectedTrip)}
-          />
-        </TabsContent>
-      </Tabs>
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8z"
+            />
+          </svg>
+          <div className="text-green-700 font-semibold text-lg">
+            {loadingTrips ? "Loading trips..." : "Loading tickets..."}
+          </div>
+        </div>
+      ) : (
+        <Tabs defaultValue="passenger" className="w-full">
+          <TabsList className="flex justify-center bg-green-100 rounded mb-4">
+            <TabsTrigger
+              value="passenger"
+              className="text-green-700 data-[state=active]:bg-green-600 data-[state=active]:text-white"
+            >
+              Passenger Tickets
+            </TabsTrigger>
+            <TabsTrigger
+              value="baggage"
+              className="text-green-700 data-[state=active]:bg-green-600 data-[state=active]:text-white"
+            >
+              Baggage Tickets
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="passenger">
+            <PassengerTicketsTable
+              tickets={passengerTickets}
+              selectedTrip={tripsList.find(trip => trip.id === selectedTrip)}
+            />
+          </TabsContent>
+          <TabsContent value="baggage">
+            <BaggageTicketsTable
+              tickets={baggageTickets}
+              selectedTrip={tripsList.find(trip => trip.id === selectedTrip)}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }

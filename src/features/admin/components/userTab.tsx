@@ -27,6 +27,7 @@ import {
 
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
+import { DriverType } from "@/features/driver/types/types";
 
 type UserRole = "user" | "admin" | "cashier" | "driver";
 type User = {
@@ -152,18 +153,21 @@ export default function UserTab() {
         }
       }
 
-      // If driver, only POST if driver entry does not exist
+      // If driver, only POST if driver entry does not exist for this user
       if (update.role === "driver") {
         // Split name into first and last name
         const [first_name, ...rest] = user.name.split(" ");
         const last_name = rest.join(" ");
-        // Check if driver entry exists
+        // Check if driver entry exists for this user
         let driverExists = false;
         try {
-          const res = await fetch(`/api/driver/${user.id}`);
+          const res = await fetch(`/api/driver`);
           if (res.ok) {
             const data = await res.json();
-            driverExists = !!data.driver;
+            // If any driver in the list has this user_id, consider it exists
+            driverExists =
+              Array.isArray(data.drivers) &&
+              data.drivers.some((d: DriverType) => d.user_id === user.id);
           }
         } catch {}
         if (!driverExists) {

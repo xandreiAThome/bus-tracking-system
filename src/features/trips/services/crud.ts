@@ -246,7 +246,7 @@ export async function editTrip(
 
     if (status === "complete") {
       // Run in a transaction to ensure both update together
-      updated = await prisma.$transaction(async (tx) => {
+      updated = await prisma.$transaction(async tx => {
         const updatedTrip = await tx.trip.update({
           where: { id },
           data: updateData,

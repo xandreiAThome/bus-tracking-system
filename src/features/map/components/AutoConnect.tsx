@@ -23,6 +23,7 @@ interface AutoConnectProps {
   };
   busId: string;
   userId: string;
+  plateNumber: string;
 }
 
 export function AutoConnect({
@@ -35,6 +36,7 @@ export function AutoConnect({
   busId,
   subscribe,
   userId,
+  plateNumber,
 }: AutoConnectProps) {
   const initialized = useRef(false);
   const [busTrackedOnline, setBusTrackedOnline] = useState(false);
@@ -127,7 +129,7 @@ export function AutoConnect({
             ></div>
             <span>
               {busTrackedOnline
-                ? `Bus ${busId} Online`
+                ? `${plateNumber} Online`
                 : `Searching Bus ${busId}...`}
             </span>
           </div>
