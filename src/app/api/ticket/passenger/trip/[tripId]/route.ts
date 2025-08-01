@@ -1,31 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPassengerTicketsByTripId } from "@/features/ticket/services/crud";
-import { validateIdParam } from "@/lib/utils";
+import { validateIdParam, parseError } from "@/lib/utils";
 
+/**
+ * GET /api/ticket/passenger/trip/[tripId]
+ *
+ * Fetches all passenger tickets for a given trip ID.
+ */
 export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
 ) {
-  try {
-    const tripId = validateIdParam((await params).tripId);
-    if (tripId instanceof Response) {
-      // If validateIdParam returns a Response, wrap it in NextResponse
-      return NextResponse.json(await tripId.json(), { status: tripId.status });
-    }
+  const { tripId } = await params;
 
-    const tickets = await getPassengerTicketsByTripId(tripId);
+  if (!validateIdParam(tripId)) {
+    return NextResponse.json({ message: "Invalid [tripId] parameter" }, { status: 400 });
+  }
+
+  try {
+    const tickets = await getPassengerTicketsByTripId(Number(tripId));
+
     if (!tickets || tickets.length === 0) {
       return NextResponse.json(
         { message: "No passenger tickets found." },
         { status: 404 }
       );
     }
-    return NextResponse.json({ tickets });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
+    return NextResponse.json({ passengerTickets: tickets }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { message: "Internal server error." },
-      { status: 500 }
-    );
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
