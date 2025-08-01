@@ -54,6 +54,27 @@ export default function WebSocketWrapper({
     fetchTrip();
   }, [tripId]);
 
+  // Auto-subscribe to this trip's busId when trip is loaded
+  useEffect(() => {
+    if (trip?.bus?.id && userName) {
+      subscribe(trip.bus.id.toString(), userName);
+    }
+    // Only run when trip or userName changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.bus?.id, userName]);
+
+  // Center map on latest location if available, else fallback to Manila
+  const latestLocation =
+    locationUpdates.length > 0
+      ? locationUpdates[locationUpdates.length - 1]
+      : null;
+  const mapCenter: [number, number] =
+    latestLocation &&
+    typeof latestLocation.latitude === "number" &&
+    typeof latestLocation.longitude === "number"
+      ? [latestLocation.latitude, latestLocation.longitude]
+      : [14.5995, 120.9842];
+
   return (
     <div className="min-h-screen bg-gray-50 p-4">
       <Toaster></Toaster>
@@ -63,7 +84,6 @@ export default function WebSocketWrapper({
           <CardHeader>
             <CardTitle className="flex justify-between">
               <h1>{trip?.bus.plate_number} Location Map</h1>
-
               <h1>
                 Driver: {trip?.driver.first_name} {trip?.driver.last_name}
               </h1>
@@ -72,8 +92,7 @@ export default function WebSocketWrapper({
           <CardContent className="p-0 sm:p-6">
             <MapComponent
               locations={locationUpdates}
-              // TEMPORARY CENTERED LOCATION
-              center={[parseFloat("14.5995"), parseFloat("120.9842")]}
+              center={mapCenter}
               zoom={15}
             />
           </CardContent>
@@ -93,6 +112,7 @@ export default function WebSocketWrapper({
               busId={trip?.bus.id.toString() || "bus"}
               subscribe={subscribe}
               userId={userName}
+              plateNumber={trip?.bus.plate_number || "unknown"}
             />
           </div>
         </div>
