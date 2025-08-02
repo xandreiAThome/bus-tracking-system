@@ -1,3 +1,4 @@
+import { checkAuth, blockUserRole } from "@/lib/auth-helpers";
 import { validateIdParam, validateSortOrder, parseError } from "@/lib/utils";
 import { getSeatsByBus } from "@features/seat/services/crud";
 import { NextRequest, NextResponse } from "next/server";
@@ -36,6 +37,14 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
   const searchParams = req.nextUrl.searchParams;
   const rawSortOrder = searchParams.get("sortOrder");

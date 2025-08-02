@@ -1,3 +1,4 @@
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
 import { validateIdParam, parseError } from "@/lib/utils";
 import { deleteSeat, getSeat, updateSeat } from "@features/seat/services/crud";
 import { NextRequest, NextResponse } from "next/server";
@@ -6,6 +7,14 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -36,6 +45,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -66,6 +78,14 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {

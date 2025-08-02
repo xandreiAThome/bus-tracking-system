@@ -14,11 +14,13 @@ export default async function RootLayout({
 }>) {
   const session = await auth();
 
+  // Check if user is authenticated
   if (!session?.user) {
     redirect("/");
   }
 
-  if (session?.user?.role === "user") {
+  // Block users with "user" role from accessing any protected routes
+  if (session.user.role === "user") {
     redirect("/unauthorized");
   }
 

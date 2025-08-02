@@ -2,6 +2,7 @@
 
 import { getAllBuses } from "@/features/bus/services/crud";
 import { addBus } from "@/features/bus/services/crud";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
 import { parseError } from "@/lib/utils";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -11,6 +12,14 @@ import { NextResponse, NextRequest } from "next/server";
  * Returns all buses in the system.
  */
 export async function GET() {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   try {
     const buses = await getAllBuses();
     return NextResponse.json({ buses: buses }, { status: 200 });
@@ -32,6 +41,9 @@ export async function GET() {
  * }
  */
 export async function POST(req: NextRequest) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   try {
     const { plate_number, station_id, capacity } = await req.json();
 
@@ -60,7 +72,7 @@ export async function POST(req: NextRequest) {
     );
 
     return NextResponse.json(
-      { message: "Driver created successfully", result: created},
+      { message: "Driver created successfully", result: created },
       { status: 201 }
     );
   } catch (error) {

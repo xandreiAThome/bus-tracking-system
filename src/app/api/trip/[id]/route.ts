@@ -1,6 +1,7 @@
 import { validateIdParam, parseError } from "@/lib/utils";
 import { deleteTrip, editTrip, getTrip } from "@/features/trips/services/crud";
 import { NextRequest, NextResponse } from "next/server";
+import { blockUserRole, checkAuth } from "@/lib/auth-helpers";
 
 /**
  * GET /api/trip/[id]
@@ -9,6 +10,14 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -40,6 +49,14 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -68,6 +85,14 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {

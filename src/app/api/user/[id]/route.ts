@@ -5,11 +5,15 @@ import {
   updateUserRole,
   getUser,
 } from "@/features/user/services/crud";
+import { checkAuthAndRole } from "@/lib/auth-helpers";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   const { id } = await params;
   if (!validateIdParam(id)) {
     return NextResponse.json(
@@ -38,6 +42,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   const { id } = await params;
   if (!validateIdParam(id)) {
     return NextResponse.json(
@@ -66,6 +73,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   const { id } = await params;
   if (!validateIdParam(id)) {
     return NextResponse.json(
