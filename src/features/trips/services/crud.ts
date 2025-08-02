@@ -78,6 +78,11 @@ export async function addTrip(
   const newStart = new Date(start_time);
   const newEnd = new Date(end_time);
 
+  // Validate that source and destination stations are different
+  if (src_station === dest_station) {
+    throw new Error("Source and destination stations cannot be the same.");
+  }
+
   const result = await prisma.$transaction(async tx => {
     // Check for overlapping trips with same driver or bus, that aren't completed
     const overlappingTrips = await tx.trip.findFirst({
@@ -221,6 +226,8 @@ export async function editTrip(
       status: true,
       driver_id: true,
       bus_id: true,
+      src_station_id: true,
+      dest_station_id: true,
     },
   });
 
@@ -237,6 +244,14 @@ export async function editTrip(
 
   if (newEnd <= newStart) {
     throw new Error("End time must be after start time.");
+  }
+
+  // Validate that source and destination stations are different
+  const finalSrcStation = src_station_id ?? existingTrip.src_station_id;
+  const finalDestStation = dest_station_id ?? existingTrip.dest_station_id;
+
+  if (finalSrcStation === finalDestStation) {
+    throw new Error("Source and destination stations cannot be the same.");
   }
 
   if (start_time !== undefined) updateData.start_time = newStart;
