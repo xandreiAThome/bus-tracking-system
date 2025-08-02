@@ -56,8 +56,19 @@ export function CreateTripModal({
     bus: "",
   });
 
-  const [startTime, setStartTime] = useState<Date>(new Date());
-  const [endTime, setEndTime] = useState<Date>(new Date());
+  // Set start time to current hour, end time to one hour later
+  const getDefaultTimes = () => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setMinutes(0, 0, 0);
+    const end = new Date(start);
+    end.setHours(start.getHours() + 1);
+    return { start, end };
+  };
+
+  const { start, end } = getDefaultTimes();
+  const [startTime, setStartTime] = useState<Date>(start);
+  const [endTime, setEndTime] = useState<Date>(end);
 
   // All data is passed as props from OverviewCard. No fetching here.
   // TimePicker logic is now handled in the TimePicker component
