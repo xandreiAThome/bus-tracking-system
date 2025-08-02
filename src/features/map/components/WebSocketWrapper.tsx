@@ -96,7 +96,7 @@ export default function WebSocketWrapper({
                 {trip?.src_station
                   ? (trip.src_station.name ?? "Unknown Station")
                   : "Unknown Station"}{" "}
-                {"->"}
+                →{" "}
                 {trip?.dest_station
                   ? (trip.dest_station.name ?? "Unknown Station")
                   : "Unknown Station"}{" "}

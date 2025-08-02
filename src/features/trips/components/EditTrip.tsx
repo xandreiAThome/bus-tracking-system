@@ -200,7 +200,7 @@ export default function EditTripModal({
             </Select>
           </div>
 
-          <div className="flex justify-around">
+          <div className="flex justify-around flex-wrap gap-2">
             <TimePicker
               time={startTime}
               setTime={setStartTime}
