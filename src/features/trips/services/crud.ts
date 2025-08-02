@@ -75,20 +75,49 @@ export async function addTrip(
   dest_station: number,
   driver_id: number
 ) {
-  const created = await prisma.trip.create({
-    data: {
-      start_time: start_time ? new Date(start_time) : null,
-      end_time: end_time ? new Date(end_time) : null,
-      bus: { connect: { id: bus_id } },
-      driver: { connect: { id: driver_id } },
-      station_trip_dest_station_idTostation: {
-        connect: { id: dest_station },
+  const newStart = new Date(start_time);
+  const newEnd = new Date(end_time);
+
+  const result = await prisma.$transaction(async (tx) => {
+    // Check for overlapping trips with same driver or bus, that aren't completed
+    const overlappingTrips = await tx.trip.findFirst({
+      where: {
+        NOT: { status: "complete" },
+        OR: [
+          { driver_id },
+          { bus_id },
+        ],
+        AND: [
+          { start_time: { lt: newEnd } },
+          { end_time: { gt: newStart } },
+        ],
       },
-      station_trip_src_station_idTostation: { connect: { id: src_station } },
-      // status: ... if you want to set it
-    },
+    });
+
+    if (overlappingTrips) {
+      throw new Error(`Cannot create trip: overlapping trip exists for driver ${driver_id} or bus ${bus_id}.`);
+    }
+
+    // Create the trip
+    const created = await tx.trip.create({
+      data: {
+        start_time: newStart,
+        end_time: newEnd,
+        bus: { connect: { id: bus_id } },
+        driver: { connect: { id: driver_id } },
+        station_trip_dest_station_idTostation: {
+          connect: { id: dest_station },
+        },
+        station_trip_src_station_idTostation: {
+          connect: { id: src_station },
+        },
+      },
+    });
+
+    return created;
   });
-  return created;
+
+  return result;
 }
 
 /**
@@ -188,6 +217,18 @@ export async function editTrip(
   status?: string | null
 ) {
   const updateData: any = {};
+  
+  const existingTrip = await prisma.trip.findUnique({
+    where: { id },
+    select: { start_time: true, end_time: true }
+  });
+
+  if (!existingTrip) {
+    throw new Error(`Trip with id ${id} not found`);
+  }
+
+  const newStart = start_time ? new Date(start_time) : new Date(existingTrip.start_time!);
+  const newEnd = end_time ? new Date(end_time) : new Date(existingTrip.end_time!);
 
   if (start_time !== undefined) updateData.start_time = start_time;
   if (end_time !== undefined) updateData.end_time = end_time;
@@ -211,6 +252,24 @@ export async function editTrip(
   if (status === "complete") {
     // Run in a transaction to ensure both update together
     updated = await prisma.$transaction(async tx => {
+      // Check for overlapping trips with same driver or bus, that aren't completed
+      const overlappingTrips = await tx.trip.findFirst({
+        where: {
+          NOT: { status: "complete" },
+          OR: [
+            { driver_id },
+            { bus_id },
+          ],
+          AND: [
+            { start_time: { lt: newEnd! } },
+            { end_time: { gt: newStart! } },
+          ],
+        },
+      });
+
+      if (overlappingTrips) {
+        throw new Error(`Cannot create trip: overlapping trip exists for driver ${driver_id} or bus ${bus_id}.`);
+      }
       const updatedTrip = await tx.trip.update({
         where: { id },
         data: updateData,
