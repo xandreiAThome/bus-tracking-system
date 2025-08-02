@@ -10,6 +10,8 @@ import { AggregatedTripType } from "../types/types";
 import { Toaster } from "sonner";
 import { format } from "date-fns";
 
+type TripStatus = "all" | "transit" | "complete" | "boarding";
+
 export default function OverviewCard() {
   const [isMetaLoading, setIsMetaLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +20,12 @@ export default function OverviewCard() {
   const [stations, setStations] = useState<StationType[]>([]);
   const [buses, setBuses] = useState<AggregatedBusType[]>([]);
   const [drivers, setDrivers] = useState<DriverType[]>([]);
+  const [statusFilter, setStatusFilter] = useState<TripStatus>("all");
+
+  const filteredTrips = trips.filter(trip => {
+    if (statusFilter === "all") return true;
+    return trip.status === statusFilter;
+  });
 
   const fetchTrips = async () => {
     setIsLoading(true);
@@ -89,15 +97,36 @@ export default function OverviewCard() {
   }
 
   return (
-    <div className="h-full flex items-start justify-center p-5 relative">
+    <div className="h-full flex items-start justify-center p-5  sm:pt-5 pt-12 relative bg-green-50">
       <Card className="w-full max-w-4xl h-full min-h-[calc(100vh-40px)] overflow-y-auto p-5">
         <CardHeader className="border-b border-gray-300">
           <div className="flex flex-col items-center">
-            <CardTitle className="mt-2 text-xl font-extrabold text-[#456A3B]">
+            <CardTitle className="mt-2 text-xl font-extrabold text-green-700">
               Trips Overview
             </CardTitle>
             <div className="mt-1 text-green-700 font-semibold text-base">
               {format(new Date(), "MMMM dd, yyyy")}
+            </div>
+
+            {/* Status Filter Buttons */}
+            <div className="mt-4 flex flex-wrap gap-2 justify-center">
+              {(["all", "transit", "complete", "boarding"] as TripStatus[]).map(
+                status => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${
+                      statusFilter === status
+                        ? "bg-green-800 text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {status === "all"
+                      ? "All Trips"
+                      : status.charAt(0).toUpperCase() + status.slice(1)}
+                  </button>
+                )
+              )}
             </div>
           </div>
         </CardHeader>
@@ -106,26 +135,24 @@ export default function OverviewCard() {
             <div className="text-center text-green-700 font-bold">
               Loading trips...
             </div>
-          ) : trips.length === 0 ? (
+          ) : filteredTrips.length === 0 ? (
             <div className="text-center py-8 text-gray-500 font-bold">
-              No trips found
+              {trips.length === 0
+                ? "No trips found"
+                : `No ${statusFilter} trips found`}
             </div>
           ) : (
             <div className="flex flex-col overflow-y-auto gap-y-4">
-              {trips.map(trip => {
-                if (trip.status !== "complete")
-                  return (
-                    <TripCard
-                      key={trip.id}
-                      onSuccessEdit={fetchTrips}
-                      trip={trip}
-                      stations={stations}
-                      buses={buses}
-                      drivers={drivers}
-                    />
-                  );
-                return null;
-              })}
+              {filteredTrips.map(trip => (
+                <TripCard
+                  key={trip.id}
+                  onSuccessEdit={fetchTrips}
+                  trip={trip}
+                  stations={stations}
+                  buses={buses}
+                  drivers={drivers}
+                />
+              ))}
             </div>
           )}
         </CardContent>

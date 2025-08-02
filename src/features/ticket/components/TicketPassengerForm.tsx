@@ -52,7 +52,6 @@ const TicketPassengerForm: React.FC<TicketPassengerFormProps> = ({
   handleSeatSelect,
 }) => {
   // Utility to get seat by id or number
-
   const getSeat = (query: { id?: number; number?: number }) => {
     if (query.id !== undefined) {
       return seats.find(s => s.id === query.id) || null;
@@ -65,6 +64,73 @@ const TicketPassengerForm: React.FC<TicketPassengerFormProps> = ({
       );
     }
     return null;
+  };
+
+  // Editable default prices with cookie persistence
+  const COOKIE_NAME = "defaultPrices";
+  function getCookie(name: string) {
+    const match = document.cookie.match(
+      new RegExp("(^| )" + name + "=([^;]+)")
+    );
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+  function setCookie(name: string, value: string, days = 365) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie =
+      name +
+      "=" +
+      encodeURIComponent(value) +
+      "; expires=" +
+      expires +
+      "; path=/";
+  }
+
+  const getInitialPrices = () => {
+    if (typeof window !== "undefined") {
+      const cookie = getCookie(COOKIE_NAME);
+      if (cookie) {
+        try {
+          const arr = JSON.parse(cookie);
+          if (Array.isArray(arr) && arr.every(n => typeof n === "number")) {
+            return arr;
+          }
+        } catch {}
+      }
+    }
+    return [25, 50, 80];
+  };
+
+  const [defaultPrices, setDefaultPrices] =
+    React.useState<number[]>(getInitialPrices());
+
+  const [newPrice, setNewPrice] = React.useState<string>("");
+  const [editMode, setEditMode] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCookie(COOKIE_NAME, JSON.stringify(defaultPrices));
+    }
+  }, [defaultPrices]);
+
+  const handleAddPrice = () => {
+    const priceNum = Number(newPrice);
+    if (!isNaN(priceNum) && priceNum > 0 && !defaultPrices.includes(priceNum)) {
+      setDefaultPrices([...defaultPrices, priceNum]);
+      setNewPrice("");
+    }
+  };
+
+  const handleEditPrice = (index: number, value: string) => {
+    const priceNum = Number(value);
+    if (!isNaN(priceNum) && priceNum > 0) {
+      setDefaultPrices(
+        defaultPrices.map((p, i) => (i === index ? priceNum : p))
+      );
+    }
+  };
+
+  const handleRemovePrice = (index: number) => {
+    setDefaultPrices(defaultPrices.filter((_, i) => i !== index));
   };
 
   return (
@@ -242,23 +308,98 @@ const TicketPassengerForm: React.FC<TicketPassengerFormProps> = ({
 
       <div className="mt-4">
         <label className="text-sm font-medium mb-2 block">Pricing</label>
-        <Input
-          placeholder="Input"
-          value={price}
-          onChange={e => setPrice(e.target.value)}
-          className="mb-3"
-        />
-        <div className="grid grid-cols-3 gap-2">
-          {[50, 137, 222].map(amt => (
-            <Button
-              key={amt}
-              variant="outline"
-              className="h-10 bg-transparent"
-              onClick={() => setPrice(String(amt))}
-            >
-              {amt}
-            </Button>
-          ))}
+        <div className="rounded-lg border bg-gray-50 p-4 mb-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2 items-center mb-2">
+              <Input
+                placeholder="Custom price"
+                value={price}
+                onChange={e => setPrice(e.target.value)}
+                className="w-32 h-10 text-center border-gray-300"
+              />
+              <span className="text-xs text-gray-500">
+                Enter or select a price
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {defaultPrices.map((amt, idx) => (
+                <div key={amt} className="relative">
+                  {editMode ? (
+                    <div className="flex items-center gap-1 bg-white border rounded px-2 py-1 shadow-sm">
+                      <Input
+                        type="number"
+                        value={amt}
+                        onChange={e => handleEditPrice(idx, e.target.value)}
+                        className="w-16 h-8 text-center border-gray-300"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500"
+                        onClick={() => handleRemovePrice(idx)}
+                        aria-label="Remove price"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M4 4L12 12M12 4L4 12"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant={price === String(amt) ? "default" : "outline"}
+                      className={`h-8 px-4 rounded-full transition-all ${price === String(amt) ? "bg-green-600 text-white border-green-600" : "bg-white border-gray-300 text-gray-700 hover:bg-green-50"}`}
+                      onClick={() => setPrice(String(amt))}
+                    >
+                      <span className="font-semibold">₱{amt}</span>
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {editMode && (
+              <div className="flex gap-2 mt-2 items-center">
+                <Input
+                  type="number"
+                  placeholder="Add price"
+                  value={newPrice}
+                  onChange={e => setNewPrice(e.target.value)}
+                  className="w-24 h-8 text-center border-gray-300"
+                />
+                <Button
+                  variant="outline"
+                  className="h-8 px-4"
+                  onClick={handleAddPrice}
+                  disabled={
+                    !newPrice ||
+                    isNaN(Number(newPrice)) ||
+                    Number(newPrice) <= 0
+                  }
+                >
+                  <span className="font-semibold">Add</span>
+                </Button>
+              </div>
+            )}
+            <div className="flex justify-end mt-2">
+              <Button
+                variant="secondary"
+                className="text-xs px-3 py-1"
+                onClick={() => setEditMode(!editMode)}
+              >
+                {editMode ? "Done" : "Edit Prices"}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

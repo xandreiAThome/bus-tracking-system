@@ -132,7 +132,7 @@ export function CreateTripModal({
   return (
     <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
       <DrawerTrigger asChild>
-        <Button className="h-max bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
+        <Button className="h-max bg-green-700 hover:bg-[#456A3B] font-bold text-xl rounded-lg">
           Create Trip
         </Button>
       </DrawerTrigger>
