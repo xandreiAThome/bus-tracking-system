@@ -5,6 +5,7 @@ import {
   editCashier,
 } from "@/features/cashier/services/crud";
 import { NextResponse, NextRequest } from "next/server";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
 
 /**
  * GET /api/cashier/[id]
@@ -15,6 +16,14 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -47,6 +56,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -89,6 +101,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {

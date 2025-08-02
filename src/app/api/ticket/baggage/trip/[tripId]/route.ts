@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBaggageTicketsByTripId } from "@/features/ticket/services/crud";
+import { blockUserRole, checkAuth } from "@/lib/auth-helpers";
 
 /**
  * GET /api/ticket/baggage/trip/[tripId]
@@ -19,6 +20,14 @@ export async function GET(
   _: NextRequest,
   { params }: { params: Promise<{ tripId: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   try {
     const { tripId } = await params;
     const parsedId = parseInt(tripId, 10);

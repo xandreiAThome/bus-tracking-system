@@ -1,3 +1,4 @@
+import { blockUserRole, checkAuth } from "@/lib/auth-helpers";
 import { validateIdParam, parseError } from "@/lib/utils";
 import {
   getBaggageTicketById,
@@ -14,6 +15,14 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {
@@ -49,6 +58,14 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   const { id } = await params;
 
   if (!validateIdParam(id)) {

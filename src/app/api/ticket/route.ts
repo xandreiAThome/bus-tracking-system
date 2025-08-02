@@ -5,6 +5,7 @@ import {
   createFullPassengerTicket,
   createFullBaggageTicket,
 } from "@/features/ticket/services/crud";
+import { blockUserRole, checkAuth } from "@/lib/auth-helpers";
 import { parseError } from "@/lib/utils";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -14,6 +15,14 @@ import { NextResponse, NextRequest } from "next/server";
  * Retrieves all tickets.
  */
 export async function GET() {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   try {
     const tickets = await getAllTickets();
     return NextResponse.json({ tickets: tickets }, { status: 200 });
@@ -29,6 +38,14 @@ export async function GET() {
  * Creates a passenger or baggage ticket.
  */
 export async function POST(req: NextRequest) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
   try {
     const payload = await req.json();
     const { price, trip_id, cashier_id, ticket_type } = payload;
