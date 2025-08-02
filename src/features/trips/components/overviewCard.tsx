@@ -20,7 +20,7 @@ export default function OverviewCard() {
   const [stations, setStations] = useState<StationType[]>([]);
   const [buses, setBuses] = useState<AggregatedBusType[]>([]);
   const [drivers, setDrivers] = useState<DriverType[]>([]);
-  const [statusFilter, setStatusFilter] = useState<TripStatus>("all");
+  const [statusFilter, setStatusFilter] = useState<TripStatus>("boarding");
 
   const filteredTrips = trips.filter(trip => {
     if (statusFilter === "all") return true;

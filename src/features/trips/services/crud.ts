@@ -93,9 +93,20 @@ export async function addTrip(
     });
 
     if (overlappingTrips) {
-      throw new Error(
-        `Cannot create trip: driver ${driver_id} or bus ${bus_id} already assigned to a non-complete trip.`
-      );
+      // Determine which resource is conflicting
+      const isDriverConflict = overlappingTrips.driver_id === driver_id;
+      const isBusConflict = overlappingTrips.bus_id === bus_id;
+
+      let conflictMessage = "Cannot create trip: ";
+      if (isDriverConflict && isBusConflict) {
+        conflictMessage += `both Driver ${driver_id} and Bus ${bus_id} are already assigned to a non-complete trip (Trip ID: ${overlappingTrips.id}).`;
+      } else if (isDriverConflict) {
+        conflictMessage += `Driver ${driver_id} is already assigned to a non-complete trip (Trip ID: ${overlappingTrips.id}).`;
+      } else {
+        conflictMessage += `Bus ${bus_id} is already assigned to a non-complete trip (Trip ID: ${overlappingTrips.id}).`;
+      }
+
+      throw new Error(conflictMessage);
     }
 
     // Create the trip
@@ -342,17 +353,21 @@ export async function editTrip(
           });
 
           if (reactivationConflict) {
-            const conflictType =
-              reactivationConflict.driver_id === driverToCheck
-                ? "Driver"
-                : "Bus";
-            const conflictValue =
-              reactivationConflict.driver_id === driverToCheck
-                ? driverToCheck
-                : busToCheck;
-            throw new Error(
-              `Conflict: ${conflictType} ${conflictValue} is already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`
-            );
+            // Determine which resource is conflicting for reactivation
+            const isDriverConflict =
+              reactivationConflict.driver_id === driverToCheck;
+            const isBusConflict = reactivationConflict.bus_id === busToCheck;
+
+            let conflictMessage = "Cannot reactivate trip: ";
+            if (isDriverConflict && isBusConflict) {
+              conflictMessage += `both Driver ${driverToCheck} and Bus ${busToCheck} are already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`;
+            } else if (isDriverConflict) {
+              conflictMessage += `Driver ${driverToCheck} is already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`;
+            } else {
+              conflictMessage += `Bus ${busToCheck} is already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`;
+            }
+
+            throw new Error(conflictMessage);
           }
         }
       }
