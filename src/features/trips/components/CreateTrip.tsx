@@ -117,11 +117,7 @@ export function CreateTripModal({
       }
     } catch (err) {
       console.error("Error:", err);
-      alert(
-        err instanceof Error
-          ? err.message + " diaubfiawbfuhawb" + err
-          : "An error occurred"
-      );
+      toast.error(err instanceof Error ? err.message : "Failed to create trip");
     } finally {
       setIsSubmitting(false);
     }

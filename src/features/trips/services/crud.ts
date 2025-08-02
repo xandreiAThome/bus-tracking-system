@@ -78,20 +78,19 @@ export async function addTrip(
   const newStart = new Date(start_time);
   const newEnd = new Date(end_time);
 
-  const result = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async tx => {
     // Check for overlapping trips with same driver or bus, that aren't completed
     const overlappingTrips = await tx.trip.findFirst({
       where: {
         NOT: { status: "complete" },
-        OR: [
-          { driver_id },
-          { bus_id },
-        ],
+        OR: [{ driver_id }, { bus_id }],
       },
     });
 
     if (overlappingTrips) {
-      throw new Error(`Cannot create trip: driver ${driver_id} or bus ${bus_id} already assigned to a non-complete trip.`);
+      throw new Error(
+        `Cannot create trip: driver ${driver_id} or bus ${bus_id} already assigned to a non-complete trip.`
+      );
     }
 
     // Create the trip
@@ -221,16 +220,20 @@ export async function editTrip(
       end_time: true,
       status: true,
       driver_id: true,
-      bus_id: true
-    }
+      bus_id: true,
+    },
   });
 
   if (!existingTrip) {
     throw new Error(`Trip with id ${id} not found`);
   }
 
-  const newStart = start_time ? new Date(start_time) : new Date(existingTrip.start_time!);
-  const newEnd = end_time ? new Date(end_time) : new Date(existingTrip.end_time!);
+  const newStart = start_time
+    ? new Date(start_time)
+    : new Date(existingTrip.start_time!);
+  const newEnd = end_time
+    ? new Date(end_time)
+    : new Date(existingTrip.end_time!);
 
   if (newEnd <= newStart) {
     throw new Error("End time must be after start time.");
@@ -239,7 +242,8 @@ export async function editTrip(
   if (start_time !== undefined) updateData.start_time = newStart;
   if (end_time !== undefined) updateData.end_time = newEnd;
   if (bus_id !== undefined) updateData.bus = { connect: { id: bus_id } };
-  if (driver_id !== undefined) updateData.driver = { connect: { id: driver_id } };
+  if (driver_id !== undefined)
+    updateData.driver = { connect: { id: driver_id } };
   if (src_station_id !== undefined) {
     updateData.station_trip_src_station_idTostation = {
       connect: { id: src_station_id },
@@ -265,10 +269,7 @@ export async function editTrip(
         where: {
           id: { not: id }, // exclude current trip
           NOT: { status: "complete" },
-          OR: [
-            { driver_id: driverToCheck },
-            { bus_id: busToCheck },
-          ],
+          OR: [{ driver_id: driverToCheck }, { bus_id: busToCheck }],
         },
       });
 
@@ -315,4 +316,3 @@ export async function editTrip(
 
   return updated;
 }
-
