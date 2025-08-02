@@ -256,7 +256,8 @@ export async function editTrip(
   }
   if (status !== undefined) updateData.status = status;
 
-  const isBecomingActive = status !== "complete";
+  const finalStatus = status ?? existingTrip.status;
+  const isBecomingActive = finalStatus !== "complete";
   const driverToCheck = driver_id ?? existingTrip.driver_id;
   const busToCheck = bus_id ?? existingTrip.bus_id;
 
@@ -265,18 +266,80 @@ export async function editTrip(
   if (isBecomingActive) {
     // Only run this block if trip is active or being reactivated
     updated = await prisma.$transaction(async tx => {
-      const overlappingTrips = await tx.trip.findFirst({
-        where: {
-          id: { not: id }, // exclude current trip
-          NOT: { status: "complete" },
-          OR: [{ driver_id: driverToCheck }, { bus_id: busToCheck }],
-        },
-      });
+      // Check for overlapping trips if:
+      // 1. Driver or bus is being changed
+      // 2. Trip is changing from complete to non-complete status
+      // 3. Trip is already non-complete and we're changing driver/bus
+      const shouldCheckConflicts =
+        driver_id !== undefined ||
+        bus_id !== undefined ||
+        (existingTrip.status === "complete" && finalStatus !== "complete");
 
-      if (overlappingTrips) {
-        throw new Error(
-          `Conflict: Driver ${driverToCheck} or Bus ${busToCheck} is already assigned to a non-complete trip.`
-        );
+      if (shouldCheckConflicts) {
+        // Check for driver conflicts ONLY if driver is being changed
+        if (driver_id !== undefined) {
+          const driverConflict = await tx.trip.findFirst({
+            where: {
+              id: { not: id },
+              NOT: { status: "complete" },
+              driver_id: driverToCheck,
+            },
+          });
+
+          if (driverConflict) {
+            throw new Error(
+              `Conflict: Driver ${driverToCheck} is already assigned to a non-complete trip (Trip ID: ${driverConflict.id}).`
+            );
+          }
+        }
+
+        // Check for bus conflicts ONLY if bus is being changed
+        if (bus_id !== undefined) {
+          const busConflict = await tx.trip.findFirst({
+            where: {
+              id: { not: id },
+              NOT: { status: "complete" },
+              bus_id: busToCheck,
+            },
+          });
+
+          if (busConflict) {
+            throw new Error(
+              `Conflict: Bus ${busToCheck} is already assigned to a non-complete trip (Trip ID: ${busConflict.id}).`
+            );
+          }
+        }
+
+        // ONLY check for reactivation conflicts when actually reactivating
+        // AND ONLY when driver/bus are NOT being changed (since those are checked above)
+        if (
+          existingTrip.status === "complete" &&
+          finalStatus !== "complete" &&
+          driver_id === undefined &&
+          bus_id === undefined
+        ) {
+          const reactivationConflict = await tx.trip.findFirst({
+            where: {
+              id: { not: id },
+              NOT: { status: "complete" },
+              OR: [{ driver_id: driverToCheck }, { bus_id: busToCheck }],
+            },
+          });
+
+          if (reactivationConflict) {
+            const conflictType =
+              reactivationConflict.driver_id === driverToCheck
+                ? "Driver"
+                : "Bus";
+            const conflictValue =
+              reactivationConflict.driver_id === driverToCheck
+                ? driverToCheck
+                : busToCheck;
+            throw new Error(
+              `Conflict: ${conflictType} ${conflictValue} is already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`
+            );
+          }
+        }
       }
 
       const updatedTrip = await tx.trip.update({
