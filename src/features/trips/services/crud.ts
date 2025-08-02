@@ -87,15 +87,11 @@ export async function addTrip(
           { driver_id },
           { bus_id },
         ],
-        AND: [
-          { start_time: { lt: newEnd } },
-          { end_time: { gt: newStart } },
-        ],
       },
     });
 
     if (overlappingTrips) {
-      throw new Error(`Cannot create trip: overlapping trip exists for driver ${driver_id} or bus ${bus_id}.`);
+      throw new Error(`Cannot create trip: driver ${driver_id} or bus ${bus_id} already assigned to a non-complete trip.`);
     }
 
     // Create the trip
@@ -217,10 +213,16 @@ export async function editTrip(
   status?: string | null
 ) {
   const updateData: any = {};
-  
+
   const existingTrip = await prisma.trip.findUnique({
     where: { id },
-    select: { start_time: true, end_time: true }
+    select: {
+      start_time: true,
+      end_time: true,
+      status: true,
+      driver_id: true,
+      bus_id: true
+    }
   });
 
   if (!existingTrip) {
@@ -230,11 +232,14 @@ export async function editTrip(
   const newStart = start_time ? new Date(start_time) : new Date(existingTrip.start_time!);
   const newEnd = end_time ? new Date(end_time) : new Date(existingTrip.end_time!);
 
-  if (start_time !== undefined) updateData.start_time = start_time;
-  if (end_time !== undefined) updateData.end_time = end_time;
+  if (newEnd <= newStart) {
+    throw new Error("End time must be after start time.");
+  }
+
+  if (start_time !== undefined) updateData.start_time = newStart;
+  if (end_time !== undefined) updateData.end_time = newEnd;
   if (bus_id !== undefined) updateData.bus = { connect: { id: bus_id } };
-  if (driver_id !== undefined)
-    updateData.driver = { connect: { id: driver_id } };
+  if (driver_id !== undefined) updateData.driver = { connect: { id: driver_id } };
   if (src_station_id !== undefined) {
     updateData.station_trip_src_station_idTostation = {
       connect: { id: src_station_id },
@@ -247,29 +252,32 @@ export async function editTrip(
   }
   if (status !== undefined) updateData.status = status;
 
+  const isBecomingActive = status !== "complete";
+  const driverToCheck = driver_id ?? existingTrip.driver_id;
+  const busToCheck = bus_id ?? existingTrip.bus_id;
+
   let updated;
 
-  if (status === "complete") {
-    // Run in a transaction to ensure both update together
+  if (isBecomingActive) {
+    // Only run this block if trip is active or being reactivated
     updated = await prisma.$transaction(async tx => {
-      // Check for overlapping trips with same driver or bus, that aren't completed
       const overlappingTrips = await tx.trip.findFirst({
         where: {
+          id: { not: id }, // exclude current trip
           NOT: { status: "complete" },
           OR: [
-            { driver_id },
-            { bus_id },
-          ],
-          AND: [
-            { start_time: { lt: newEnd! } },
-            { end_time: { gt: newStart! } },
+            { driver_id: driverToCheck },
+            { bus_id: busToCheck },
           ],
         },
       });
 
       if (overlappingTrips) {
-        throw new Error(`Cannot create trip: overlapping trip exists for driver ${driver_id} or bus ${bus_id}.`);
+        throw new Error(
+          `Conflict: Driver ${driverToCheck} or Bus ${busToCheck} is already assigned to a non-complete trip.`
+        );
       }
+
       const updatedTrip = await tx.trip.update({
         where: { id },
         data: updateData,
@@ -281,16 +289,10 @@ export async function editTrip(
         },
       });
 
-      // Update seats status associated with the trip's bus
-      await tx.seat.updateMany({
-        where: { bus_id: updatedTrip.bus.id },
-        data: { status: "available" }, // or whatever status fits your logic
-      });
-
       return updatedTrip;
     });
   } else {
-    // Just update the trip normally
+    // Just update normally
     updated = await prisma.trip.update({
       where: { id },
       data: updateData,
@@ -303,5 +305,14 @@ export async function editTrip(
     });
   }
 
+  // Free up seats if trip is marked complete
+  if (status === "complete" && updated.bus?.id) {
+    await prisma.seat.updateMany({
+      where: { bus_id: updated.bus.id },
+      data: { status: "available" },
+    });
+  }
+
   return updated;
 }
+
