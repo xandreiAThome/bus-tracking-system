@@ -44,6 +44,18 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
   const { hour, minute, meridiem } = get12HourParts(time);
   const meridiemTyped = meridiem as "a.m." | "p.m.";
 
+  // Track input values separately to allow empty fields during typing
+  const [hourInput, setHourInput] = React.useState(hour.toString());
+  const [minuteInput, setMinuteInput] = React.useState(
+    minute.toString().padStart(2, "0")
+  );
+
+  // Update input values when time prop changes (from external sources like +/- buttons)
+  React.useEffect(() => {
+    setHourInput(hour.toString());
+    setMinuteInput(minute.toString().padStart(2, "0"));
+  }, [hour, minute]);
+
   const handleHourChange = (op: "increment" | "decrement") => {
     let newHour = hour;
     if (op === "increment") {
@@ -66,19 +78,34 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (!/^\d{0,2}$/.test(value)) return;
+
+    // Allow empty string or numeric input only
+    if (value !== "" && !/^\d+$/.test(value)) return;
+
     if (name === "hour") {
-      let num = parseInt(value);
-      if (isNaN(num)) num = 1;
-      if (num < 1) num = 1;
-      if (num > 12) num = 12;
-      setTime(setHour(time, num, meridiemTyped));
+      setHourInput(value);
+      if (value === "") {
+        // Allow empty field, don't update time yet
+        return;
+      }
+      const num = parseInt(value);
+      if (isNaN(num)) return;
+
+      // Clamp hour to valid range (1-12)
+      const clampedHour = Math.max(1, Math.min(12, num));
+      setTime(setHour(time, clampedHour, meridiemTyped));
     } else if (name === "minute") {
-      let num = parseInt(value);
-      if (isNaN(num)) num = 0;
-      if (num < 0) num = 0;
-      if (num > 59) num = 59;
-      setTime(setMinute(time, num));
+      setMinuteInput(value);
+      if (value === "") {
+        // Allow empty field, don't update time yet
+        return;
+      }
+      const num = parseInt(value);
+      if (isNaN(num)) return;
+
+      // Clamp minute to valid range (0-59)
+      const clampedMinute = Math.max(0, Math.min(59, num));
+      setTime(setMinute(time, clampedMinute));
     }
   };
 
@@ -101,7 +128,7 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
           </button>
           <input
             name="hour"
-            value={hour.toString().padStart(2, "0")}
+            value={hourInput}
             onChange={handleInputChange}
             className="w-10 text-center outline-none"
             aria-label="Hour"
@@ -128,7 +155,7 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
           </button>
           <input
             name="minute"
-            value={minute.toString().padStart(2, "0")}
+            value={minuteInput}
             onChange={handleInputChange}
             className="w-10 text-center outline-none"
             aria-label="Minute"

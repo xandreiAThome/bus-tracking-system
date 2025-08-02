@@ -24,6 +24,7 @@ import { AggregatedBusType } from "@/features/bus/types/types";
 import { DriverType } from "@/features/driver/types/types";
 import { StationType } from "@/features/station/types/types";
 import { formatTime } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface TripCardProps {
   trip: AggregatedTripType;
@@ -67,8 +68,12 @@ export default function TripCard({
       }
 
       setStatus(newStatus as "boarding" | "transit" | "complete");
+      onSuccessEdit(); // Refresh trip data in parent component
     } catch (error) {
       console.error("Error updating trip status:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update trip status";
+      toast.error(errorMessage);
     } finally {
       setLoading(prev => ({ ...prev, status: false }));
     }

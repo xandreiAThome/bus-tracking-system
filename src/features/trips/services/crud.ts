@@ -75,20 +75,60 @@ export async function addTrip(
   dest_station: number,
   driver_id: number
 ) {
-  const created = await prisma.trip.create({
-    data: {
-      start_time: start_time ? new Date(start_time) : null,
-      end_time: end_time ? new Date(end_time) : null,
-      bus: { connect: { id: bus_id } },
-      driver: { connect: { id: driver_id } },
-      station_trip_dest_station_idTostation: {
-        connect: { id: dest_station },
+  const newStart = new Date(start_time);
+  const newEnd = new Date(end_time);
+
+  // Validate that source and destination stations are different
+  if (src_station === dest_station) {
+    throw new Error("Source and destination stations cannot be the same.");
+  }
+
+  const result = await prisma.$transaction(async tx => {
+    // Check for overlapping trips with same driver or bus, that aren't completed
+    const overlappingTrips = await tx.trip.findFirst({
+      where: {
+        NOT: { status: "complete" },
+        OR: [{ driver_id }, { bus_id }],
       },
-      station_trip_src_station_idTostation: { connect: { id: src_station } },
-      // status: ... if you want to set it
-    },
+    });
+
+    if (overlappingTrips) {
+      // Determine which resource is conflicting
+      const isDriverConflict = overlappingTrips.driver_id === driver_id;
+      const isBusConflict = overlappingTrips.bus_id === bus_id;
+
+      let conflictMessage = "Cannot create trip: ";
+      if (isDriverConflict && isBusConflict) {
+        conflictMessage += `both Driver ${driver_id} and Bus ${bus_id} are already assigned to a non-complete trip (Trip ID: ${overlappingTrips.id}).`;
+      } else if (isDriverConflict) {
+        conflictMessage += `Driver ${driver_id} is already assigned to a non-complete trip (Trip ID: ${overlappingTrips.id}).`;
+      } else {
+        conflictMessage += `Bus ${bus_id} is already assigned to a non-complete trip (Trip ID: ${overlappingTrips.id}).`;
+      }
+
+      throw new Error(conflictMessage);
+    }
+
+    // Create the trip
+    const created = await tx.trip.create({
+      data: {
+        start_time: newStart,
+        end_time: newEnd,
+        bus: { connect: { id: bus_id } },
+        driver: { connect: { id: driver_id } },
+        station_trip_dest_station_idTostation: {
+          connect: { id: dest_station },
+        },
+        station_trip_src_station_idTostation: {
+          connect: { id: src_station },
+        },
+      },
+    });
+
+    return created;
   });
-  return created;
+
+  return result;
 }
 
 /**
@@ -189,8 +229,44 @@ export async function editTrip(
 ) {
   const updateData: any = {};
 
-  if (start_time !== undefined) updateData.start_time = start_time;
-  if (end_time !== undefined) updateData.end_time = end_time;
+  const existingTrip = await prisma.trip.findUnique({
+    where: { id },
+    select: {
+      start_time: true,
+      end_time: true,
+      status: true,
+      driver_id: true,
+      bus_id: true,
+      src_station_id: true,
+      dest_station_id: true,
+    },
+  });
+
+  if (!existingTrip) {
+    throw new Error(`Trip with id ${id} not found`);
+  }
+
+  const newStart = start_time
+    ? new Date(start_time)
+    : new Date(existingTrip.start_time!);
+  const newEnd = end_time
+    ? new Date(end_time)
+    : new Date(existingTrip.end_time!);
+
+  if (newEnd <= newStart) {
+    throw new Error("End time must be after start time.");
+  }
+
+  // Validate that source and destination stations are different
+  const finalSrcStation = src_station_id ?? existingTrip.src_station_id;
+  const finalDestStation = dest_station_id ?? existingTrip.dest_station_id;
+
+  if (finalSrcStation === finalDestStation) {
+    throw new Error("Source and destination stations cannot be the same.");
+  }
+
+  if (start_time !== undefined) updateData.start_time = newStart;
+  if (end_time !== undefined) updateData.end_time = newEnd;
   if (bus_id !== undefined) updateData.bus = { connect: { id: bus_id } };
   if (driver_id !== undefined)
     updateData.driver = { connect: { id: driver_id } };
@@ -206,11 +282,96 @@ export async function editTrip(
   }
   if (status !== undefined) updateData.status = status;
 
+  const finalStatus = status ?? existingTrip.status;
+  const isBecomingActive = finalStatus !== "complete";
+  const driverToCheck = driver_id ?? existingTrip.driver_id;
+  const busToCheck = bus_id ?? existingTrip.bus_id;
+
   let updated;
 
-  if (status === "complete") {
-    // Run in a transaction to ensure both update together
+  if (isBecomingActive) {
+    // Only run this block if trip is active or being reactivated
     updated = await prisma.$transaction(async tx => {
+      // Check for overlapping trips if:
+      // 1. Driver or bus is being changed
+      // 2. Trip is changing from complete to non-complete status
+      // 3. Trip is already non-complete and we're changing driver/bus
+      const shouldCheckConflicts =
+        driver_id !== undefined ||
+        bus_id !== undefined ||
+        (existingTrip.status === "complete" && finalStatus !== "complete");
+
+      if (shouldCheckConflicts) {
+        // Check for driver conflicts ONLY if driver is being changed
+        if (driver_id !== undefined) {
+          const driverConflict = await tx.trip.findFirst({
+            where: {
+              id: { not: id },
+              NOT: { status: "complete" },
+              driver_id: driverToCheck,
+            },
+          });
+
+          if (driverConflict) {
+            throw new Error(
+              `Conflict: Driver ${driverToCheck} is already assigned to a non-complete trip (Trip ID: ${driverConflict.id}).`
+            );
+          }
+        }
+
+        // Check for bus conflicts ONLY if bus is being changed
+        if (bus_id !== undefined) {
+          const busConflict = await tx.trip.findFirst({
+            where: {
+              id: { not: id },
+              NOT: { status: "complete" },
+              bus_id: busToCheck,
+            },
+          });
+
+          if (busConflict) {
+            throw new Error(
+              `Conflict: Bus ${busToCheck} is already assigned to a non-complete trip (Trip ID: ${busConflict.id}).`
+            );
+          }
+        }
+
+        // ONLY check for reactivation conflicts when actually reactivating
+        // AND ONLY when driver/bus are NOT being changed (since those are checked above)
+        if (
+          existingTrip.status === "complete" &&
+          finalStatus !== "complete" &&
+          driver_id === undefined &&
+          bus_id === undefined
+        ) {
+          const reactivationConflict = await tx.trip.findFirst({
+            where: {
+              id: { not: id },
+              NOT: { status: "complete" },
+              OR: [{ driver_id: driverToCheck }, { bus_id: busToCheck }],
+            },
+          });
+
+          if (reactivationConflict) {
+            // Determine which resource is conflicting for reactivation
+            const isDriverConflict =
+              reactivationConflict.driver_id === driverToCheck;
+            const isBusConflict = reactivationConflict.bus_id === busToCheck;
+
+            let conflictMessage = "Cannot reactivate trip: ";
+            if (isDriverConflict && isBusConflict) {
+              conflictMessage += `both Driver ${driverToCheck} and Bus ${busToCheck} are already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`;
+            } else if (isDriverConflict) {
+              conflictMessage += `Driver ${driverToCheck} is already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`;
+            } else {
+              conflictMessage += `Bus ${busToCheck} is already assigned to a non-complete trip (Trip ID: ${reactivationConflict.id}).`;
+            }
+
+            throw new Error(conflictMessage);
+          }
+        }
+      }
+
       const updatedTrip = await tx.trip.update({
         where: { id },
         data: updateData,
@@ -222,16 +383,10 @@ export async function editTrip(
         },
       });
 
-      // Update seats status associated with the trip's bus
-      await tx.seat.updateMany({
-        where: { bus_id: updatedTrip.bus.id },
-        data: { status: "available" }, // or whatever status fits your logic
-      });
-
       return updatedTrip;
     });
   } else {
-    // Just update the trip normally
+    // Just update normally
     updated = await prisma.trip.update({
       where: { id },
       data: updateData,
@@ -241,6 +396,14 @@ export async function editTrip(
         station_trip_src_station_idTostation: true,
         station_trip_dest_station_idTostation: true,
       },
+    });
+  }
+
+  // Free up seats if trip is marked complete
+  if (status === "complete" && updated.bus?.id) {
+    await prisma.seat.updateMany({
+      where: { bus_id: updated.bus.id },
+      data: { status: "available" },
     });
   }
 
