@@ -224,7 +224,7 @@ export default function Page() {
     );
 
   return (
-    <div className="min-h-screen bg-[#71AC61] flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-green-50 flex flex-col items-center justify-center p-4">
       <Toaster richColors position="top-center" />
       <h1 className="text-2xl font-semibold text-center mt-5 text-[#FFFFFF]">
         Issue Tickets
@@ -237,13 +237,13 @@ export default function Page() {
         <TabsList className="grid w-full grid-cols-2 pb-2 p-0 -my-1.5 bg-[#71AC61] -mb-5.5 mt-4">
           <TabsTrigger
             value="passenger"
-            className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
+            className="bg-green-700 text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
           >
             Passenger
           </TabsTrigger>
           <TabsTrigger
             value="baggage"
-            className="bg-[#71AC61] text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
+            className="bg-green-700 text-white data-[state=active]:bg-white data-[state=active]:text-[#71AC61] border rounded-b-none pb-4"
           >
             Baggage
           </TabsTrigger>
