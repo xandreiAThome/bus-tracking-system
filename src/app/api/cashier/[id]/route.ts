@@ -1,9 +1,11 @@
-import { validateIdParam } from "@/lib/utils";
+import { validateIdParam, parseError } from "@/lib/utils";
 import {
   getCashier,
   deleteCashier,
   editCashier,
 } from "@/features/cashier/services/crud";
+import { NextResponse, NextRequest } from "next/server";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
 
 /**
  * GET /api/cashier/[id]
@@ -11,12 +13,38 @@ import {
  * Fetches a single cashier by ID.
  */
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
-  return getCashier(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const result = await getCashier(Number(id));
+    if (result === null) {
+      return NextResponse.json(
+        { message: `Cannot find cashier with id ${id}` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -25,12 +53,36 @@ export async function GET(
  * Removes a cashier by ID.
  */
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
-  return deleteCashier(id);
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const deleted = await deleteCashier(Number(id));
+    if (deleted === null) {
+      return NextResponse.json(
+        { message: "Cannot find cashier" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { message: `Deleted cashier with id ${id}`, result: deleted },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -46,29 +98,40 @@ export async function DELETE(
  * }
  */
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
 
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
   try {
     const body = await req.json();
-    // Only allow update if at least one field is present in the body
-    if (Object.keys(body).length === 0) {
-      return Response.json(
+    const { first_name, last_name, user_id, station_id } = body;
+
+    if (!first_name && !last_name && !user_id && !station_id) {
+      return NextResponse.json(
         {
-          message: "At least one field must be provided in the request body",
+          message:
+            "At least one field (first_name, last_name, user_id, station_id) must be provided",
         },
         { status: 400 }
       );
     }
-    return editCashier(id, body);
-  } catch (err) {
-    console.error("PATCH /api/cashier/[id] error:", err);
-    return Response.json(
-      { message: "Invalid request body or internal error" },
-      { status: 500 }
+    const updated = await editCashier(Number(id), body);
+    return NextResponse.json(
+      { message: `Updated cashier with id ${id}`, result: updated },
+      { status: 200 }
     );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

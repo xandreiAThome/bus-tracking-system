@@ -1,23 +1,17 @@
-### Get Passenger Ticket by ID (replace :id with actual ticket id)
-GET http://localhost:3000/api/ticket/passenger/1
+### Get all tickets
+GET http://localhost:3000/api/ticket
 Accept: application/json
 
 ###
 
-### Get Baggage Ticket by ID (replace :id with actual ticket id)
-GET http://localhost:3000/api/ticket/baggage/2
-Accept: application/json
-
-###
-
-### Example passenger ticket creation (adjust URL and body as needed)
+### Create a passenger ticket
 POST http://localhost:3000/api/ticket
 Content-Type: application/json
 
 {
-  "price": "150.00",
+  "price": 150,
   "trip_id": 1,
-  "cashier_id": 6,
+  "cashier_id": 2,
   "ticket_type": "passenger",
   "passenger_name": "John Doe",
   "discount": "student"
@@ -25,76 +19,107 @@ Content-Type: application/json
 
 ###
 
-### Example baggage ticket creation (adjust URL and body as needed)
+### Create a baggage ticket
 POST http://localhost:3000/api/ticket
 Content-Type: application/json
 
 {
-  "price": "50.00",
+  "price": 80,
   "trip_id": 1,
-  "cashier_id": 6,
+  "cashier_id": 2,
   "ticket_type": "baggage",
-  "sender_no": 1234567890,
-  "dispatcher_no": 9876543210,
-  "sender_name": "Alice",
-  "receiver_name": "Bob",
-  "item": "Box"
+  "sender_no": "09171234567",
+  "dispatcher_no": "09187654321",
+  "sender_name": "Jane Sender",
+  "receiver_name": "Bob Receiver",
+  "item": "1 box of clothes"
 }
 
 ###
 
-### Example passenger ticket creation (adjust URL and body as needed)
-POST http://localhost:3000/api/ticket
-Content-Type: application/json
-
-{
-  "price": "20.00",
-  "trip_id": 1,
-  "cashier_id": 1,
-  "ticket_type": "passenger",
-  "passenger_name": "John Deer"
-}
-
-###
-
-GET http://localhost:3000/api/ticket
+### Get ticket by ID
+GET http://localhost:3000/api/ticket/1
 Accept: application/json
 
 ###
 
-GET http://localhost:3000/api/ticket/passenger/1
+### PATCH ticket (note: edits trip, based on current handler)
+PATCH http://localhost:3000/api/ticket/1
+Content-Type: application/json
+
+{
+  "price": "100"
+}
+
+###
+
+### Delete ticket by ID
+DELETE http://localhost:3000/api/ticket/1
 Accept: application/json
 
-### Example passenger ticket update (adjust URL and body as needed)
-PUT http://localhost:3000/api/ticket/passenger/1
-Content-Type: application/json
-
-{
-  "price": "20.00",
-  "trip_id": 1,
-  "cashier_id": 1,
-  "ticket_type": "passenger",
-  "passenger_name": "John Deer"
-}
-
-###
-
-PUT http://localhost:3000/api/ticket/baggage/1
-Content-Type: application/json
-
-{
-  "price": "50.00",
-  "trip_id": 1,
-  "cashier_id": 1,
-  "ticket_type": "baggage",
-  "sender_no": 1234567890,
-  "dispatcher_no": 9876543210,
-  "sender_name": "Alice",
-  "receiver_name": "Bob",
-  "item": "Box"
-}
-###  
-GET http://localhost:3000/api/ticket/passenger
-
-###
+### Get all baggage tickets
 GET http://localhost:3000/api/ticket/baggage
+Accept: application/json
+
+###
+
+### Get baggage ticket by ID
+GET http://localhost:3000/api/ticket/baggage/8
+Accept: application/json
+
+###
+
+### Update baggage ticket by ID
+PUT http://localhost:3000/api/ticket/baggage/2
+Content-Type: application/json
+
+{
+  "price": 100,
+  "trip_id": 1,
+  "cashier_id": 2,
+  "ticket_type": "baggage",
+  "sender_no": "09981234567",
+  "dispatcher_no": "09172222222",
+  "sender_name": "Alice Sender",
+  "receiver_name": "Charlie Receiver",
+  "item": "2 bags of books"
+}
+
+###
+
+### Get all baggage tickets by trip ID
+GET http://localhost:3000/api/ticket/baggage/trip/1
+Accept: application/json
+
+### Get all passenger tickets
+GET http://localhost:3000/api/ticket/passenger
+Accept: application/json
+
+###
+
+### Get passenger ticket by ID
+GET http://localhost:3000/api/ticket/passenger/2
+Accept: application/json
+
+###
+
+### Update passenger ticket by ID
+PUT http://localhost:3000/api/ticket/passenger/3
+Content-Type: application/json
+
+{
+  "price": 150,
+  "trip_id": 2,
+  "cashier_id": 1,
+  "ticket_type": "passenger",
+  "passenger_name": "Jane Doe",
+  "discount": "student"
+}
+
+###
+
+### Get passenger tickets by trip ID
+GET http://localhost:3000/api/ticket/passenger/trip/2
+Accept: application/json
+
+

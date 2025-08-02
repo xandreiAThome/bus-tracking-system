@@ -116,7 +116,7 @@ model trip {
   src_station_id                        Int
   bus_id                                Int
   driver_id                             Int
-  status                                trip_status?
+  status                                trip_status? @default(boarding)
   ticket                                ticket[]
   bus                                   bus          @relation(fields: [bus_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trip_bus1")
   driver                                driver       @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trip_driver1")

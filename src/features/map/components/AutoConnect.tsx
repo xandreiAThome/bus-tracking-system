@@ -43,16 +43,12 @@ export function AutoConnect({
   const [wasConnected, setWasConnected] = useState(false);
 
   useEffect(() => {
-    let found = false;
-    for (let i = 0; i < clientInfo.clients.length; i++) {
-      if (clientInfo.clients[i].busId === busId) {
-        found = true;
-        break;
-      }
-    }
-    setBusTrackedOnline(found);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientInfo]);
+    console.log(clientInfo);
+
+    setBusTrackedOnline(
+      clientInfo.clients.some(client => client.busId === busId)
+    );
+  }, [clientInfo, busId, connected]);
 
   useEffect(() => {
     if (!connected) {
@@ -130,7 +126,7 @@ export function AutoConnect({
             <span>
               {busTrackedOnline
                 ? `${plateNumber} Online`
-                : `Searching Bus ${busId}...`}
+                : `Searching ${plateNumber}...`}
             </span>
           </div>
         </div>

@@ -1,36 +1,19 @@
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
-
 /**
  * Get a single cashier by ID
  */
 export async function getCashier(id: number) {
-  try {
-    const cashier = await prisma.cashier.findUnique({ where: { id } });
-    if (!cashier) {
-      return Response.json({ message: "Cashier not found" }, { status: 404 });
-    }
-    return Response.json({ cashier }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const cashier = await prisma.cashier.findUnique({ where: { id } });
+
+  return cashier;
 }
 
 /**
  * Delete a cashier by ID
  */
 export async function deleteCashier(id: number) {
-  try {
-    await prisma.cashier.delete({ where: { id } });
-    return Response.json(
-      { message: "Cashier deleted successfully" },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const deleted = await prisma.cashier.delete({ where: { id } });
+  return deleted;
 }
 
 /**
@@ -45,35 +28,22 @@ export async function editCashier(
     station_id?: number;
   }
 ) {
-  try {
-    const updated = await prisma.cashier.update({
-      where: { id },
-      data,
-    });
-    return Response.json(
-      { message: "Cashier updated successfully", updated },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const updated = await prisma.cashier.update({
+    where: { id },
+    data,
+  });
+  return updated;
 }
 
 /**
  * Get all cashiers
  */
 export async function getAllCashiers() {
-  try {
-    const cashiers = await prisma.cashier.findMany();
-    if (!cashiers.length) {
-      return Response.json({ message: "No cashiers found" }, { status: 404 });
-    }
-    return Response.json({ cashiers }, { status: 200 });
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
+  const cashiers = await prisma.cashier.findMany();
+  if (!cashiers.length) {
+    return null;
   }
+  return cashiers;
 }
 
 /**
@@ -85,21 +55,13 @@ export async function addCashier(
   user_id: number,
   station_id: number
 ) {
-  try {
-    const created = await prisma.cashier.create({
-      data: {
-        first_name,
-        last_name,
-        user_id,
-        station_id,
-      },
-    });
-    return Response.json(
-      { message: "Cashier created successfully", created },
-      { status: 201 }
-    );
-  } catch (err) {
-    console.error("Prisma Error:", err);
-    return catchDBError(err);
-  }
+  const created = await prisma.cashier.create({
+    data: {
+      first_name,
+      last_name,
+      user_id,
+      station_id,
+    },
+  });
+  return created;
 }

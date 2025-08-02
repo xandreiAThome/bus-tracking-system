@@ -1,9 +1,11 @@
-import { validateIdParam } from "@/lib/utils";
+import { validateIdParam, parseError } from "@/lib/utils";
 import {
   getDriver,
   deleteDriver,
   editDriver,
 } from "@/features/driver/services/crud";
+import { NextResponse, NextRequest } from "next/server";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
 
 /**
  * GET /api/driver/[id]
@@ -11,12 +13,40 @@ import {
  * Fetches a single driver by ID.
  */
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
-  return await getDriver(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const result = await getDriver(Number(id));
+    if (!result) {
+      return NextResponse.json(
+        { message: `Cannot find driver with id ${id}` },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -25,42 +55,64 @@ export async function GET(
  * Removes a driver by ID.
  */
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
-  return deleteDriver(id);
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const deleted = await deleteDriver(Number(id));
+    return NextResponse.json(
+      { message: `Deleted driver with id ${id}`, result: deleted },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
  * PATCH /api/driver/[id]
  *
  * Updates an existing driver.
- * Expected JSON body:
- * {
- *   first_name: string,
- *   last_name: string,
- *   user_id: number
- * }
  */
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
 
   try {
     const body = await req.json();
     const { first_name, last_name, user_id } = body;
-    // Only allow update if at least one field is present
+
     if (
       first_name === undefined &&
       last_name === undefined &&
       user_id === undefined
     ) {
-      return Response.json(
+      return NextResponse.json(
         {
           message:
             "At least one field (first_name, last_name, user_id) must be provided",
@@ -69,12 +121,17 @@ export async function PATCH(
       );
     }
 
-    return editDriver(id, { first_name, last_name, user_id });
-  } catch (err) {
-    console.error("PATCH /api/driver/[id] error:", err);
-    return Response.json(
-      { message: "Invalid request body or internal error" },
-      { status: 500 }
+    const updated = await editDriver(Number(id), {
+      first_name,
+      last_name,
+      user_id,
+    });
+    return NextResponse.json(
+      { message: `Updated driver with id ${id}`, result: updated },
+      { status: 200 }
     );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

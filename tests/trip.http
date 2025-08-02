@@ -1,32 +1,53 @@
-### GET request
+### Get all trips
 GET http://localhost:3000/api/trip
 Accept: application/json
 
-### POST request
+###
+
+### Create a new trip
 POST http://localhost:3000/api/trip
 Content-Type: application/json
 
 {
-  "start_time": "2025-07-16 08:00:00",
-  "end_time": "2025-07-16 12:00:00",
-  "src_station_id": 1,
-  "dest_station_id": 1,
+  "start_time": "2025-08-01T09:00:00Z",
+  "end_time": "2025-08-01T13:00:00Z",
   "bus_id": 1,
+  "src_station_id": 1,
+  "dest_station_id": 2,
+  "driver_id": 3
+}
+
+###
+
+### Get a specific trip by ID
+GET http://localhost:3000/api/trip/3
+Accept: application/json
+
+###
+
+### Update a trip by ID
+PATCH http://localhost:3000/api/trip/3
+Content-Type: application/json
+
+{
+  "end_time": "2025-08-01T14:00:00Z",
   "driver_id": 1
 }
 
 ###
 
-PATCH http://localhost:3000/api/trip/31
-Content-Type: application/json
+### Delete a trip by ID
+DELETE http://localhost:3000/api/trip/1
+Accept: application/json
 
-{
-  "status": "complete"
-}
+###
 
-### GET request
-GET http://localhost:3000/api/trip/1
+### Get trips for a specific day (query param: date)
+GET http://localhost:3000/api/trip/daily?date=2025-08-01
+Accept: application/json
 
-### DELETE request
-DELETE http://localhost:3000/api/trip/2
+###
 
+### Get trips for a specific month and year
+GET http://localhost:3000/api/trip/monthly?month=8&year=2025
+Accept: application/json

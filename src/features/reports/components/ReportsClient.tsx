@@ -36,9 +36,7 @@ export default function ReportsClient() {
         .then(res => res.json())
         .then(data => {
           let trips = [];
-          if (Array.isArray(data)) {
-            trips = data;
-          } else if (Array.isArray(data?.trips)) {
+          if (Array.isArray(data.trips)) {
             trips = data.trips;
           }
           setTripsList(trips);
@@ -60,8 +58,8 @@ export default function ReportsClient() {
         ),
       ])
         .then(([passengerData, baggageData]) => {
-          setPassengerTickets(passengerData.tickets || []);
-          setBaggageTickets(baggageData.tickets || []);
+          setPassengerTickets(passengerData.passenger_tickets || []);
+          setBaggageTickets(baggageData.baggage_tickets || []);
         })
         .finally(() => setLoadingTickets(false));
     }

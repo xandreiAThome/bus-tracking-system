@@ -21,6 +21,7 @@ export default async function GPSBroadcastPage() {
   // Get today's date in YYYY-MM-DD format
   const today = new Date();
   const trips = await getTripsForDay(today);
+
   const driver =
     typeof session.user.user_id === "number"
       ? await getDriverByUserId(session.user.user_id)

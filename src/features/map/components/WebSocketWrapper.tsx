@@ -7,6 +7,7 @@ import { useWebSocket } from "@/features/map/hooks";
 import { AutoConnect } from "./index";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+import { formatTime } from "@/lib/utils";
 
 // TEMPORARY CONNECT TO AUTH AFTER INTEGRATION
 
@@ -45,7 +46,8 @@ export default function WebSocketWrapper({
         const res = await fetch(`/api/trip/${tripId}`);
         if (!res.ok) throw new Error("Failed to fetch trip");
         const data = await res.json();
-        setTrip(data.trip as AggregatedTripType);
+
+        setTrip(data as AggregatedTripType);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         toast.error("Failed to fetch trip info");
@@ -80,12 +82,25 @@ export default function WebSocketWrapper({
       <Toaster></Toaster>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Map Section */}
-        <Card>
+        <Card className="pb-0">
           <CardHeader>
-            <CardTitle className="flex justify-between">
-              <h1>{trip?.bus.plate_number} Location Map</h1>
+            <CardTitle className="space-y-2">
+              <div className="flex justify-between">
+                <h1>{trip?.bus.plate_number} Location Map</h1>
+                <h1>
+                  Driver: {trip?.driver.first_name} {trip?.driver.last_name}
+                </h1>
+              </div>
               <h1>
-                Driver: {trip?.driver.first_name} {trip?.driver.last_name}
+                Trip{" "}
+                {trip?.src_station
+                  ? (trip.src_station.name ?? "Unknown Station")
+                  : "Unknown Station"}{" "}
+                {"->"}
+                {trip?.dest_station
+                  ? (trip.dest_station.name ?? "Unknown Station")
+                  : "Unknown Station"}{" "}
+                {trip?.start_time ? formatTime(trip.start_time) : ""}
               </h1>
             </CardTitle>
           </CardHeader>
@@ -109,7 +124,7 @@ export default function WebSocketWrapper({
               connected={connected}
               connecting={connecting}
               clientInfo={clientInfo}
-              busId={trip?.bus.id.toString() || "bus"}
+              busId={trip?.bus.id.toString() ?? "bus"}
               subscribe={subscribe}
               userId={userName}
               plateNumber={trip?.bus.plate_number || "unknown"}

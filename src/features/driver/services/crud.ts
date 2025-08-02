@@ -1,208 +1,78 @@
-import pool from "@/lib/db";
 import { prisma } from "@/lib/prisma";
-import { catchDBError } from "@/lib/utils";
-import { RowDataPacket, ResultSetHeader } from "mysql2";
 
 /**
- * Get all drivers from the database.
+ * Get all drivers.
  */
 export async function getAllDrivers() {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [drivers] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM driver"
-      );
-
-      if (!drivers || drivers.length === 0) {
-        return Response.json({ message: "No drivers found" }, { status: 404 });
-      }
-
-      return Response.json({ drivers }, { status: 200 });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
-  }
+  const drivers = await prisma.driver.findMany();
+  return drivers;
 }
 
 /**
- * Get a specific driver by ID.
- * @param id - Driver ID
+ * Get a driver by ID.
  */
-export async function getDriver(id: number): Promise<Response> {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [drivers] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM driver WHERE id = ?",
-        [id]
-      );
-
-      if (!drivers || drivers.length === 0) {
-        return Response.json(
-          { message: `Driver with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-
-      return Response.json({ driver: drivers[0] });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ error: "Database error" }, { status: 500 });
-  }
+export async function getDriver(id: number) {
+  const driver = await prisma.driver.findUnique({
+    where: { id },
+  });
+  return driver;
 }
 
 /**
- * Create a new driver.
- * @param first_name - First name
- * @param last_name - Last name
- * @param user_id - Related user ID
+ * Add a new driver.
  */
 export async function addDriver(
   first_name: string,
   last_name: string,
   user_id: number
 ) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO driver (first_name, last_name, user_id) VALUES (?, ?, ?)",
-        [first_name, last_name, user_id]
-      );
-
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: "Failed to create driver" },
-          { status: 500 }
-        );
-      }
-
-      return Response.json(
-        { message: "Driver created successfully" },
-        { status: 201 }
-      );
-    } finally {
-      conn.release();
-    }
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+  const created = await prisma.driver.create({
+    data: {
+      first_name,
+      last_name,
+      user_id,
+    },
+  });
+  return created;
 }
 
 /**
  * Update an existing driver.
- * @param id - Driver ID
- * @param first_name - First name
- * @param last_name - Last name
- * @param user_id - Related user ID
  */
 export async function editDriver(
   id: number,
-  fields: { first_name?: string; last_name?: string; user_id?: number }
-) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      // Build dynamic SQL and values
-      const updates = [];
-      const values = [];
-      if (fields.first_name !== undefined) {
-        updates.push("first_name = ?");
-        values.push(fields.first_name);
-      }
-      if (fields.last_name !== undefined) {
-        updates.push("last_name = ?");
-        values.push(fields.last_name);
-      }
-      if (fields.user_id !== undefined) {
-        updates.push("user_id = ?");
-        values.push(fields.user_id);
-      }
-      if (updates.length === 0) {
-        return Response.json(
-          { message: "No fields to update" },
-          { status: 400 }
-        );
-      }
-      values.push(id);
-      const [result] = await conn.execute<ResultSetHeader>(
-        `UPDATE driver SET ${updates.join(", ")} WHERE id = ?`,
-        values
-      );
-
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: `Driver with id ${id} not found or no changes made` },
-          { status: 404 }
-        );
-      }
-
-      return Response.json(
-        { message: `Driver with id ${id} updated successfully` },
-        { status: 200 }
-      );
-    } finally {
-      conn.release();
-    }
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
+  fields: {
+    first_name?: string;
+    last_name?: string;
+    user_id?: number;
   }
+) {
+  const updated = await prisma.driver.update({
+    where: { id },
+    data: fields,
+  });
+  return updated;
 }
 
 /**
  * Delete a driver by ID.
- * @param id - Driver ID
  */
 export async function deleteDriver(id: number) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        "DELETE FROM driver WHERE id = ?",
-        [id]
-      );
-
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: `Driver with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-
-      return Response.json(
-        { message: `Driver with id ${id} deleted successfully` },
-        { status: 200 }
-      );
-    } finally {
-      conn.release();
-    }
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+  const deleted = await prisma.driver.delete({
+    where: { id },
+  });
+  return deleted;
 }
 
+/**
+ * Get a driver by associated user ID.
+ */
 export async function getDriverByUserId(userId: number) {
-  try {
-    const driver = await prisma.driver.findFirst({
-      where: { user_id: userId },
-      include: {
-        user: true, // include user details if needed
-      },
-    });
-
-    return driver;
-  } catch (error) {
-    console.error("Error fetching driver by user ID:", error);
-    throw new Error("Failed to fetch driver by user ID.");
-  }
+  const driver = await prisma.driver.findFirst({
+    where: { user_id: userId },
+    include: {
+      user: true, // include user info if needed
+    },
+  });
+  return driver || null;
 }

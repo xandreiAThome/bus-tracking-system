@@ -5,7 +5,6 @@ import OverviewCard from "@features/trips/components/overviewCard";
 export default async function TripsOverview() {
   const session = await auth();
 
-  console.log(session?.user?.role);
   if (session?.user?.role === "driver") {
     redirect("/gps-broadcast");
   }

@@ -1,64 +1,53 @@
-import { getAllSeats } from "@features/seat/services/crud";
-import { addSeat } from "@features/seat/services/crud";
+import { getAllSeats, addSeat } from "@features/seat/services/crud";
+import { NextRequest, NextResponse } from "next/server";
+import { parseError } from "@/lib/utils";
+import { checkAuth, blockUserRole, checkAuthAndRole } from "@/lib/auth-helpers";
 
 /**
- * GET /api/seats
- *
- * Retrieves all existing seats from the database.
- *
- * @returns {Response}
- * 200 OK — Returns a JSON object:
- * {
- *   "seats": [
- *     {
- *       "id": number,
- *       "seat_number": string,
- *       "bus_id": number
- *     },
- *     ...
- *   ]
- * }
- *
- * @returns {Response} 404 Not Found If no seats exist.
- * @returns {Response} 500 Internalerver Error — For unexpected database or server errors.
+ * GET /api/seat
  */
 export async function GET() {
-  return getAllSeats();
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  try {
+    const result = await getAllSeats();
+    return NextResponse.json({ seats: result }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
  * POST /api/seat
- *
- * Creates a new seat for a specific bus.
- *
- * @param {Request} req - The incoming request with a JSON body:
- * {
- *   seat_number: string, // The seat number or label (e.g. "A1", "12")
- *   bus_id: number       // The ID of the associated bus
- * }
- *
- * @returns {Response} 201 - Seat created successfully:
- * {
- *   message: "Seat created successfully",
- *   created: {
- *     id: number,
- *     seat_number: string,
- *     bus_id: number
- *   }
- * }
- *
- * @returns {Response} 400 - Invalid or missing input data.
- * @returns {Response} 409 - Seat already exists for the bus.
- * @returns {Response} 500 - Internal server/database error.
  */
-export async function POST(req: Request) {
-  const { seat_number, bus_id } = await req.json();
+export async function POST(req: NextRequest) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
 
-  if (!seat_number || !bus_id) {
-    return Response.json(
-      { message: "Invalid input: Payload field/s missing" },
-      { status: 400 }
+  try {
+    const { seat_number, bus_id } = await req.json();
+
+    if (!seat_number || !bus_id) {
+      return NextResponse.json(
+        { message: "Invalid input: Payload field/s missing" },
+        { status: 400 }
+      );
+    }
+
+    const created = await addSeat(seat_number, bus_id);
+    return NextResponse.json(
+      { message: "Seat created successfully", result: created },
+      { status: 201 }
     );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
-  return addSeat(seat_number, bus_id);
 }

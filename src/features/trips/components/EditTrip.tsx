@@ -62,17 +62,17 @@ export default function EditTripModal({
     e.preventDefault();
     setIsSubmitting(true);
     if (!driverId && !busId && !srcStationId && !destStationId) {
-      alert("Please fill in at least one field");
+      toast.error("Please fill in at least one field");
       setIsSubmitting(false);
       return;
     }
     if (!startTime || !endTime) {
-      alert("Please select start and end time");
+      toast.error("Please select start and end time");
       setIsSubmitting(false);
       return;
     }
     if (endTime <= startTime) {
-      alert("End time must be after start time");
+      toast.error("End time must be after start time");
       setIsSubmitting(false);
       return;
     }
@@ -87,16 +87,17 @@ export default function EditTripModal({
             ? parseInt(driverId)
             : (trip.driver?.id ?? undefined),
           bus_id: busId ? parseInt(busId) : (trip.bus?.id ?? undefined),
-          src_station: srcStationId
+          src_station_id: srcStationId
             ? parseInt(srcStationId)
             : (trip.src_station?.id ?? undefined),
-          dest_station: destStationId
+          dest_station_id: destStationId
             ? parseInt(destStationId)
             : (trip.dest_station?.id ?? undefined),
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
         }),
       });
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to update trip");
@@ -106,7 +107,7 @@ export default function EditTripModal({
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error("Error updating trip:", err);
-      alert(err instanceof Error ? err.message : "Failed to update trip");
+      toast.error(err instanceof Error ? err.message : "Failed to update trip");
     } finally {
       setIsSubmitting(false);
     }

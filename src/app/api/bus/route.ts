@@ -2,6 +2,9 @@
 
 import { getAllBuses } from "@/features/bus/services/crud";
 import { addBus } from "@/features/bus/services/crud";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
+import { parseError } from "@/lib/utils";
+import { NextResponse, NextRequest } from "next/server";
 
 /**
  * GET /api/bus
@@ -9,7 +12,21 @@ import { addBus } from "@/features/bus/services/crud";
  * Returns all buses in the system.
  */
 export async function GET() {
-  return getAllBuses();
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  try {
+    const buses = await getAllBuses();
+    return NextResponse.json({ buses: buses }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -23,7 +40,10 @@ export async function GET() {
  *   capacity: number
  * }
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
   try {
     const { plate_number, station_id, capacity } = await req.json();
 
@@ -45,15 +65,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const response = await addBus(
+    const created = await addBus(
       plate_number,
       Number(station_id),
       Number(capacity)
     );
 
-    return response;
+    return NextResponse.json(
+      { message: "Driver created successfully", result: created },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error("API Route Error:", error);
-    return Response.json({ message: "Internal server error" }, { status: 500 });
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

@@ -69,7 +69,12 @@ export function CreateTripModal({
     const { driver, bus, source, destination } = formData;
 
     if (!driver || !bus || !source || !destination) {
-      alert("Please fill in all required fields.");
+      toast.error("Please fill in all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (endTime <= startTime) {
+      toast.error("End time must be after start time.");
       setIsSubmitting(false);
       return;
     }

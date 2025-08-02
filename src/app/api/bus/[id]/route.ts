@@ -1,7 +1,9 @@
 // bus-tracking-system-main/src/app/api/bus/[id]/route.ts
 
-import { validateIdParam } from "@/lib/utils";
-import { getBusByID, deleteBus, editBus } from "@/features/bus/services/crud";
+import { validateIdParam, parseError } from "@/lib/utils";
+import { getBusById, deleteBus, editBus } from "@/features/bus/services/crud";
+import { NextRequest, NextResponse } from "next/server";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
 
 /**
  * GET /api/bus/[id]
@@ -9,12 +11,38 @@ import { getBusByID, deleteBus, editBus } from "@/features/bus/services/crud";
  * Fetch a single bus by its URL‐segment ID.
  */
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
-  return getBusByID(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const result = await getBusById(Number(id));
+    if (result === null) {
+      return NextResponse.json(
+        { message: `Cannot find bus with id ${id}` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -23,12 +51,30 @@ export async function GET(
  * Remove a bus by its URL‐segment ID.
  */
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
-  return deleteBus(id);
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const result = await deleteBus(Number(id));
+    return NextResponse.json(
+      { message: `Deleted bus with id ${id} and its associated seats`, result },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
@@ -43,12 +89,20 @@ export async function DELETE(
  * }
  */
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
 
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
   try {
     const body = await req.json();
     const { plate_number, station_id, capacity } = body;
@@ -58,7 +112,7 @@ export async function PATCH(
       station_id === undefined &&
       capacity === undefined
     ) {
-      return Response.json(
+      return NextResponse.json(
         {
           message:
             "At least one field (plate_number, station_id, capacity) must be provided",
@@ -67,12 +121,17 @@ export async function PATCH(
       );
     }
 
-    return editBus(id, { plate_number, station_id, capacity });
-  } catch (err) {
-    console.error("PATCH /api/bus/[id] error:", err);
-    return Response.json(
-      { message: "Invalid request body or internal error" },
-      { status: 500 }
+    const updated = await editBus(Number(id), {
+      plate_number,
+      station_id,
+      capacity,
+    });
+    return NextResponse.json(
+      { message: `Updated bus with id ${id}`, result: updated },
+      { status: 200 }
     );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

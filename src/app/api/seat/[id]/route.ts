@@ -1,106 +1,123 @@
-import { validateIdParam } from "@/lib/utils";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
+import { validateIdParam, parseError } from "@/lib/utils";
 import { deleteSeat, getSeat, updateSeat } from "@features/seat/services/crud";
+import { NextRequest, NextResponse } from "next/server";
 
-/**
- * GET /api/seat/[id]
- *
- * Retrieves a specific seat's information by its ID.
- *
- * Example request:
- *  GET /api/seat/123
- *
- * @param req - The incoming HTTP request object.
- * @param params - Route parameters containing:
- * @property {string} id - The ID of the seat, passed as part of the URL.
- *
- * @returns
- * 200 OK — Returns:
- * {
- *  seat: {
- *    id: number,
- *    seat_number: string,
- *    bus_id: number
- *  }
- * }
- *
- * @returns 400 Bad Request — If the seat ID is invalid.
- * @returns 404 Not Found — If no seat is found with the given ID.
- * @returns 500 Internal Server Error — For unexpected server or database errors.
- */
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getSeat(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+
+  const numericId = Number(id);
+
+  try {
+    const seat = await getSeat(numericId);
+    if (!seat) {
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(seat, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
-/**
- * DELETE /api/seat/[id]
- *
- * Deletes a seat based on the dynamic `id` parameter in the URL path.
- * Example request:
- *  DELETE /api/seat/123
- *
- * @param req - The incoming HTTP request object.
- * @param params - Route parameters containing:
- * @property {string} id - The ID of the seat, passed as part of the URL.
- *
- * @returns
- * 200 OK — Returns:
- * {
- *  seat: {
- *    id: number,
- *    seat_number: string,
- *    bus_id: number
- *  }
- * }
- *
- * @returns 400 Bad Request — If the seat ID is invalid.
- * @returns 404 Not Found — If no seat is found with the given ID.
- * @returns 500 Internal Server Error — For unexpected server or database errors.
- */
 export async function DELETE(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return deleteSeat(id);
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid seat ID" }, { status: 400 });
+  }
+
+  const numericId = Number(id);
+
+  try {
+    const deleted = await deleteSeat(numericId);
+    if (!deleted) {
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { message: `Deleted seat with id ${id}`, result: deleted },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
-/**
- * PATCH /api/seat/[id]
- * Updates a seat's data
- */
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) return id;
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid seat ID" }, { status: 400 });
+  }
+
+  const numericId = Number(id);
 
   try {
     const body = await req.json();
-
-    // Validate at least one valid field is present
     const validFields = ["seat_number", "bus_id", "status"];
+
     if (!Object.keys(body).some(key => validFields.includes(key))) {
-      return Response.json(
+      return NextResponse.json(
         { message: "No valid fields to update" },
         { status: 400 }
       );
     }
 
-    return updateSeat(id, body); // Pass the entire body (filtered if needed)
+    const updated = await updateSeat(numericId, body);
+    if (!updated) {
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { message: `Updated seat with id ${id}`, result: updated },
+      { status: 200 }
+    );
   } catch (error) {
-    return Response.json({ message: "Invalid request body" }, { status: 400 });
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
