@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import React, { useTransition } from "react";
+import { toast } from "sonner";
 
 interface RefundDialogProps {
   ticketId: number;
@@ -33,13 +34,35 @@ export default function RefundDialog({
       });
 
       if (!res.ok) {
-        throw new Error("Refund failed");
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Refund failed");
       }
 
       onSuccess(); // Let parent component know
+      toast.success("Ticket refunded successfully");
+
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("ticketRefunded", {
+          detail: { ticketId },
+        })
+      );
+
+      // Also trigger storage event as fallback
+      window.dispatchEvent(
+        new StorageEvent("storage", {
+          key: "ticketRefunded",
+          newValue: Date.now().toString(),
+        })
+      );
+
       document.getElementById(`close-${ticketId}`)?.click(); // Close dialog
     } catch (err) {
       console.error("Refund error:", err);
+      // Show a user-friendly error message
+      toast.error(
+        `Refund failed: ${err instanceof Error ? err.message : "Unknown error"}`
+      );
     }
   };
 

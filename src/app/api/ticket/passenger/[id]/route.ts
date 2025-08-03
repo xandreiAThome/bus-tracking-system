@@ -81,7 +81,7 @@ export async function PUT(
       trip_id,
       cashier_id,
       ticket_type,
-      passenger_name,
+      // passenger_name,
       discount,
     } = await req.json();
 
@@ -99,11 +99,33 @@ export async function PUT(
       );
     }
 
-    if (!passenger_name) {
+    // Check if the ticket exists and is a passenger ticket before updating
+    const existingTicket = await getPassengerTicketById(Number(id));
+    if (!existingTicket) {
+      return NextResponse.json(
+        { message: `Ticket with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+
+    // Check if it's actually a passenger ticket
+    if (
+      !existingTicket.passenger_ticket ||
+      existingTicket.ticket_type !== "passenger"
+    ) {
+      return NextResponse.json(
+        { message: `Ticket with id ${id} is not a passenger ticket` },
+        { status: 400 }
+      );
+    }
+
+    {
+      /*if (!passenger_name) {
       return NextResponse.json(
         { message: "Missing required passenger_name for passenger ticket" },
         { status: 400 }
       );
+    }*/
     }
 
     const updated = await updateFullPassengerTicket(
@@ -112,7 +134,7 @@ export async function PUT(
       trip_id,
       cashier_id,
       ticket_type,
-      passenger_name,
+      //  passenger_name,
       discount ?? null
     );
 

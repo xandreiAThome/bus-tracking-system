@@ -10,7 +10,8 @@ import PassengerCard from "@features/ticket/components/passengerCard";
 import BaggageCard from "@features/ticket/components/baggageCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AggregatedTicketType } from "../types/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { CashierType } from "@features/cashier/types/types";
 
 interface IssuedTicketsModalProps {
   tripId?: number; // Added tripId pro
@@ -26,34 +27,42 @@ export default function IssuedTicketsModal({
   const [baggageTickets, setBaggageTickets] = useState<AggregatedTicketType[]>(
     []
   );
+  const [cashiers, setCashiers] = useState<CashierType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!open || !tripId) return;
+  const fetchMeta = useCallback(async () => {
     setIsLoading(true);
-    // Fetch passenger tickets
-    fetch(`/api/ticket/passenger/trip/${tripId}`)
-      .then(res => res.json())
-      .then(data => {
-        setPassengerTickets(
-          Array.isArray(data.passenger_tickets) ? data.passenger_tickets : []
-        );
-      })
-      .catch(() => setPassengerTickets([]))
-      .finally(() => setIsLoading(false));
+    try {
+      const [passRes, bagRes, cashierRes] = await Promise.all([
+        fetch(`/api/ticket/passenger/trip/${tripId}`),
+        fetch(`/api/ticket/baggage/trip/${tripId}`),
+        fetch("/api/cashier"),
+      ]);
+      if (!passRes.ok || !bagRes.ok || !cashierRes.ok) {
+        throw new Error("Failed to fetch meta data");
+      }
+      const [passData, bagData, cashierData] = await Promise.all([
+        passRes.json(),
+        bagRes.json(),
+        cashierRes.json(),
+      ]);
+      setPassengerTickets(passData.passenger_tickets || passData);
+      setBaggageTickets(bagData.baggage_tickets || bagData);
+      setCashiers(cashierData.cashiers || cashierData);
+    } catch (err) {
+      console.error("Failed to fetch tickets:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [tripId]);
 
-    setIsLoading(true);
-    // Fetch baggage tickets
-    fetch(`/api/ticket/baggage/trip/${tripId}`)
-      .then(res => res.json())
-      .then(data => {
-        setBaggageTickets(
-          Array.isArray(data.baggage_tickets) ? data.baggage_tickets : []
-        );
-      })
-      .catch(() => setBaggageTickets([]))
-      .finally(() => setIsLoading(false));
-  }, [tripId, open]);
+  const handleTicketUpdate = () => {
+    fetchMeta(); // Refresh the tickets when a ticket is updated
+  };
+
+  useEffect(() => {
+    fetchMeta();
+  }, [fetchMeta]);
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -98,7 +107,12 @@ export default function IssuedTicketsModal({
                 ) : (
                   <div className="flex flex-col gap-y-4">
                     {passengerTickets.map((pass: AggregatedTicketType) => (
-                      <PassengerCard key={pass.id} ticket={pass} />
+                      <PassengerCard
+                        key={pass.id}
+                        ticket={pass}
+                        cashiers={cashiers}
+                        onSuccess={handleTicketUpdate}
+                      />
                     ))}
                   </div>
                 )}
@@ -114,7 +128,12 @@ export default function IssuedTicketsModal({
                 ) : (
                   <div className="flex flex-col gap-y-4">
                     {baggageTickets.map((bag: AggregatedTicketType) => (
-                      <BaggageCard key={bag.id} ticket={bag} />
+                      <BaggageCard
+                        key={bag.id}
+                        ticket={bag}
+                        cashiers={cashiers}
+                        onSuccess={handleTicketUpdate}
+                      />
                     ))}
                   </div>
                 )}

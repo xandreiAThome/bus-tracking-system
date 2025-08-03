@@ -73,22 +73,19 @@ export async function POST(req: NextRequest) {
 
     // Passenger ticket validation
     if (ticket_type === "passenger") {
-      const { passenger_name, discount } = payload;
+      const { passenger_name, discount, seat_id } = payload;
 
-      if (passenger_name === undefined) {
-        return NextResponse.json(
-          { message: "Missing passenger_name for passenger ticket" },
-          { status: 400 }
-        );
-      }
+      // Use placeholder value for passenger_name since it's not used for now
+      const finalPassengerName = passenger_name || "Passenger";
 
       const created = await createFullPassengerTicket(
         price,
         Number(trip_id),
         Number(cashier_id),
         ticket_type,
-        passenger_name,
-        discount ?? null
+        finalPassengerName,
+        discount ?? null,
+        seat_id ? Number(seat_id) : undefined
       );
 
       return NextResponse.json(

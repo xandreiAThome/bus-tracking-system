@@ -102,7 +102,7 @@ export default function EditTripModal({
         const errorData = await res.json();
         throw new Error(errorData.message || "Failed to update trip");
       }
-      toast.success("Trip updated succesfully");
+      toast.success("Trip updated successfully");
       setDrawerOpen(false);
       if (onSuccess) onSuccess();
     } catch (err) {

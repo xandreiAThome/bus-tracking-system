@@ -78,6 +78,7 @@ model seat {
   bus_id      Int
   status      seat_status @default(available)
   bus         bus         @relation(fields: [bus_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_seat_bus1")
+  ticket      ticket[]
 
   @@unique([bus_id, seat_number], map: "unique_bus_order")
   @@index([bus_id], map: "fk_seat_bus1_idx")
@@ -98,14 +99,17 @@ model ticket {
   trip_id          Int
   cashier_id       Int
   ticket_type      ticket_ticket_type
+  seat_id          Int?
   createdAt        DateTime?          @default(now()) @db.DateTime(0)
   baggage_ticket   baggage_ticket?
   passenger_ticket passenger_ticket?
   cashier          cashier            @relation(fields: [cashier_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_cashier1")
   trip             trip               @relation(fields: [trip_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_trip1")
+  seat             seat?              @relation(fields: [seat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_seat1")
 
   @@index([cashier_id], map: "fk_ticket_cashier1_idx")
   @@index([trip_id], map: "fk_ticket_trip1_idx")
+  @@index([seat_id], map: "fk_ticket_seat1_idx")
 }
 
 model trip {

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 
 import {
@@ -24,7 +24,7 @@ import { AggregatedBusType } from "@/features/bus/types/types";
 import { DriverType } from "@/features/driver/types/types";
 import { StationType } from "@/features/station/types/types";
 import { formatTime } from "@/lib/utils";
-import { AggregatedTicketType, TicketType } from "@features/ticket/types/types";
+import { AggregatedTicketType } from "@features/ticket/types/types";
 import { toast } from "sonner";
 
 interface TripCardProps {
@@ -57,7 +57,7 @@ export default function TripCard({
     AggregatedTicketType[]
   >([]);
 
-  useEffect(() => {
+  const fetchPassengerTickets = useCallback(() => {
     fetch(`/api/ticket/passenger/trip/${trip.id}`)
       .then(res => res.json())
       .then(data => {
@@ -66,7 +66,27 @@ export default function TripCard({
         );
       })
       .catch(() => setPassengerTickets([]));
-  }, []);
+  }, [trip.id]);
+
+  useEffect(() => {
+    fetchPassengerTickets();
+
+    // Set up event listeners for ticket changes
+    const handleTicketChange = () => {
+      fetchPassengerTickets();
+    };
+
+    // Listen for custom ticketRefunded events
+    window.addEventListener("ticketRefunded", handleTicketChange);
+
+    // Listen for storage changes as fallback
+    window.addEventListener("storage", handleTicketChange);
+
+    return () => {
+      window.removeEventListener("ticketRefunded", handleTicketChange);
+      window.removeEventListener("storage", handleTicketChange);
+    };
+  }, [fetchPassengerTickets]);
 
   async function handleStatusChange(newStatus: string) {
     try {
@@ -194,9 +214,20 @@ export default function TripCard({
           {/* Right Side:  */}
           <div className="flex flex-col items-end">
             <div className="flex flex-row gap-1 justify-end items-baseline mr-1">
-              <span className="font-bold">
+              <span
+                className={`font-bold ${
+                  passengerTickets?.length > bus.capacity
+                    ? "text-orange-600"
+                    : ""
+                }`}
+              >
                 {passengerTickets?.length} / {bus.capacity}
               </span>
+              {passengerTickets?.length > bus.capacity && (
+                <span className="text-xs text-orange-600 font-medium">
+                  ({passengerTickets.length - bus.capacity} standing)
+                </span>
+              )}
             </div>
             <Link
               className="bg-green-600 text-white py-1 px-2 rounded-lg font-bold "
