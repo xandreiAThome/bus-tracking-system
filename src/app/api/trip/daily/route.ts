@@ -13,6 +13,7 @@ export async function GET(req: NextRequest) {
   if (roleError) return roleError;
 
   const dateParam = req.nextUrl.searchParams.get("date");
+  // When no date is provided, use Manila local time for "today"
   const date = dateParam ? new Date(dateParam) : new Date();
 
   try {
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
-    console.log(date);
+    console.log("Querying trips for date:", date);
 
     const trips = await getTripsForDay(date);
 

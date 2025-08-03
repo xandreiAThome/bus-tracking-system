@@ -20,7 +20,9 @@ export default async function GPSBroadcastPage() {
 
   // Get today's date in YYYY-MM-DD format
   const today = new Date();
+  console.log(today);
   const trips = await getTripsForDay(today);
+  console.log(trips);
 
   const driver =
     typeof session.user.user_id === "number"

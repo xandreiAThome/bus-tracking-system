@@ -18,16 +18,27 @@ export async function getAllTrips() {
       station_trip_src_station_idTostation: true,
     },
   });
-  const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
-    id: trip.id,
-    start_time: trip.start_time,
-    end_time: trip.end_time,
-    status: trip.status,
-    dest_station: trip.station_trip_dest_station_idTostation,
-    src_station: trip.station_trip_src_station_idTostation,
-    bus: trip.bus,
-    driver: trip.driver,
-  }));
+  const mappedTrips: AggregatedTripType[] = trips.map(trip => {
+    // Convert Manila local time back to UTC for frontend consumption
+    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const start_time = trip.start_time
+      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
+      : trip.start_time;
+    const end_time = trip.end_time
+      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
+      : trip.end_time;
+
+    return {
+      id: trip.id,
+      start_time,
+      end_time,
+      status: trip.status,
+      dest_station: trip.station_trip_dest_station_idTostation,
+      src_station: trip.station_trip_src_station_idTostation,
+      bus: trip.bus,
+      driver: trip.driver,
+    };
+  });
   return mappedTrips;
 }
 /**
@@ -51,10 +62,16 @@ export async function getTrip(id: number) {
   if (!trip) {
     return null;
   }
+  // Convert Manila local time back to UTC for frontend consumption
+  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
   const mappedTrips: AggregatedTripType = {
     id: trip.id,
-    start_time: trip.start_time,
-    end_time: trip.end_time,
+    start_time: trip.start_time
+      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
+      : trip.start_time,
+    end_time: trip.end_time
+      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
+      : trip.end_time,
     status: trip.status,
     dest_station: trip.station_trip_dest_station_idTostation,
     src_station: trip.station_trip_src_station_idTostation,
@@ -75,8 +92,16 @@ export async function addTrip(
   dest_station: number,
   driver_id: number
 ) {
-  const newStart = new Date(start_time);
-  const newEnd = new Date(end_time);
+  // Convert from UTC to Manila local time for storage
+  // The frontend sends .toISOString() which converts Manila time to UTC
+  // We need to convert it back to Manila time for consistent storage
+  const utcStart = new Date(start_time);
+  const utcEnd = new Date(end_time);
+
+  // Convert UTC to Manila time (UTC+8) for database storage
+  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const newStart = new Date(utcStart.getTime() + manilaOffset);
+  const newEnd = new Date(utcEnd.getTime() + manilaOffset);
 
   // Validate that source and destination stations are different
   if (src_station === dest_station) {
@@ -143,11 +168,12 @@ export async function deleteTrip(id: number) {
 }
 
 export const getTripsForDay = async (date: Date) => {
+  // Convert to Manila time (UTC+8)
   const start = new Date(date);
-  start.setUTCHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
 
   const end = new Date(date);
-  end.setUTCHours(24, 0, 0, 0);
+  end.setHours(23, 59, 59, 999);
 
   const trips = await prisma.trip.findMany({
     where: {
@@ -168,16 +194,27 @@ export const getTripsForDay = async (date: Date) => {
     },
   });
 
-  const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
-    id: trip.id,
-    start_time: trip.start_time,
-    end_time: trip.end_time,
-    status: trip.status,
-    dest_station: trip.station_trip_dest_station_idTostation,
-    src_station: trip.station_trip_src_station_idTostation,
-    bus: trip.bus,
-    driver: trip.driver,
-  }));
+  const mappedTrips: AggregatedTripType[] = trips.map(trip => {
+    // Convert Manila local time back to UTC for frontend consumption
+    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const start_time = trip.start_time
+      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
+      : trip.start_time;
+    const end_time = trip.end_time
+      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
+      : trip.end_time;
+
+    return {
+      id: trip.id,
+      start_time,
+      end_time,
+      status: trip.status,
+      dest_station: trip.station_trip_dest_station_idTostation,
+      src_station: trip.station_trip_src_station_idTostation,
+      bus: trip.bus,
+      driver: trip.driver,
+    };
+  });
   return mappedTrips;
 };
 
@@ -204,16 +241,27 @@ export const getTripsForMonth = async (month: number, year: number) => {
     },
   });
 
-  const mappedTrips: AggregatedTripType[] = trips.map(trip => ({
-    id: trip.id,
-    start_time: trip.start_time,
-    end_time: trip.end_time,
-    status: trip.status,
-    dest_station: trip.station_trip_dest_station_idTostation,
-    src_station: trip.station_trip_src_station_idTostation,
-    bus: trip.bus,
-    driver: trip.driver,
-  }));
+  const mappedTrips: AggregatedTripType[] = trips.map(trip => {
+    // Convert Manila local time back to UTC for frontend consumption
+    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const start_time = trip.start_time
+      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
+      : trip.start_time;
+    const end_time = trip.end_time
+      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
+      : trip.end_time;
+
+    return {
+      id: trip.id,
+      start_time,
+      end_time,
+      status: trip.status,
+      dest_station: trip.station_trip_dest_station_idTostation,
+      src_station: trip.station_trip_src_station_idTostation,
+      bus: trip.bus,
+      driver: trip.driver,
+    };
+  });
   return mappedTrips;
 };
 
@@ -227,7 +275,8 @@ export async function editTrip(
   driver_id?: number,
   status?: string | null
 ) {
-  const updateData: any = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateData: Record<string, any> = {};
 
   const existingTrip = await prisma.trip.findUnique({
     where: { id },
@@ -247,10 +296,18 @@ export async function editTrip(
   }
 
   const newStart = start_time
-    ? new Date(start_time)
+    ? (() => {
+        const utcDate = new Date(start_time);
+        const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+        return new Date(utcDate.getTime() + manilaOffset);
+      })()
     : new Date(existingTrip.start_time!);
   const newEnd = end_time
-    ? new Date(end_time)
+    ? (() => {
+        const utcDate = new Date(end_time);
+        const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+        return new Date(utcDate.getTime() + manilaOffset);
+      })()
     : new Date(existingTrip.end_time!);
 
   if (newEnd <= newStart) {

@@ -11,8 +11,11 @@ export const getTicketsByTrip = async (tripId: number) => {
 };
 
 export const getDailySummary = async (date: Date) => {
-  const start = new Date(date.setHours(0, 0, 0, 0));
-  const end = new Date(date.setHours(24, 0, 0, 0));
+  // Use local Manila time for consistency
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
 
   return prisma.ticket.aggregate({
     _count: true,
