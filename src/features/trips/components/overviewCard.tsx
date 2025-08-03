@@ -30,7 +30,9 @@ export default function OverviewCard() {
   const fetchTrips = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/trip/daily`);
+      const response = await fetch(
+        `/api/trip/daily?date=${format(new Date(), "yyyy-MM-dd")}`
+      );
       if (!response.ok) {
         throw new Error(response.statusText || "Failed to fetch trips");
       }

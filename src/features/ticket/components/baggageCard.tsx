@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, SquarePen } from "lucide-react";
 import { AggregatedTicketType } from "../types/types";
+import RefundDialog from "@features/ticket/components/refundDialog";
 
 interface TicketCardProps {
   ticket: AggregatedTicketType;
@@ -28,9 +29,7 @@ export default function BaggageCard({ ticket }: TicketCardProps) {
           <div className="flex flex-row items-center gap-2">
             {/*Right Side*/}
             <SquarePen />
-            <Button className="h-[70%] rounded-lg bg-[#B81F1F] hover:bg-[#8B1919] font-semibold text-lg">
-              Refund
-            </Button>
+            <RefundDialog></RefundDialog>
           </div>
         </div>
         <div className="text-[#525252] -mt-2">

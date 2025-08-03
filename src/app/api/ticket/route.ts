@@ -63,6 +63,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Additional validation for cashier_id
+    if (cashier_id === 0 || isNaN(Number(cashier_id))) {
+      return NextResponse.json(
+        { message: "Please select a valid cashier" },
+        { status: 400 }
+      );
+    }
+
     // Passenger ticket validation
     if (ticket_type === "passenger") {
       const { passenger_name, discount } = payload;

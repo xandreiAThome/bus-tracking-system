@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 
 import {
@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { AlignJustify, SquareArrowOutUpRight, Map } from "lucide-react";
+import { AlignJustify, Map } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
 import EditTripModal from "./EditTrip";
 import { AggregatedTripType } from "../types/types";
@@ -24,6 +24,7 @@ import { AggregatedBusType } from "@/features/bus/types/types";
 import { DriverType } from "@/features/driver/types/types";
 import { StationType } from "@/features/station/types/types";
 import { formatTime } from "@/lib/utils";
+import { AggregatedTicketType, TicketType } from "@features/ticket/types/types";
 import { toast } from "sonner";
 
 interface TripCardProps {
@@ -50,6 +51,22 @@ export default function TripCard({
 
   // Extract data from props (assuming props now includes the relations)
   const { src_station, dest_station, driver, bus } = trip;
+
+  // Get passenger tickets for count
+  const [passengerTickets, setPassengerTickets] = useState<
+    AggregatedTicketType[]
+  >([]);
+
+  useEffect(() => {
+    fetch(`/api/ticket/passenger/trip/${trip.id}`)
+      .then(res => res.json())
+      .then(data => {
+        setPassengerTickets(
+          Array.isArray(data.passenger_tickets) ? data.passenger_tickets : []
+        );
+      })
+      .catch(() => setPassengerTickets([]));
+  }, []);
 
   async function handleStatusChange(newStatus: string) {
     try {
@@ -176,10 +193,9 @@ export default function TripCard({
 
           {/* Right Side:  */}
           <div className="flex flex-col items-end">
-            <div className="flex flex-row gap-1 justify-end items-baseline">
-              <span className="font-bold">0/0</span>
-              <span>
-                <SquareArrowOutUpRight />
+            <div className="flex flex-row gap-1 justify-end items-baseline mr-1">
+              <span className="font-bold">
+                {passengerTickets?.length} / {bus.capacity}
               </span>
             </div>
             <Link
