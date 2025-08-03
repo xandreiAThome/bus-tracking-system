@@ -81,7 +81,7 @@ export async function PUT(
       trip_id,
       cashier_id,
       ticket_type,
-      passenger_name,
+      // passenger_name,
       discount,
     } = await req.json();
 
@@ -99,11 +99,13 @@ export async function PUT(
       );
     }
 
-    if (!passenger_name) {
+    {
+      /*if (!passenger_name) {
       return NextResponse.json(
         { message: "Missing required passenger_name for passenger ticket" },
         { status: 400 }
       );
+    }*/
     }
 
     const updated = await updateFullPassengerTicket(
@@ -112,7 +114,7 @@ export async function PUT(
       trip_id,
       cashier_id,
       ticket_type,
-      passenger_name,
+      //  passenger_name,
       discount ?? null
     );
 

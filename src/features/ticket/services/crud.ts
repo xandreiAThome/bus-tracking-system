@@ -217,7 +217,7 @@ export async function updateFullPassengerTicket(
   trip_id: number,
   cashier_id: number,
   ticket_type: string,
-  passenger_name: string,
+  //passenger_name: string,
   discount: string | null
 ) {
   const ticket = await updateTicket(
@@ -227,7 +227,7 @@ export async function updateFullPassengerTicket(
     cashier_id,
     ticket_type
   );
-  const passenger = await updatePassengerTicket(id, passenger_name, discount);
+  const passenger = await updatePassengerTicket(id, discount);
   return { ticket, passenger };
 }
 

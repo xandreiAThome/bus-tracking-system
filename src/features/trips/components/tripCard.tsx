@@ -24,7 +24,7 @@ import { AggregatedBusType } from "@/features/bus/types/types";
 import { DriverType } from "@/features/driver/types/types";
 import { StationType } from "@/features/station/types/types";
 import { formatTime } from "@/lib/utils";
-import { AggregatedTicketType, TicketType } from "@features/ticket/types/types";
+import { AggregatedTicketType } from "@features/ticket/types/types";
 import { toast } from "sonner";
 
 interface TripCardProps {
