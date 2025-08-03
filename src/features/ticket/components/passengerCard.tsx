@@ -58,6 +58,9 @@ export default function PassengerCard({
           </div>
         </div>
         <div className="text-[#525252] text-sm mt-2">
+          Seat: {ticket.seat ? `${ticket.seat.seat_number}` : "Standing"}
+        </div>
+        <div className="text-[#525252] text-sm">
           Cashier: {ticket.cashier.first_name} {ticket.cashier.last_name}
         </div>
       </Card>

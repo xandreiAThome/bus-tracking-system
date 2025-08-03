@@ -9,6 +9,7 @@ export async function getAllTickets() {
       baggage_ticket: true,
       passenger_ticket: true,
       cashier: true,
+      seat: true,
     },
   });
 }
@@ -20,6 +21,7 @@ export async function getTicketById(id: number) {
       baggage_ticket: true,
       passenger_ticket: true,
       cashier: true,
+      seat: true,
     },
   });
 }
@@ -132,6 +134,7 @@ export async function getPassengerTicketById(ticket_id: number) {
     include: {
       passenger_ticket: true,
       cashier: true,
+      seat: true,
     },
   });
 }
@@ -328,6 +331,7 @@ export async function getAllPassengerTickets() {
     include: {
       passenger_ticket: true,
       cashier: true,
+      seat: true,
     },
   });
 }
@@ -351,6 +355,7 @@ export async function getPassengerTicketsByTripId(trip_id: number) {
     include: {
       passenger_ticket: true,
       cashier: true,
+      seat: true,
     },
   });
 }
