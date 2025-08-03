@@ -1,14 +1,17 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ShoppingBag, SquarePen } from "lucide-react";
 import { AggregatedTicketType } from "../types/types";
 import RefundDialog from "@features/ticket/components/refundDialog";
+import { useState } from "react";
 
 interface TicketCardProps {
   ticket: AggregatedTicketType;
 }
 
 export default function BaggageCard({ ticket }: TicketCardProps) {
+  const [isDeleted, setIsDeleted] = useState(false);
+
+  if (isDeleted) return null;
   return (
     <div className="flex flex-col justify-center">
       <Card className="flex flex-col gap-0 p-5">
@@ -29,7 +32,7 @@ export default function BaggageCard({ ticket }: TicketCardProps) {
           <div className="flex flex-row items-center gap-2">
             {/*Right Side*/}
             <SquarePen />
-            <RefundDialog></RefundDialog>
+            <RefundDialog ticketId={ticket.id} onSuccess={() => setIsDeleted(true)}></RefundDialog>
           </div>
         </div>
         <div className="text-[#525252] -mt-2">

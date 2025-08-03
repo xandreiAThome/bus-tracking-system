@@ -1,5 +1,4 @@
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { SquarePen, Ticket } from "lucide-react";
 import { AggregatedTicketType } from "../types/types";
 import RefundDialog from "@features/ticket/components/refundDialog";
