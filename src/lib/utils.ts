@@ -133,7 +133,24 @@ export function parseError(err: unknown): {
       case "P2025":
         return { status: 404, message: "Record not found" };
       case "P2003":
-        return { status: 400, message: "Invalid foreign key reference" };
+        // Check if the error message contains specific foreign key constraint information
+        const errorMessage = err.message || "";
+        if (
+          errorMessage.includes("cashier") ||
+          errorMessage.includes("Cashier")
+        ) {
+          return { status: 400, message: "Please select a valid cashier" };
+        } else if (
+          errorMessage.includes("trip") ||
+          errorMessage.includes("Trip")
+        ) {
+          return { status: 400, message: "Please select a valid trip" };
+        }
+        return {
+          status: 400,
+          message:
+            "Invalid reference - please check that all required selections are made",
+        };
       case "2011":
         return { status: 400, message: "Missing required fields" };
     }
