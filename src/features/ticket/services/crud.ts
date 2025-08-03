@@ -28,7 +28,8 @@ export async function createTicket(
   price: string,
   trip_id: number,
   cashier_id: number,
-  ticket_type: string
+  ticket_type: string,
+  seat_id?: number
 ) {
   if (!validateDecimal6_2(price)) {
     throw new Error("Price must be a valid DECIMAL(6,2)");
@@ -40,6 +41,7 @@ export async function createTicket(
       trip_id,
       cashier_id,
       ticket_type: ticket_type as any,
+      seat_id: seat_id || null,
     },
   });
 
@@ -69,11 +71,41 @@ export async function updateTicket(
 }
 
 export async function deleteTicket(id: number) {
+  console.log(`Attempting to delete ticket with id: ${id}`);
   return await prisma.$transaction(async tx => {
+    // First, get the ticket to check if it has a seat_id
+    const ticket = await tx.ticket.findUnique({
+      where: { id },
+      select: { seat_id: true, ticket_type: true },
+    });
+
+    if (!ticket) {
+      throw new Error(`Ticket with id ${id} not found`);
+    }
+
+    console.log(`Found ticket: ${JSON.stringify(ticket)}`);
+
+    // Delete related records
+    console.log("Deleting passenger tickets...");
     await tx.passenger_ticket.deleteMany({ where: { ticket_id: id } });
+
+    console.log("Deleting baggage tickets...");
     await tx.baggage_ticket.deleteMany({ where: { ticket_id: id } });
 
+    // Delete the ticket
+    console.log("Deleting main ticket...");
     const deleted = await tx.ticket.delete({ where: { id } });
+
+    // If it's a passenger ticket with a seat, free up the seat
+    if (ticket.ticket_type === "passenger" && ticket.seat_id) {
+      console.log(`Freeing up seat with id: ${ticket.seat_id}`);
+      await tx.seat.update({
+        where: { id: ticket.seat_id },
+        data: { status: "available" },
+      });
+    }
+
+    console.log("Ticket deletion completed successfully");
     return deleted;
   });
 }
@@ -148,7 +180,7 @@ export async function getBaggageTicketById(ticket_id: number) {
 }
 
 export async function updateBaggageTicket(
-  id: number,
+  ticket_id: number,
   sender_no: number,
   dispatcher_no: number,
   sender_name: string,
@@ -156,7 +188,7 @@ export async function updateBaggageTicket(
   item: string
 ) {
   return await prisma.baggage_ticket.update({
-    where: { id },
+    where: { ticket_id },
     data: {
       sender_no: String(sender_no),
       dispatcher_no: String(dispatcher_no),
@@ -175,9 +207,16 @@ export async function createFullPassengerTicket(
   cashier_id: number,
   ticket_type: string,
   passenger_name: string,
-  discount: string | null
+  discount: string | null,
+  seat_id?: number
 ) {
-  const ticket = await createTicket(price, trip_id, cashier_id, ticket_type);
+  const ticket = await createTicket(
+    price,
+    trip_id,
+    cashier_id,
+    ticket_type,
+    seat_id
+  );
   const passenger = await createPassengerTicket(
     ticket.id,
     passenger_name,
@@ -220,6 +259,16 @@ export async function updateFullPassengerTicket(
   //passenger_name: string,
   discount: string | null
 ) {
+  // First get the existing ticket to get the passenger_ticket ID
+  const existingTicket = await prisma.ticket.findUnique({
+    where: { id },
+    include: { passenger_ticket: true },
+  });
+
+  if (!existingTicket || !existingTicket.passenger_ticket) {
+    throw new Error("Passenger ticket not found");
+  }
+
   const ticket = await updateTicket(
     id,
     price,
@@ -227,7 +276,17 @@ export async function updateFullPassengerTicket(
     cashier_id,
     ticket_type
   );
-  const passenger = await updatePassengerTicket(id, discount);
+
+  // Update the passenger_ticket using the correct passenger_ticket ID
+  // Note: passenger_name is not used for now, so we only update discount
+  const passenger = await prisma.passenger_ticket.update({
+    where: { id: existingTicket.passenger_ticket.id },
+    data: {
+      discount: discount as any,
+      // passenger_name is not updated since it's not being used currently
+    },
+  });
+
   return { ticket, passenger };
 }
 
@@ -251,7 +310,7 @@ export async function updateFullBaggageTicket(
     ticket_type
   );
   const baggage = await updateBaggageTicket(
-    id,
+    id, // Use the main ticket ID as ticket_id for baggage_ticket
     sender_no,
     dispatcher_no,
     sender_name,

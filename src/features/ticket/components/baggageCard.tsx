@@ -1,15 +1,27 @@
 import { Card } from "@/components/ui/card";
-import { ShoppingBag, SquarePen } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { AggregatedTicketType } from "../types/types";
 import RefundDialog from "@features/ticket/components/refundDialog";
+import EditBaggageDialog from "@features/ticket/components/editBaggageModal";
 import { useState } from "react";
+import { CashierType } from "@features/cashier/types/types";
 
 interface TicketCardProps {
   ticket: AggregatedTicketType;
+  cashiers: CashierType[];
+  onSuccess?: () => void;
 }
 
-export default function BaggageCard({ ticket }: TicketCardProps) {
+export default function BaggageCard({
+  ticket,
+  cashiers,
+  onSuccess,
+}: TicketCardProps) {
   const [isDeleted, setIsDeleted] = useState(false);
+
+  const handleSuccess = () => {
+    if (onSuccess) onSuccess();
+  };
 
   if (isDeleted) return null;
   return (
@@ -31,12 +43,22 @@ export default function BaggageCard({ ticket }: TicketCardProps) {
           </div>
           <div className="flex flex-row items-center gap-2">
             {/*Right Side*/}
-            <SquarePen />
-            <RefundDialog ticketId={ticket.id} onSuccess={() => setIsDeleted(true)}></RefundDialog>
+            <EditBaggageDialog
+              ticket={ticket}
+              cashiers={cashiers}
+              onSuccess={handleSuccess}
+            />
+            <RefundDialog
+              ticketId={ticket.id}
+              onSuccess={() => setIsDeleted(true)}
+            />
           </div>
         </div>
         <div className="text-[#525252] -mt-2">
           Sender: {ticket.baggage_ticket.sender_name}
+        </div>
+        <div className="text-[#525252] text-sm">
+          Cashier: {ticket.cashier.first_name} {ticket.cashier.last_name}
         </div>
         <div className="text-[#456A3B] text-sm mt-2">
           Baggage Ticket #{ticket.id}

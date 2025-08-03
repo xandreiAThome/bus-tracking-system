@@ -10,9 +10,8 @@ import PassengerCard from "@features/ticket/components/passengerCard";
 import BaggageCard from "@features/ticket/components/baggageCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AggregatedTicketType } from "../types/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CashierType } from "@features/cashier/types/types";
-import { setUnhandledErrorLogLevel } from "effect/Layer";
 
 interface IssuedTicketsModalProps {
   tripId?: number; // Added tripId pro
@@ -30,9 +29,8 @@ export default function IssuedTicketsModal({
   );
   const [cashiers, setCashiers] = useState<CashierType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchMeta = async () => {
+  const fetchMeta = useCallback(async () => {
     setIsLoading(true);
     try {
       const [passRes, bagRes, cashierRes] = await Promise.all([
@@ -52,15 +50,19 @@ export default function IssuedTicketsModal({
       setBaggageTickets(bagData.baggage_tickets || bagData);
       setCashiers(cashierData.cashiers || cashierData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unknown error occured");
+      console.error("Failed to fetch tickets:", err);
     } finally {
       setIsLoading(false);
     }
+  }, [tripId]);
+
+  const handleTicketUpdate = () => {
+    fetchMeta(); // Refresh the tickets when a ticket is updated
   };
 
   useEffect(() => {
-    Promise.all([fetchMeta()]);
-  }, []);
+    fetchMeta();
+  }, [fetchMeta]);
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -109,6 +111,7 @@ export default function IssuedTicketsModal({
                         key={pass.id}
                         ticket={pass}
                         cashiers={cashiers}
+                        onSuccess={handleTicketUpdate}
                       />
                     ))}
                   </div>
@@ -125,7 +128,12 @@ export default function IssuedTicketsModal({
                 ) : (
                   <div className="flex flex-col gap-y-4">
                     {baggageTickets.map((bag: AggregatedTicketType) => (
-                      <BaggageCard key={bag.id} ticket={bag} />
+                      <BaggageCard
+                        key={bag.id}
+                        ticket={bag}
+                        cashiers={cashiers}
+                        onSuccess={handleTicketUpdate}
+                      />
                     ))}
                   </div>
                 )}

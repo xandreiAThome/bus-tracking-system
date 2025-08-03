@@ -99,6 +99,26 @@ export async function PUT(
       );
     }
 
+    // Check if the ticket exists and is a passenger ticket before updating
+    const existingTicket = await getPassengerTicketById(Number(id));
+    if (!existingTicket) {
+      return NextResponse.json(
+        { message: `Ticket with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+
+    // Check if it's actually a passenger ticket
+    if (
+      !existingTicket.passenger_ticket ||
+      existingTicket.ticket_type !== "passenger"
+    ) {
+      return NextResponse.json(
+        { message: `Ticket with id ${id} is not a passenger ticket` },
+        { status: 400 }
+      );
+    }
+
     {
       /*if (!passenger_name) {
       return NextResponse.json(

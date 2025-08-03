@@ -90,7 +90,7 @@ export default function EditPassengerDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Edit ticket">
-          <SquarePen className="h-4 w-4" />
+          <SquarePen size={16} />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -102,7 +102,7 @@ export default function EditPassengerDialog({
             <Label className="mb-2">Price (₱)</Label>
             <Input
               type="number"
-              step="0.01"
+              step="1"
               value={price}
               onChange={e => setPrice(e.target.value)}
               required
