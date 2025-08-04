@@ -5,6 +5,7 @@ import { Session, User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 
 const authConfig = {
+const authConfig = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -12,7 +13,10 @@ const authConfig = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
+    signIn: "/",
+    signOut: "/",
     signIn: "/",
     signOut: "/",
   },
@@ -106,6 +110,9 @@ const authConfig = {
       return session;
     },
   },
+};
+
+export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth(authConfig);
