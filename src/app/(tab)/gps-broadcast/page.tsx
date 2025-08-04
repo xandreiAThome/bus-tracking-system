@@ -23,6 +23,8 @@ export default async function GPSBroadcastPage() {
     redirect("/tripsOverview");
   }
 
+  console.log("Full session:", JSON.stringify(session, null, 2));
+
   // Get today's date in Manila timezone for proper trip lookup
   const now = new Date();
   const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
@@ -38,10 +40,23 @@ export default async function GPSBroadcastPage() {
   const trips = await getTripsForDay(today);
   console.log("Found trips:", trips);
 
-  const driver =
-    typeof session.user.user_id === "number"
-      ? await getDriverByUserId(session.user.user_id)
-      : null;
+  // Wait for driver lookup first
+  let driver = null;
+  if (typeof session.user.user_id === "number") {
+    try {
+      console.log("Looking up driver for user_id:", session.user.user_id);
+      driver = await getDriverByUserId(session.user.user_id);
+      console.log("Driver lookup complete:", driver);
+    } catch (error) {
+      console.error("Error looking up driver:", error);
+    }
+  } else {
+    console.log(
+      "Session user_id is not a number:",
+      session.user.user_id,
+      typeof session.user.user_id
+    );
+  }
 
   console.log("Current driver from DB:", driver);
   console.log("Session user_id:", session.user.user_id);
@@ -55,7 +70,14 @@ export default async function GPSBroadcastPage() {
           "Trip driver ID:",
           trip.driver?.id,
           "Current driver ID:",
-          driver?.id
+          driver?.id,
+          "Types:",
+          typeof trip.driver?.id,
+          typeof driver?.id,
+          "Strict match:",
+          trip.driver?.id === driver?.id,
+          "Loose match:",
+          trip.driver?.id == driver?.id
         );
         return trip.driver?.id === driver?.id && trip.status !== "complete";
       })
