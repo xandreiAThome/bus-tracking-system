@@ -6,9 +6,14 @@ import { formatTime } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 export default async function GPSBroadcastPage() {
-  // Helper to get time-based greeting
+  // Helper to get time-based greeting using Manila timezone
   function getGreeting() {
-    const hour = new Date().getHours();
+    // Get Manila time for proper greeting
+    const now = new Date();
+    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const manilaTime = new Date(now.getTime() + manilaOffset);
+    const hour = manilaTime.getUTCHours(); // Use UTC methods since we added offset
+
     if (hour < 12) return "Good morning";
     if (hour < 18) return "Good afternoon";
     return "Good evening";
@@ -18,11 +23,20 @@ export default async function GPSBroadcastPage() {
     redirect("/tripsOverview");
   }
 
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date();
-  console.log(today);
+  // Get today's date in Manila timezone for proper trip lookup
+  const now = new Date();
+  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  const manilaTime = new Date(now.getTime() + manilaOffset);
+
+  // Create Manila "today" using UTC methods to avoid server timezone issues
+  const year = manilaTime.getUTCFullYear();
+  const month = manilaTime.getUTCMonth();
+  const day = manilaTime.getUTCDate();
+  const today = new Date(Date.UTC(year, month, day));
+
+  console.log("Manila today:", today);
   const trips = await getTripsForDay(today);
-  console.log(trips);
+  console.log("Found trips:", trips);
 
   const driver =
     typeof session.user.user_id === "number"
