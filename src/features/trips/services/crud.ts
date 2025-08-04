@@ -165,9 +165,10 @@ export const getTripsForDay = async (date: Date) => {
   const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
 
   // Create Manila day boundaries using UTC methods to avoid server timezone
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
+  // Use UTC methods since the input date might be created with Date.UTC()
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
 
   // Create Manila midnight and end of day in UTC
   const manilaStart = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
@@ -289,12 +290,12 @@ export async function editTrip(
     throw new Error(`Trip with id ${id} not found`);
   }
 
-  const newStart = start_time
-    ? new Date(start_time)
-    : new Date(existingTrip.start_time!);
-  const newEnd = end_time
-    ? new Date(end_time)
-    : new Date(existingTrip.end_time!);
+  // Ensure we have proper Date objects
+  const existingStartTime = new Date(existingTrip.start_time!);
+  const existingEndTime = new Date(existingTrip.end_time!);
+
+  const newStart = start_time ? new Date(start_time) : existingStartTime;
+  const newEnd = end_time ? new Date(end_time) : existingEndTime;
 
   if (newEnd <= newStart) {
     throw new Error("End time must be after start time.");

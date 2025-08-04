@@ -45,6 +45,8 @@ export default function EditTripModal({
   const [destStationId, setDestStationId] = useState("");
   const [startTime, setStartTime] = useState<Date>(new Date());
   const [endTime, setEndTime] = useState<Date>(new Date());
+  const [originalStartTime, setOriginalStartTime] = useState<Date>(new Date());
+  const [originalEndTime, setOriginalEndTime] = useState<Date>(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -55,9 +57,14 @@ export default function EditTripModal({
     setSrcStationId(trip.src_station?.id ? String(trip.src_station.id) : "");
     setDestStationId(trip.dest_station?.id ? String(trip.dest_station.id) : "");
 
-    // Use the Date objects directly (already converted to Manila time in backend)
-    setStartTime(trip.start_time || new Date());
-    setEndTime(trip.end_time || new Date());
+    // Convert UTC strings to Date objects
+    const startDate = trip.start_time ? new Date(trip.start_time) : new Date();
+    const endDate = trip.end_time ? new Date(trip.end_time) : new Date();
+
+    setStartTime(startDate);
+    setEndTime(endDate);
+    setOriginalStartTime(startDate);
+    setOriginalEndTime(endDate);
   }, [trip]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,25 +86,38 @@ export default function EditTripModal({
       return;
     }
     try {
+      // Only include time fields if they've been changed
+      const hasStartTimeChanged =
+        startTime.getTime() !== originalStartTime.getTime();
+      const hasEndTimeChanged = endTime.getTime() !== originalEndTime.getTime();
+
+      const requestBody: Record<string, number | string | undefined> = {
+        driver_id: driverId
+          ? parseInt(driverId)
+          : (trip.driver?.id ?? undefined),
+        bus_id: busId ? parseInt(busId) : (trip.bus?.id ?? undefined),
+        src_station_id: srcStationId
+          ? parseInt(srcStationId)
+          : (trip.src_station?.id ?? undefined),
+        dest_station_id: destStationId
+          ? parseInt(destStationId)
+          : (trip.dest_station?.id ?? undefined),
+      };
+
+      // Only add time fields if they've been changed
+      if (hasStartTimeChanged) {
+        requestBody.start_time = startTime.toISOString();
+      }
+      if (hasEndTimeChanged) {
+        requestBody.end_time = endTime.toISOString();
+      }
+
       const res = await fetch(`/api/trip/${trip.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          driver_id: driverId
-            ? parseInt(driverId)
-            : (trip.driver?.id ?? undefined),
-          bus_id: busId ? parseInt(busId) : (trip.bus?.id ?? undefined),
-          src_station_id: srcStationId
-            ? parseInt(srcStationId)
-            : (trip.src_station?.id ?? undefined),
-          dest_station_id: destStationId
-            ? parseInt(destStationId)
-            : (trip.dest_station?.id ?? undefined),
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!res.ok) {

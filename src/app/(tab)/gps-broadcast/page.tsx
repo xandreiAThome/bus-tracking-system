@@ -2,7 +2,6 @@ import { auth } from "@/features/auth/services/auth";
 import { getDriverByUserId } from "@/features/driver/services/crud";
 import GPSBroadcastClient from "@/features/gps/components/GPSBroadcastClient";
 import { getTripsForDay } from "@/features/trips/services/crud";
-import { formatTime } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 export default async function GPSBroadcastPage() {
@@ -17,6 +16,26 @@ export default async function GPSBroadcastPage() {
     if (hour < 12) return "Good morning";
     if (hour < 18) return "Good afternoon";
     return "Good evening";
+  }
+
+  // Helper to format time in Manila timezone (server-side safe)
+  function formatManilaTime(timeString: string | Date | null) {
+    if (!timeString) return "N/A";
+
+    const date =
+      typeof timeString === "string" ? new Date(timeString) : timeString;
+    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+    const manilaTime = new Date(date.getTime() + manilaOffset);
+
+    const hours = manilaTime.getUTCHours();
+    const minutes = manilaTime.getUTCMinutes();
+
+    // Format as 12-hour time
+    const period = hours >= 12 ? "PM" : "AM";
+    const displayHours = hours % 12 || 12;
+    const displayMinutes = minutes.toString().padStart(2, "0");
+
+    return `${displayHours}:${displayMinutes} ${period}`;
   }
   const session = await auth();
   if (session?.user?.role !== "driver" && session?.user?.role !== "admin") {
@@ -121,7 +140,7 @@ export default async function GPSBroadcastPage() {
                     {driverTrip.src_station?.name} →{" "}
                     {driverTrip.dest_station?.name} (Bus {driverTrip.bus?.id})
                     {" | "}
-                    {formatTime(driverTrip.start_time)}
+                    {formatManilaTime(driverTrip.start_time)}
                   </li>
                 </ul>
               ) : (
