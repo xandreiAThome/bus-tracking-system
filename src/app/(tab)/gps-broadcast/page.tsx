@@ -43,11 +43,25 @@ export default async function GPSBroadcastPage() {
       ? await getDriverByUserId(session.user.user_id)
       : null;
 
+  console.log("Current driver from DB:", driver);
+  console.log("Session user_id:", session.user.user_id);
+  console.log("Driver ID:", driver?.id);
+
   const driverTrip = Array.isArray(trips)
-    ? trips.find(
-        trip => trip.driver?.id === driver?.id && trip.status !== "complete"
-      )
+    ? trips.find(trip => {
+        console.log(
+          "Checking trip:",
+          trip.id,
+          "Trip driver ID:",
+          trip.driver?.id,
+          "Current driver ID:",
+          driver?.id
+        );
+        return trip.driver?.id === driver?.id && trip.status !== "complete";
+      })
     : undefined;
+
+  console.log("Found driver trip:", driverTrip);
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
