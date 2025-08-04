@@ -93,9 +93,10 @@ export default function TripCard(props: TripCardProps) {
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
           <div className="flex gap-2">
-            <button>
+            {/* TEMPORARY, CHANGE TO THE BUS ID OF THE TRIP WHEN INTEGRATED TO THE BACKEND */}
+            <Link href={"/map/1"}>
               <Map />
-            </button>
+            </Link>
             <button>
               <SquarePen />
             </button>

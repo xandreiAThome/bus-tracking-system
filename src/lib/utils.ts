@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -62,6 +64,14 @@ export function catchDBError(err: any) {
     return Response.json(
       { message: "Row is currently referenced" },
       { status: 409 }
+    );
+  } else if (err.code === "WARN_DATA_TRUNCATED") {
+    return Response.json(
+      {
+        message:
+          "Data truncation error: Invalid or too long data, possibly invalid ENUM value",
+      },
+      { status: 400 }
     );
   } else {
     return Response.json({ message: "Internal Server Error" }, { status: 500 });
