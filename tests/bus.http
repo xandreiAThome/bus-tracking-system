@@ -1,0 +1,23 @@
+### GET seat count by bus
+GET http://localhost:3000/api/bus/1/seatcount
+Accept: application/json
+
+### GET seat count by bus
+GET http://localhost:3000/api/bus/2/seatcount
+Accept: application/json
+
+### GET seats by bus
+GET http://localhost:3000/api/bus/1/seats
+Accept: application/json
+
+### GET seats by bus
+GET http://localhost:3000/api/bus/1/seats?sortOrder=DESC
+Accept: application/json
+
+### GET seats by bus
+GET http://localhost:3000/api/bus/2/seats
+Accept: application/json
+
+### GET seats by bus
+GET http://localhost:3000/api/bus/3/seats
+Accept: application/json
