@@ -19,19 +19,11 @@ export async function getAllTrips() {
     },
   });
   const mappedTrips: AggregatedTripType[] = trips.map(trip => {
-    // Convert Manila local time back to UTC for frontend consumption
-    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-    const start_time = trip.start_time
-      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
-      : trip.start_time;
-    const end_time = trip.end_time
-      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
-      : trip.end_time;
-
+    // Send UTC times to frontend - let frontend handle Manila conversion
     return {
       id: trip.id,
-      start_time,
-      end_time,
+      start_time: trip.start_time,
+      end_time: trip.end_time,
       status: trip.status,
       dest_station: trip.station_trip_dest_station_idTostation,
       src_station: trip.station_trip_src_station_idTostation,
@@ -62,16 +54,11 @@ export async function getTrip(id: number) {
   if (!trip) {
     return null;
   }
-  // Convert Manila local time back to UTC for frontend consumption
-  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+  // Send UTC times to frontend - let frontend handle Manila conversion
   const mappedTrips: AggregatedTripType = {
     id: trip.id,
-    start_time: trip.start_time
-      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
-      : trip.start_time,
-    end_time: trip.end_time
-      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
-      : trip.end_time,
+    start_time: trip.start_time,
+    end_time: trip.end_time,
     status: trip.status,
     dest_station: trip.station_trip_dest_station_idTostation,
     src_station: trip.station_trip_src_station_idTostation,
@@ -92,16 +79,21 @@ export async function addTrip(
   dest_station: number,
   driver_id: number
 ) {
-  // Convert from UTC to Manila local time for storage
-  // The frontend sends .toISOString() which converts Manila time to UTC
-  // We need to convert it back to Manila time for consistent storage
-  const utcStart = new Date(start_time);
-  const utcEnd = new Date(end_time);
+  // Store UTC times in database (frontend sends UTC via .toISOString())
+  const newStart = new Date(start_time);
+  const newEnd = new Date(end_time);
 
-  // Convert UTC to Manila time (UTC+8) for database storage
-  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-  const newStart = new Date(utcStart.getTime() + manilaOffset);
-  const newEnd = new Date(utcEnd.getTime() + manilaOffset);
+  // Validate that the dates are valid
+  if (isNaN(newStart.getTime()) || isNaN(newEnd.getTime())) {
+    throw new Error(
+      "Invalid date format. Please provide valid ISO date strings."
+    );
+  }
+
+  // Validate that end time is after start time
+  if (newEnd <= newStart) {
+    throw new Error("End time must be after start time.");
+  }
 
   // Validate that source and destination stations are different
   if (src_station === dest_station) {
@@ -168,18 +160,28 @@ export async function deleteTrip(id: number) {
 }
 
 export const getTripsForDay = async (date: Date) => {
-  // Convert to Manila time (UTC+8)
-  const start = new Date(date);
-  start.setHours(0, 0, 0, 0);
+  // Convert Manila date to UTC range for database query
+  // Use UTC methods to avoid server timezone issues
+  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
 
-  const end = new Date(date);
-  end.setHours(23, 59, 59, 999);
+  // Create Manila day boundaries using UTC methods to avoid server timezone
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  // Create Manila midnight and end of day in UTC
+  const manilaStart = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  const manilaEnd = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
+
+  // Convert Manila time to UTC for database query
+  const utcStart = new Date(manilaStart.getTime() - manilaOffset);
+  const utcEnd = new Date(manilaEnd.getTime() - manilaOffset);
 
   const trips = await prisma.trip.findMany({
     where: {
       start_time: {
-        gte: start,
-        lt: end,
+        gte: utcStart,
+        lt: utcEnd,
       },
     },
     include: {
@@ -195,19 +197,11 @@ export const getTripsForDay = async (date: Date) => {
   });
 
   const mappedTrips: AggregatedTripType[] = trips.map(trip => {
-    // Convert Manila local time back to UTC for frontend consumption
-    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-    const start_time = trip.start_time
-      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
-      : trip.start_time;
-    const end_time = trip.end_time
-      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
-      : trip.end_time;
-
+    // Send UTC times to frontend - let frontend handle Manila conversion
     return {
       id: trip.id,
-      start_time,
-      end_time,
+      start_time: trip.start_time,
+      end_time: trip.end_time,
       status: trip.status,
       dest_station: trip.station_trip_dest_station_idTostation,
       src_station: trip.station_trip_src_station_idTostation,
@@ -219,8 +213,16 @@ export const getTripsForDay = async (date: Date) => {
 };
 
 export const getTripsForMonth = async (month: number, year: number) => {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 1);
+  // Convert Manila month range to UTC for database query using UTC methods
+  const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
+
+  // Create Manila month boundaries using UTC to avoid server timezone issues
+  const manilaStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
+  const manilaEnd = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0));
+
+  // Convert to UTC for database query
+  const start = new Date(manilaStart.getTime() - manilaOffset);
+  const end = new Date(manilaEnd.getTime() - manilaOffset);
 
   const trips = await prisma.trip.findMany({
     where: {
@@ -242,19 +244,11 @@ export const getTripsForMonth = async (month: number, year: number) => {
   });
 
   const mappedTrips: AggregatedTripType[] = trips.map(trip => {
-    // Convert Manila local time back to UTC for frontend consumption
-    const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-    const start_time = trip.start_time
-      ? new Date(new Date(trip.start_time).getTime() - manilaOffset)
-      : trip.start_time;
-    const end_time = trip.end_time
-      ? new Date(new Date(trip.end_time).getTime() - manilaOffset)
-      : trip.end_time;
-
+    // Send UTC times to frontend - let frontend handle Manila conversion
     return {
       id: trip.id,
-      start_time,
-      end_time,
+      start_time: trip.start_time,
+      end_time: trip.end_time,
       status: trip.status,
       dest_station: trip.station_trip_dest_station_idTostation,
       src_station: trip.station_trip_src_station_idTostation,
@@ -296,18 +290,10 @@ export async function editTrip(
   }
 
   const newStart = start_time
-    ? (() => {
-        const utcDate = new Date(start_time);
-        const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-        return new Date(utcDate.getTime() + manilaOffset);
-      })()
+    ? new Date(start_time)
     : new Date(existingTrip.start_time!);
   const newEnd = end_time
-    ? (() => {
-        const utcDate = new Date(end_time);
-        const manilaOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-        return new Date(utcDate.getTime() + manilaOffset);
-      })()
+    ? new Date(end_time)
     : new Date(existingTrip.end_time!);
 
   if (newEnd <= newStart) {

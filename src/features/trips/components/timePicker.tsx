@@ -1,5 +1,6 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
+import { Tomorrow } from "next/font/google";
 
 export type TimePickerProps = {
   time: Date;
@@ -8,6 +9,16 @@ export type TimePickerProps = {
 };
 
 function get12HourParts(date: Date) {
+  // Check if the date is valid
+  if (isNaN(date.getTime())) {
+    // Return default values if date is invalid
+    return {
+      hour: 12,
+      minute: 0,
+      meridiem: "a.m." as const,
+    };
+  }
+
   let hour = date.getHours();
   const minute = date.getMinutes();
   const meridiem = hour >= 12 ? "p.m." : "a.m.";
@@ -41,7 +52,11 @@ function setMeridiem(date: Date, meridiem: "a.m." | "p.m.") {
 }
 
 export default function TimePicker({ time, setTime, label }: TimePickerProps) {
-  const { hour, minute, meridiem } = get12HourParts(time);
+  // Ensure we have a proper Date object, create new Date() if not
+  const timeAsDate = time instanceof Date ? time : new Date(time);
+
+  // Date object automatically shows browser's local timezone
+  const { hour, minute, meridiem } = get12HourParts(timeAsDate);
   const meridiemTyped = meridiem as "a.m." | "p.m.";
 
   // Track input values separately to allow empty fields during typing
@@ -63,7 +78,7 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
     } else {
       newHour = hour === 1 ? 12 : hour - 1;
     }
-    setTime(setHour(time, newHour, meridiemTyped));
+    setTime(setHour(timeAsDate, newHour, meridiemTyped));
   };
 
   const handleMinuteChange = (op: "increment" | "decrement") => {
@@ -73,7 +88,7 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
     } else {
       newMinute = (minute - 1 + 60) % 60;
     }
-    setTime(setMinute(time, newMinute));
+    setTime(setMinute(timeAsDate, newMinute));
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,7 +108,7 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
 
       // Clamp hour to valid range (1-12)
       const clampedHour = Math.max(1, Math.min(12, num));
-      setTime(setHour(time, clampedHour, meridiemTyped));
+      setTime(setHour(timeAsDate, clampedHour, meridiemTyped));
     } else if (name === "minute") {
       setMinuteInput(value);
       if (value === "") {
@@ -105,12 +120,12 @@ export default function TimePicker({ time, setTime, label }: TimePickerProps) {
 
       // Clamp minute to valid range (0-59)
       const clampedMinute = Math.max(0, Math.min(59, num));
-      setTime(setMinute(time, clampedMinute));
+      setTime(setMinute(timeAsDate, clampedMinute));
     }
   };
 
   const handleMeridiemChange = (value: "a.m." | "p.m.") => {
-    setTime(setMeridiem(time, value));
+    setTime(setMeridiem(timeAsDate, value));
   };
 
   return (

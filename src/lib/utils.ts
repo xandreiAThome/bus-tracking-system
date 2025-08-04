@@ -165,14 +165,23 @@ export function parseError(err: unknown): {
   return { status: 500, message: "Internal Server Error" };
 }
 
-export function formatTime(timeString: Date | null): string {
+export function formatTime(timeString: Date | string | null): string {
   if (!timeString) return "Unknown time";
   try {
-    return new Date(timeString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return timeString?.toString() ?? "Unknown time";
+    // Date object automatically converts to browser's local timezone
+    const date = new Date(timeString);
+
+    let hours = date.getHours(); // Browser automatically shows local time
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+
+    return `${hours}:${minutes} ${ampm}`;
+  } catch (error) {
+    console.error("Error formatting time:", error, "Input:", timeString);
+    return "Unknown time";
   }
 }

@@ -54,8 +54,10 @@ export default function EditTripModal({
     setBusId(trip.bus?.id ? String(trip.bus.id) : "");
     setSrcStationId(trip.src_station?.id ? String(trip.src_station.id) : "");
     setDestStationId(trip.dest_station?.id ? String(trip.dest_station.id) : "");
-    setStartTime(trip.start_time ? new Date(trip.start_time) : new Date());
-    setEndTime(trip.end_time ? new Date(trip.end_time) : new Date());
+
+    // Use the Date objects directly (already converted to Manila time in backend)
+    setStartTime(trip.start_time || new Date());
+    setEndTime(trip.end_time || new Date());
   }, [trip]);
 
   const handleSubmit = async (e: React.FormEvent) => {
