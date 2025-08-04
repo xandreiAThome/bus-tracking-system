@@ -27,6 +27,9 @@ export default function RootLayout({
       <body
         className={`h-full relative ${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <header className="p-2 absolute">
+          <AlignJustify className="text-green-800" />
+        </header>
         {children}
       </body>
     </html>

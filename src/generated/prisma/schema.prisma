@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model baggage_ticket {
+  id            Int     @id @default(autoincrement())
+  sender_no     String? @db.VarChar(20)
+  dispatcher_no String? @db.VarChar(20)
+  sender_name   String? @db.VarChar(100)
+  receiver_name String? @db.VarChar(100)
+  item          String  @db.VarChar(255)
+  ticket_id     Int     @unique(map: "ticket_id_UNIQUE")
+  ticket        ticket  @relation(fields: [ticket_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_baggage_ticket_ticket1")
+
+  @@index([ticket_id], map: "fk_baggage_ticket_ticket1_idx")
+  @@index([dispatcher_no], map: "fk_seat_bus1_idx")
+}
+
+model bus {
+  id           Int     @id @default(autoincrement())
+  plate_number String  @db.VarChar(8)
+  capacity     Int
+  station_id   Int
+  station      station @relation(fields: [station_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_bus_station1")
+  seat         seat[]
+  trip         trip[]
+
+  @@index([station_id], map: "fk_bus_station1_idx")
+}
+
+model cashier {
+  id          Int       @id @default(autoincrement())
+  shift_start DateTime? @db.Timestamp(0)
+  shift_end   DateTime? @db.Timestamp(0)
+  station_id  Int
+  user_id     Int
+  last_name   String    @db.VarChar(50)
+  first_name  String    @db.VarChar(50)
+  station     station   @relation(fields: [station_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cashier_station1")
+  user        user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cashier_user1")
+  ticket      ticket[]
+
+  @@index([station_id], map: "fk_cashier_station1_idx")
+  @@index([user_id], map: "fk_cashier_user1_idx")
+}
+
+model driver {
+  id         Int    @id @default(autoincrement())
+  first_name String @db.VarChar(50)
+  last_name  String @db.VarChar(50)
+  user_id    Int
+  user       user   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_driver_user1")
+  trip       trip[]
+
+  @@index([user_id], map: "fk_driver_user1_idx")
+}
+
+model passenger_ticket {
+  id             Int                        @id @default(autoincrement())
+  passenger_name String?                    @db.VarChar(100)
+  discount       passenger_ticket_discount?
+  ticket_id      Int                        @unique(map: "ticket_id_UNIQUE")
+  ticket         ticket                     @relation(fields: [ticket_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_passenger_ticket_ticket1")
+
+  @@index([ticket_id], map: "fk_passenger_ticket_ticket1_idx")
+  @@index([passenger_name], map: "fk_seat_bus1_idx")
+}
+
+model seat {
+  id          Int         @id @default(autoincrement())
+  seat_number String      @db.VarChar(5)
+  bus_id      Int
+  status      seat_status @default(available)
+  bus         bus         @relation(fields: [bus_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_seat_bus1")
+  ticket      ticket[]
+
+  @@unique([bus_id, seat_number], map: "unique_bus_order")
+  @@index([bus_id], map: "fk_seat_bus1_idx")
+}
+
+model station {
+  id                                 Int       @id @default(autoincrement())
+  name                               String    @unique @db.VarChar(45)
+  bus                                bus[]
+  cashier                            cashier[]
+  trip_trip_dest_station_idTostation trip[]    @relation("trip_dest_station_idTostation")
+  trip_trip_src_station_idTostation  trip[]    @relation("trip_src_station_idTostation")
+}
+
+model ticket {
+  id               Int                @id @default(autoincrement())
+  price            Decimal            @db.Decimal(6, 2)
+  trip_id          Int
+  cashier_id       Int
+  ticket_type      ticket_ticket_type
+  seat_id          Int?
+  createdAt        DateTime?          @default(now()) @db.DateTime(0)
+  baggage_ticket   baggage_ticket?
+  passenger_ticket passenger_ticket?
+  cashier          cashier            @relation(fields: [cashier_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_cashier1")
+  trip             trip               @relation(fields: [trip_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_trip1")
+  seat             seat?              @relation(fields: [seat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ticket_seat1")
+
+  @@index([cashier_id], map: "fk_ticket_cashier1_idx")
+  @@index([trip_id], map: "fk_ticket_trip1_idx")
+  @@index([seat_id], map: "fk_ticket_seat1_idx")
+}
+
+model trip {
+  id                                    Int          @id @default(autoincrement())
+  start_time                            DateTime?    @db.Timestamp(0)
+  end_time                              DateTime?    @db.Timestamp(0)
+  dest_station_id                       Int
+  src_station_id                        Int
+  bus_id                                Int
+  driver_id                             Int
+  status                                trip_status? @default(boarding)
+  ticket                                ticket[]
+  bus                                   bus          @relation(fields: [bus_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trip_bus1")
+  driver                                driver       @relation(fields: [driver_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trip_driver1")
+  station_trip_dest_station_idTostation station      @relation("trip_dest_station_idTostation", fields: [dest_station_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trip_station1")
+  station_trip_src_station_idTostation  station      @relation("trip_src_station_idTostation", fields: [src_station_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_trip_station2")
+
+  @@index([bus_id], map: "fk_trip_bus1_idx")
+  @@index([driver_id], map: "fk_trip_driver1_idx")
+  @@index([dest_station_id], map: "fk_trip_station1_idx")
+  @@index([src_station_id], map: "fk_trip_station2_idx")
+}
+
+model user {
+  id      Int       @id @default(autoincrement())
+  name    String?   @db.VarChar(100)
+  email   String    @unique(map: "email_UNIQUE") @db.VarChar(150)
+  image   String?   @db.VarChar(255)
+  role    user_role @default(user)
+  cashier cashier[]
+  driver  driver[]
+}
+
+enum passenger_ticket_discount {
+  student
+  pwd
+  senior
+}
+
+enum user_role {
+  user
+  admin
+  cashier
+  driver
+}
+
+enum ticket_ticket_type {
+  passenger
+  baggage
+}
+
+enum trip_status {
+  boarding
+  transit
+  complete
+}
+
+enum seat_status {
+  available
+  occupied
+}
