@@ -1,0 +1,39 @@
+### Get all drivers
+GET http://localhost:3000/api/driver
+Accept: application/json
+
+###
+
+### Create a new driver
+POST http://localhost:3000/api/driver
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "user_id": 1
+}
+
+###
+
+### Get a driver by ID
+GET http://localhost:3000/api/driver/1
+Accept: application/json
+
+###
+
+### Update a driver by ID
+PATCH http://localhost:3000/api/driver/1
+Content-Type: application/json
+
+{
+  "first_name": "Johnny",
+  "last_name": "Smith",
+  "user_id": 2
+}
+
+###
+
+### Delete a driver by ID
+DELETE http://localhost:3000/api/driver/4
+Accept: application/json

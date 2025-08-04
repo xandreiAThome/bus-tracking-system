@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import pool from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { Session, User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 
@@ -34,18 +34,24 @@ const authConfig = {
       credentials?: unknown;
     }) {
       const { user, account } = params;
-      // Only handle Google logins and only if email is present
       if (account?.provider === "google" && user?.email) {
         try {
-          await pool.query(
-            `INSERT INTO user (name, email, image, role)
-             VALUES (?, ?, ?, 'user')
-             ON DUPLICATE KEY UPDATE name=VALUES(name), image=VALUES(image)`,
-            [user.name, user.email, user.image]
-          );
+          // Upsert user by email
+          await prisma.user.upsert({
+            where: { email: user.email },
+            update: {
+              name: user.name ?? undefined,
+              image: user.image ?? undefined,
+            },
+            create: {
+              name: user.name ?? "",
+              email: user.email,
+              image: user.image ?? undefined,
+              role: "user",
+            },
+          });
         } catch (err) {
-          // Log DB errors for debugging
-          console.error("DB error on Google sign-in:", err);
+          console.error("Prisma error on Google sign-in:", err);
           return false;
         }
       }
@@ -67,14 +73,16 @@ const authConfig = {
     async jwt({ token, user }: { token: JWT; user?: User }) {
       // Add custom property to token on sign in
       if (user && user.email) {
-        // Query your DB for the user's role
-        const [rows] = (await pool.query(
-          "SELECT role FROM user WHERE email = ? LIMIT 1",
-          [user.email]
-        )) as [Array<{ role: string }>, unknown];
+        // Query Prisma for the user's role
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        });
 
-        if (Array.isArray(rows) && rows[0]?.role) {
-          token.role = rows[0].role;
+        if (dbUser?.role && dbUser?.id) {
+          token.role = dbUser.role;
+        }
+        if (dbUser?.id) {
+          token.user_id = dbUser.id;
         }
       }
       return token;
@@ -90,6 +98,10 @@ const authConfig = {
           | "admin"
           | "driver"
           | "cashier";
+      }
+
+      if (typeof token.user_id === "number") {
+        session.user.user_id = token.user_id as number;
       }
       return session;
     },

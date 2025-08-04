@@ -1,37 +1,71 @@
-import { getAllStations, addStation } from "@features/station/services/crud";
+import { getAllStations, addStation } from "@/features/station/services/crud";
+import { parseError } from "@/lib/utils";
+import { NextRequest, NextResponse } from "next/server";
+import { checkAuth, checkAuthAndRole, blockUserRole } from "@/lib/auth-helpers";
 
 /**
  * GET /api/station
  *
- * Gets all stations from the database.
+ * Retrieves all stations from the database.
+ * Requires authentication. Users with "user" role are blocked.
  *
- * Example request:
- * GET /api/station
+ * @returns {Response} 200 - Returns array of stations
+ * @returns {Response} 401 - Unauthorized (not signed in)
+ * @returns {Response} 403 - Forbidden (user role blocked)
+ * @returns {Response} 500 - Internal server error
  */
 export async function GET() {
-  return getAllStations();
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  try {
+    const stations = await getAllStations();
+    return NextResponse.json({ stations: stations }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
  * POST /api/station
  *
- * Creates a new station in the database.
+ * Creates a new station.
+ * Only admin users can create stations.
  *
- * Request body:
- * - name (string): The name of the station
- *
- * Example request:
- * POST /api/station
- * {
- *   "name": "Terminal A"
- * }
+ * @returns {Response} 201 - Station created successfully
+ * @returns {Response} 401 - Unauthorized (not signed in)
+ * @returns {Response} 403 - Forbidden (not admin)
+ * @returns {Response} 400 - Invalid input data
+ * @returns {Response} 500 - Internal server error
  */
-export async function POST(req: Request) {
-  const { name } = await req.json();
+export async function POST(req: NextRequest) {
+  // Only admins can create stations
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
 
-  if (!name) {
-    return Response.json({ message: "Missing 'name' field" }, { status: 400 });
+  try {
+    const { name } = await req.json();
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return NextResponse.json(
+        { message: "Invalid or missing 'name' field" },
+        { status: 400 }
+      );
+    }
+
+    const created = await addStation(name);
+    return NextResponse.json(
+      { message: "Station created successfully", result: created },
+      { status: 201 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
-
-  return addStation(name);
 }

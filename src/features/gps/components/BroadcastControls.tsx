@@ -72,7 +72,7 @@ export default function BroadcastControls({
           )}
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center flex-wrap gap-4">
           <Button
             onClick={onStartBroadcasting}
             disabled={

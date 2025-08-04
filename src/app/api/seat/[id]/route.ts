@@ -1,44 +1,123 @@
-import { validateIdParam } from "@/lib/utils";
-import { deleteSeat, getSeat } from "@features/seat/services/crud";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
+import { validateIdParam, parseError } from "@/lib/utils";
+import { deleteSeat, getSeat, updateSeat } from "@features/seat/services/crud";
+import { NextRequest, NextResponse } from "next/server";
 
-/**
- * GET /api/seat/[id]
- *
- * Gets a seat's information based on the dynamic `id` parameter in the URL path.
- * Example request: GET /api/seat/123
- *
- * Route param:
- * - id (string): seat ID passed as part of the URL (e.g., /api/seat/123)
- */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getSeat(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+
+  const numericId = Number(id);
+
+  try {
+    const seat = await getSeat(numericId);
+    if (!seat) {
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(seat, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
-/**
- * DELETE /api/seat/[id]
- *
- * Deletes a seat based on the dynamic `id` parameter in the URL path.
- * Example request: DELETE /api/seat/123
- *
- * Route param:
- * - id (string): seat ID passed as part of the URL (e.g., /api/seat/123)
- */
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return deleteSeat(id);
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid seat ID" }, { status: 400 });
+  }
+
+  const numericId = Number(id);
+
+  try {
+    const deleted = await deleteSeat(numericId);
+    if (!deleted) {
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { message: `Deleted seat with id ${id}`, result: deleted },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
+}
+
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json({ message: "Invalid seat ID" }, { status: 400 });
+  }
+
+  const numericId = Number(id);
+
+  try {
+    const body = await req.json();
+    const validFields = ["seat_number", "bus_id", "status"];
+
+    if (!Object.keys(body).some(key => validFields.includes(key))) {
+      return NextResponse.json(
+        { message: "No valid fields to update" },
+        { status: 400 }
+      );
+    }
+
+    const updated = await updateSeat(numericId, body);
+    if (!updated) {
+      return NextResponse.json(
+        { message: `Seat with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { message: `Updated seat with id ${id}`, result: updated },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

@@ -1,81 +1,24 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
-
+import { Prisma } from "@/generated/prisma";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Extracts the parameter taken from a ParsedUrlQuery as a single string
- * @param queryParam The query parameter
- * @returns The parameter if it is a string, the first element if it is an array of strings
- * @throws If the parameter is undefined
- */
-export function extractParamAsString(
-  queryParam: string | string[] | undefined
-): string {
-  if (Array.isArray(queryParam)) {
-    return queryParam[0];
-  }
-  if (queryParam === undefined) {
-    throw new Error("Missing query parameter");
-  }
-  return queryParam;
-}
-
-/**
  * Validates the ID parameter of a route.
  * @param idParam is the id parameter
- * @returns A valid integer number if id is valid, else a Response with Error
+ * @returns A true if Id is valid, false otherwise
  */
-export function validateIdParam(idParam: string | null): number | Response {
+export function validateIdParam(idParam: string | null): boolean {
   if (idParam === null) {
-    return Response.json(
-      { message: "Missing required parameter: id" },
-      { status: 400 }
-    );
+    return false;
   }
   const userIdNum = Number(idParam);
-  if (!Number.isInteger(userIdNum)) {
-    return Response.json(
-      { message: "Invalid input: id is invalid" },
-      { status: 400 }
-    );
+  if (!Number.isInteger(userIdNum) || userIdNum <= 0) {
+    return false;
   }
-  return userIdNum;
-}
-
-/**
- * Catches common DB errors and returns the appropriate HTTP Response
- * @param err is the error
- * @returns An HTTP Error Response
- */
-export function catchDBError(err: any) {
-  if (err.code === "ER_DUP_ENTRY") {
-    return Response.json({ message: "Duplicate Entry Error" }, { status: 409 });
-  } else if (err.code === "ER_NO_REFERENCED_ROW_2") {
-    return Response.json(
-      { message: "Related Record Not Found" },
-      { status: 400 }
-    );
-  } else if (err.code === "ER_ROW_IS_REFERENCED_2") {
-    return Response.json(
-      { message: "Row is currently referenced" },
-      { status: 409 }
-    );
-  } else if (err.code === "WARN_DATA_TRUNCATED") {
-    return Response.json(
-      {
-        message:
-          "Data truncation error: Invalid or too long data, possibly invalid ENUM value",
-      },
-      { status: 400 }
-    );
-  } else {
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
-  }
+  return true;
 }
 
 /**
@@ -132,10 +75,113 @@ export function validateDecimal6_2(value: string): boolean {
  */
 export function validateSortOrder(
   sortOrder: string | null | undefined
-): "ASC" | "DESC" {
-  const order = sortOrder?.toUpperCase();
-  if (order === "ASC" || order === "DESC") {
+): "asc" | "desc" {
+  const order = sortOrder?.toLowerCase();
+  if (order === "asc" || order === "desc") {
     return order;
   }
-  return "ASC"; // default fallback
+  return "asc"; // default fallback
+}
+
+/**
+ * Helper function to generate seat numbers
+ */
+export function generateSeatNumbers(capacity: number): string[] {
+  const seats: string[] = [];
+  for (let i = 1; i <= capacity; i++) {
+    seats.push(`S${i.toString().padStart(2, "0")}`); // Formats as S01, S02, etc.
+  }
+  return seats;
+}
+
+function isPrismaClientValidationError(
+  err: any
+): err is Prisma.PrismaClientValidationError {
+  return (
+    err &&
+    typeof err === "object" &&
+    "name" in err &&
+    err.name === "PrismaClientValidationError" &&
+    typeof err.message === "string"
+  );
+}
+
+function isPrismaClientKnownRequestError(
+  err: any
+): err is Prisma.PrismaClientKnownRequestError {
+  return (
+    err &&
+    typeof err === "object" &&
+    "code" in err &&
+    typeof err.code === "string" &&
+    (err.name === "PrismaClientKnownRequestError" ||
+      err.name === "PrismaClientRustPanicError") // optional
+  );
+}
+export function parseError(err: unknown): {
+  status: number;
+  message: string;
+} {
+  console.log(err);
+  if (isPrismaClientKnownRequestError(err)) {
+    switch (err.code) {
+      case "P2000":
+        return { status: 400, message: "Input for column/s too long" };
+      case "P2002":
+        return { status: 409, message: "Duplicate entry" };
+      case "P2001":
+      case "P2025":
+        return { status: 404, message: "Record not found" };
+      case "P2003":
+        // Check if the error message contains specific foreign key constraint information
+        const errorMessage = err.message || "";
+        if (
+          errorMessage.includes("cashier") ||
+          errorMessage.includes("Cashier")
+        ) {
+          return { status: 400, message: "Please select a valid cashier" };
+        } else if (
+          errorMessage.includes("trip") ||
+          errorMessage.includes("Trip")
+        ) {
+          return { status: 400, message: "Please select a valid trip" };
+        }
+        return {
+          status: 400,
+          message:
+            "Invalid reference - please check that all required selections are made",
+        };
+      case "2011":
+        return { status: 400, message: "Missing required fields" };
+    }
+  } else if (isPrismaClientValidationError(err)) {
+    return {
+      status: 400,
+      message: "Invalid input: some fields are missing or malformed",
+    };
+  } else if (err instanceof Error) {
+    return { status: 500, message: err.message || "Internal Server Error" };
+  }
+  return { status: 500, message: "Internal Server Error" };
+}
+
+export function formatTime(timeString: Date | string | null): string {
+  if (!timeString) return "Unknown time";
+  try {
+    // Date object automatically converts to browser's local timezone
+    const date = new Date(timeString);
+
+    let hours = date.getHours(); // Browser automatically shows local time
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+
+    // Convert to 12-hour format
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 should be 12
+
+    return `${hours}:${minutes} ${ampm}`;
+  } catch (error) {
+    console.error("Error formatting time:", error, "Input:", timeString);
+    return "Unknown time";
+  }
 }

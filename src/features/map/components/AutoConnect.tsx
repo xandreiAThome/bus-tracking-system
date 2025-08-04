@@ -23,6 +23,7 @@ interface AutoConnectProps {
   };
   busId: string;
   userId: string;
+  plateNumber: string;
 }
 
 export function AutoConnect({
@@ -35,30 +36,29 @@ export function AutoConnect({
   busId,
   subscribe,
   userId,
+  plateNumber,
 }: AutoConnectProps) {
   const initialized = useRef(false);
   const [busTrackedOnline, setBusTrackedOnline] = useState(false);
   const [wasConnected, setWasConnected] = useState(false);
 
   useEffect(() => {
-    let found = false;
-    for (let i = 0; i < clientInfo.clients.length; i++) {
-      if (clientInfo.clients[i].busId === busId) {
-        found = true;
-        break;
-      }
-    }
-    setBusTrackedOnline(found);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientInfo]);
+    console.log(clientInfo);
+
+    setBusTrackedOnline(
+      clientInfo.clients.some(client => client.busId === busId)
+    );
+  }, [clientInfo, busId, connected]);
 
   useEffect(() => {
+    if (!connected) {
+      initialized.current = false;
+    }
     // Only run initialization once
     if (!initialized.current) {
-      initialized.current = true;
       connect();
+      initialized.current = true;
     }
-
     // Cleanup on unmount
     return () => {
       disconnect();
@@ -125,8 +125,8 @@ export function AutoConnect({
             ></div>
             <span>
               {busTrackedOnline
-                ? `Bus ${busId} Online`
-                : `Searching Bus ${busId}...`}
+                ? `${plateNumber} Online`
+                : `Searching ${plateNumber}...`}
             </span>
           </div>
         </div>

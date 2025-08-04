@@ -1,95 +1,149 @@
-import { validateIdParam } from "@/lib/utils";
-import { getPassengerTicketByTicketId } from "@features/ticket/services/crud";
-import { putPassengerTicket } from "@features/ticket/services/crud";
+import { blockUserRole, checkAuth } from "@/lib/auth-helpers";
+import { validateIdParam, parseError } from "@/lib/utils";
+import {
+  getPassengerTicketById,
+  updateFullPassengerTicket,
+} from "@features/ticket/services/crud";
+import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/ticket/passenger/[id]
  *
- * Gets passenger ticket information based on the dynamic `id` parameter (ticket_id).
- * Example request: GET /api/ticket/passenger/123
- *
- * Route param:
- * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/passenger/123)
+ * Retrieve passenger ticket by ticket ID.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  }
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
 
-  const passengerTicket = await getPassengerTicketByTicketId(id);
-  if (!passengerTicket) {
-    return new Response(
-      JSON.stringify({ message: "Passenger ticket not found" }),
-      { status: 404, headers: { "Content-Type": "application/json" } }
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
+      { status: 400 }
     );
   }
-  return new Response(JSON.stringify({ passengerTicket }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+
+  try {
+    const ticket = await getPassengerTicketById(Number(id));
+
+    if (!ticket) {
+      return NextResponse.json(
+        { message: `Cannot find passenger_ticket with id ${id}` },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ passenger_ticket: ticket }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
  * PUT /api/ticket/passenger/[id]
  *
- * Updates the base ticket and associated passenger_ticket
- *
- * Route param:
- * - id: ticket ID (e.g. /api/ticket/passenger/123)
- *
- * Body payload:
- * - price (string)
- * - trip_id (number)
- * - cashier_id (number)
- * - ticket_type (string, should be "passenger")
- * - passenger_name (string)
- * - discount (string | null)
+ * Update ticket and associated passenger_ticket by ticket ID.
  */
 export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  }
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
 
-  const payload = await req.json();
-  const { price, trip_id, cashier_id, ticket_type, passenger_name, discount } =
-    payload;
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
 
-  if (!price || !trip_id || !cashier_id || !ticket_type) {
-    return Response.json(
-      { message: "Missing required ticket fields" },
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] parameter" },
       { status: 400 }
     );
   }
 
-  if (ticket_type !== "passenger") {
-    return Response.json(
-      { message: "Invalid ticket_type; expected 'passenger'" },
-      { status: 400 }
-    );
-  }
+  try {
+    const {
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type,
+      // passenger_name,
+      discount,
+    } = await req.json();
 
-  if (!passenger_name) {
-    return Response.json(
-      { message: "Missing required passenger_name for passenger ticket" },
-      { status: 400 }
-    );
-  }
+    if (!price || !trip_id || !cashier_id || !ticket_type) {
+      return NextResponse.json(
+        { message: "Missing required ticket fields" },
+        { status: 400 }
+      );
+    }
 
-  return putPassengerTicket(
-    id,
-    price,
-    trip_id,
-    cashier_id,
-    ticket_type,
-    passenger_name,
-    discount ?? null
-  );
+    if (ticket_type !== "passenger") {
+      return NextResponse.json(
+        { message: "Invalid ticket_type; expected 'passenger'" },
+        { status: 400 }
+      );
+    }
+
+    // Check if the ticket exists and is a passenger ticket before updating
+    const existingTicket = await getPassengerTicketById(Number(id));
+    if (!existingTicket) {
+      return NextResponse.json(
+        { message: `Ticket with id ${id} not found` },
+        { status: 404 }
+      );
+    }
+
+    // Check if it's actually a passenger ticket
+    if (
+      !existingTicket.passenger_ticket ||
+      existingTicket.ticket_type !== "passenger"
+    ) {
+      return NextResponse.json(
+        { message: `Ticket with id ${id} is not a passenger ticket` },
+        { status: 400 }
+      );
+    }
+
+    {
+      /*if (!passenger_name) {
+      return NextResponse.json(
+        { message: "Missing required passenger_name for passenger ticket" },
+        { status: 400 }
+      );
+    }*/
+    }
+
+    const updated = await updateFullPassengerTicket(
+      Number(id),
+      price,
+      trip_id,
+      cashier_id,
+      ticket_type,
+      //  passenger_name,
+      discount ?? null
+    );
+
+    return NextResponse.json(
+      { message: `Updated passenger ticket with id ${id}`, result: updated },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }

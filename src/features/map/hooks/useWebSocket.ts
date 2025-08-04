@@ -42,7 +42,6 @@ export interface UseWebSocketReturn {
 }
 
 export function useWebSocket(): UseWebSocketReturn {
-  const [ws, setWs] = useState<WebSocket | null>(null);
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [messages, setMessages] = useState<string[]>([]);
@@ -66,6 +65,8 @@ export function useWebSocket(): UseWebSocketReturn {
     busId?: string;
   } | null>(null);
 
+  const wsRef = useRef<WebSocket | null>(null);
+
   const addMessage = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setMessages(prev => [...prev, `[${timestamp}] ${message}`]);
@@ -73,14 +74,14 @@ export function useWebSocket(): UseWebSocketReturn {
 
   const sendMessage = useCallback(
     (message: ClientMessage) => {
-      if (ws && connected) {
-        ws.send(JSON.stringify(message));
+      if (wsRef.current && connected) {
+        wsRef.current.send(JSON.stringify(message));
         addMessage(`Sent: ${JSON.stringify(message, null, 2)}`);
       } else {
         addMessage("Not connected to server");
       }
     },
-    [ws, connected, addMessage]
+    [connected, addMessage]
   );
 
   const connect = useCallback(() => {
@@ -99,7 +100,7 @@ export function useWebSocket(): UseWebSocketReturn {
       }
 
       const websocket = new WebSocket(wsServer);
-
+      wsRef.current = websocket;
       // --- Connection timeout workaround ---
       const connectionTimeout = setTimeout(() => {
         if (websocket.readyState !== WebSocket.OPEN) {
@@ -113,9 +114,8 @@ export function useWebSocket(): UseWebSocketReturn {
         clearTimeout(connectionTimeout); // <--- here
         setConnected(true);
         setConnecting(false);
-        setWs(websocket);
         addMessage("Connected to WebSocket server");
-
+        wsRef.current = websocket;
         // Re-register if we have previous registration info
         if (lastRegistrationRef.current) {
           const { clientType, userId, busId } = lastRegistrationRef.current;
@@ -170,7 +170,7 @@ export function useWebSocket(): UseWebSocketReturn {
       websocket.onclose = () => {
         setConnected(false);
         setConnecting(false);
-        setWs(null);
+        wsRef.current = null;
         addMessage("Disconnected from WebSocket server");
       };
 
@@ -185,10 +185,10 @@ export function useWebSocket(): UseWebSocketReturn {
   }, [addMessage, connecting, connected]);
 
   const disconnect = useCallback(() => {
-    if (ws) {
-      ws.close();
+    if (wsRef.current) {
+      wsRef.current.close();
     }
-  }, [ws]);
+  }, []);
 
   const register = useCallback(
     (
@@ -254,7 +254,7 @@ export function useWebSocket(): UseWebSocketReturn {
     // Connection state
     connected,
     connecting,
-    ws,
+    ws: wsRef.current,
 
     // Data state
     messages,

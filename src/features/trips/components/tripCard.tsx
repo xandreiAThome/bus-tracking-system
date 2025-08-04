@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import {
   Select,
   SelectContent,
@@ -16,23 +16,122 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import {
-  AlignJustify,
-  SquareArrowOutUpRight,
-  SquarePen,
-  Map,
-} from "lucide-react";
+import { AlignJustify, Map } from "lucide-react";
 import IssuedTicketsModal from "@/features/ticket/components/issuedTicketsModal";
+import EditTripModal from "./EditTrip";
+import { AggregatedTripType } from "../types/types";
+import { AggregatedBusType } from "@/features/bus/types/types";
+import { DriverType } from "@/features/driver/types/types";
+import { StationType } from "@/features/station/types/types";
+import { formatTime } from "@/lib/utils";
+import { AggregatedTicketType } from "@features/ticket/types/types";
+import { toast } from "sonner";
 
 interface TripCardProps {
-  route: string;
-  time: string;
-  driver: string;
+  trip: AggregatedTripType;
+  onSuccessEdit: () => void;
+  stations: StationType[];
+  drivers: DriverType[];
+  buses: AggregatedBusType[];
 }
 
-export default function TripCard(props: TripCardProps) {
-  const [status, setStatus] = useState("boarding");
-  const [openDrawer, setOpenDrawer] = useState(false);
+export default function TripCard({
+  trip,
+  onSuccessEdit,
+  buses,
+  stations,
+  drivers,
+}: TripCardProps) {
+  const [status, setStatus] = useState<"boarding" | "transit" | "complete">(
+    trip.status ?? "boarding"
+  );
+  const [loading, setLoading] = useState({
+    status: false,
+  });
+
+  // Extract data from props (assuming props now includes the relations)
+  const { src_station, dest_station, driver, bus } = trip;
+
+  // Get passenger tickets for count
+  const [passengerTickets, setPassengerTickets] = useState<
+    AggregatedTicketType[]
+  >([]);
+
+  const fetchPassengerTickets = useCallback(() => {
+    fetch(`/api/ticket/passenger/trip/${trip.id}`)
+      .then(res => res.json())
+      .then(data => {
+        setPassengerTickets(
+          Array.isArray(data.passenger_tickets) ? data.passenger_tickets : []
+        );
+      })
+      .catch(() => setPassengerTickets([]));
+  }, [trip.id]);
+
+  useEffect(() => {
+    fetchPassengerTickets();
+
+    // Set up event listeners for ticket changes
+    const handleTicketChange = () => {
+      fetchPassengerTickets();
+    };
+
+    // Listen for custom ticketRefunded events
+    window.addEventListener("ticketRefunded", handleTicketChange);
+
+    // Listen for storage changes as fallback
+    window.addEventListener("storage", handleTicketChange);
+
+    return () => {
+      window.removeEventListener("ticketRefunded", handleTicketChange);
+      window.removeEventListener("storage", handleTicketChange);
+    };
+  }, [fetchPassengerTickets]);
+
+  async function handleStatusChange(newStatus: string) {
+    try {
+      setLoading(prev => ({ ...prev, status: true }));
+
+      const response = await fetch(`/api/trip/${trip.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update trip status");
+      }
+
+      setStatus(newStatus as "boarding" | "transit" | "complete");
+      onSuccessEdit(); // Refresh trip data in parent component
+    } catch (error) {
+      console.error("Error updating trip status:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update trip status";
+      toast.error(errorMessage);
+    } finally {
+      setLoading(prev => ({ ...prev, status: false }));
+    }
+  }
+
+  // Loading state only for status changes now
+  if (loading.status) {
+    return (
+      <Card className="flex flex-col gap-1 p-5">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-8 bg-gray-200 rounded w-[120px]"></div>
+          <div className="flex justify-between">
+            <div className="h-8 bg-gray-200 rounded w-24"></div>
+            <div className="h-8 bg-gray-200 rounded w-24"></div>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-center">
@@ -43,86 +142,102 @@ export default function TripCard(props: TripCardProps) {
             {/* Left Side: Place and Time */}
             <div className="flex gap-2">
               <span className="font-semibold text-[#456A3B]">
-                {props.route}
+                {src_station?.name || "Unknown"} →{" "}
+                {dest_station?.name || "Unknown"}
               </span>
-              <span>{props.time}</span>
+              <span>{formatTime(trip.start_time)}</span>
             </div>
 
             {/* Right Side: Ellipsis Button */}
-
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <AlignJustify />
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 <DropdownMenuItem
-                  onSelect={() => setOpenDrawer(true)}
                   className="w-full justify-center"
+                  onSelect={e => e.preventDefault()}
                 >
-                  Issued Tickets
+                  <IssuedTicketsModal tripId={trip.id} />
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
+        <div className="text-[#456A3B]">
+          {driver
+            ? `${driver.first_name} ${driver.last_name}`
+            : "Driver unknown"}{" "}
+          | {bus.plate_number}
+        </div>
         <div>
           <Select
             value={status}
-            onValueChange={setStatus}
-            defaultValue="boarding"
+            onValueChange={handleStatusChange}
+            disabled={loading.status}
           >
             <SelectTrigger
               className={`
-                w-[120px] rounded-lg font-bold ${status === "boarding" ? "bg-[#71AC61] text-white" : ""}
-                ${status === "delayed" ? "bg-[#AC6161] text-white" : ""}
+                w-[120px] rounded-lg font-bold ${status === "boarding" ? "bg-[#AC6161] text-white" : ""}
+                ${status === "transit" ? "bg-[#EFA54A] text-white" : ""}
+                ${status === "complete" ? "bg-[#71AC61] text-white" : ""}
               `}
             >
               <SelectValue>
-                {status === "status"
-                  ? "Status"
-                  : status.charAt(0).toUpperCase() + status.slice(1)}
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="boarding">Boarding</SelectItem>
-              <SelectItem value="delayed">Delayed</SelectItem>
+              <SelectItem value="transit">Transit</SelectItem>
+              <SelectItem value="complete">Complete</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="text-[#456A3B]">{props.driver}</div>
         <div className="flex items-end justify-between">
           {/* Left Side: Place and Time */}
-          <div className="flex gap-2">
-            {/* TEMPORARY, CHANGE TO THE BUS ID OF THE TRIP WHEN INTEGRATED TO THE BACKEND */}
-            <Link href={"/map/1"}>
-              <Map />
+          <div className="flex gap-2 items-center">
+            <Link href={`/map/${trip.id}`} aria-label="View on map">
+              <button className="p-1 rounded hover:bg-gray-100">
+                <Map className="h-5 w-5" />
+              </button>
             </Link>
-            <button>
-              <SquarePen />
-            </button>
+            <EditTripModal
+              trip={trip}
+              onSuccess={onSuccessEdit}
+              stations={stations}
+              buses={buses}
+              drivers={drivers}
+            />
           </div>
 
           {/* Right Side:  */}
           <div className="flex flex-col items-end">
-            <div className="flex flex-row gap-1 justify-end items-baseline">
-              <span className="font-bold">15/40</span>
-              <span>
-                <SquareArrowOutUpRight />
+            <div className="flex flex-row gap-1 justify-end items-baseline mr-1">
+              <span
+                className={`font-bold ${
+                  passengerTickets?.length > bus.capacity
+                    ? "text-orange-600"
+                    : ""
+                }`}
+              >
+                {passengerTickets?.length} / {bus.capacity}
               </span>
+              {passengerTickets?.length > bus.capacity && (
+                <span className="text-xs text-orange-600 font-medium">
+                  ({passengerTickets.length - bus.capacity} standing)
+                </span>
+              )}
             </div>
-            <Link href={"ticket"}>
-              <Button className="bg-[#456A3B] hover:bg-[#32442D] font-semibold">
-                issue ticket
-              </Button>
+            <Link
+              className="bg-green-600 text-white py-1 px-2 rounded-lg font-bold "
+              href={`/ticket/${trip.id}`}
+            >
+              Issue Ticket
             </Link>
           </div>
         </div>
       </Card>
-
-      <IssuedTicketsModal
-        openDrawer={openDrawer}
-        setOpenDrawer={setOpenDrawer}
-      ></IssuedTicketsModal>
     </div>
   );
 }

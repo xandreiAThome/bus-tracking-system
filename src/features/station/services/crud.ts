@@ -1,136 +1,68 @@
-import pool from "@/lib/db";
-import { catchDBError } from "@/lib/utils";
-import { RowDataPacket, ResultSetHeader } from "mysql2";
+import { prisma } from "@/lib/prisma";
 
 /**
- * Get all stations
+ * Get all stations from the database.
  */
 export async function getAllStations() {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [stations] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM station"
-      );
-      if (!stations || stations.length === 0) {
-        return Response.json({ message: "No stations found" }, { status: 404 });
-      }
-      return Response.json({ stations }, { status: 200 });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
-  }
+  const stations = await prisma.station.findMany();
+  return stations;
 }
 
 /**
- * Get a station by ID
+ * Get a station by its ID.
+ * @param id - Station ID
  */
 export async function getStation(id: number) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [stations] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM station WHERE id = ?",
-        [id]
-      );
-      const station = stations[0];
-      if (!station) {
-        return Response.json({ message: "Station not found" }, { status: 404 });
-      }
-      return Response.json({ station }, { status: 200 });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
-  }
+  const station = await prisma.station.findUnique({
+    where: { id },
+  });
+
+  return station;
 }
 
 /**
- * Get a station by name
+ * Get a station by its name.
+ * @param name - Station name
  */
 export async function getStationByName(name: string) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [stations] = await conn.query<RowDataPacket[]>(
-        "SELECT * FROM station WHERE name = ?",
-        [name]
-      );
-      const station = stations[0];
-      if (!station) {
-        return Response.json({ message: "Station not found" }, { status: 404 });
-      }
-      return Response.json({ station }, { status: 200 });
-    } finally {
-      conn.release();
-    }
-  } catch (err) {
-    console.error("DB Error:", err);
-    return Response.json({ message: "Internal Server Error" }, { status: 500 });
-  }
+  const station = await prisma.station.findFirst({
+    where: { name },
+  });
+
+  return station;
 }
 
 /**
- * Create a new station
+ * Create a new station.
+ * @param name - Station name
  */
 export async function addStation(name: string) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        "INSERT INTO station (name) VALUES (?)",
-        [name]
-      );
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: "Failed to create station" },
-          { status: 500 }
-        );
-      }
-      return Response.json(
-        { message: "Station created successfully" },
-        { status: 201 }
-      );
-    } finally {
-      conn.release();
-    }
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+  const created = await prisma.station.create({
+    data: { name },
+  });
+  return created;
 }
 
 /**
- * Delete a station by ID
+ * Edit a station's name by ID.
+ * @param id - Station ID
+ * @param data - Object with new station data (currently only `name`)
+ */
+export async function editStation(id: number, data: { name: string }) {
+  const updated = await prisma.station.update({
+    where: { id },
+    data: { name: data.name },
+  });
+  return updated;
+}
+
+/**
+ * Delete a station by ID.
+ * @param id - Station ID
  */
 export async function deleteStation(id: number) {
-  try {
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.execute<ResultSetHeader>(
-        "DELETE FROM station WHERE id = ?",
-        [id]
-      );
-      if (result.affectedRows === 0) {
-        return Response.json(
-          { message: `Station with id ${id} not found` },
-          { status: 404 }
-        );
-      }
-      return Response.json(
-        { message: `Station with id ${id} deleted successfully` },
-        { status: 200 }
-      );
-    } finally {
-      conn.release();
-    }
-  } catch (err: any) {
-    console.error("DB Error:", err);
-    return catchDBError(err);
-  }
+  const deleted = await prisma.station.delete({
+    where: { id },
+  });
+  return deleted;
 }

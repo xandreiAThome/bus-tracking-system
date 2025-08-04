@@ -1,5 +1,5 @@
 "use client";
-import { GoogleMap, Marker, LoadScript } from "@react-google-maps/api";
+import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import { LocationBroadcast } from "@/features/map/hooks";
 
 interface MapComponentProps {
@@ -21,6 +21,9 @@ const MapComponent = ({ locations, center, zoom }: MapComponentProps) => {
 
   // Check if Google Maps API key is available
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: googleMapsApiKey || "",
+  });
 
   // Get the latest location for each unique bus/user
   const getLatestLocations = () => {
@@ -76,50 +79,68 @@ const MapComponent = ({ locations, center, zoom }: MapComponentProps) => {
     );
   }
 
-  return (
-    <LoadScript googleMapsApiKey={googleMapsApiKey}>
-      <GoogleMap
-        mapContainerStyle={mapStyles}
-        center={dynamicCenter}
-        zoom={zoom}
+  if (loadError) {
+    return (
+      <div
+        className="flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg"
+        style={mapStyles}
       >
-        {/* Only show markers for actual bus/user locations from WebSocket */}
-        {latestLocations.map(location => {
-          const key =
-            location.busId ||
-            location.userId ||
-            `unknown-${location.timestamp}`;
-          const isBus = !!location.busId;
+        <div className="text-center">
+          <p className="text-red-600 font-medium">Failed to load Google Maps</p>
+        </div>
+      </div>
+    );
+  }
 
-          return (
-            <Marker
-              key={key}
-              position={{
-                lat: location.latitude,
-                lng: location.longitude,
-              }}
-              title={
-                isBus
-                  ? `Bus ${location.busId}${location.userId ? ` (Driver: ${location.userId})` : ""}`
-                  : `User: ${location.userId || "Unknown"}`
-              }
-              icon={{
-                url: isBus
-                  ? "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%232563EB' stroke='%23fff' stroke-width='2' d='M4 6h16v10H4z'/%3E%3Ccircle cx='7' cy='18' r='2' fill='%23374151'/%3E%3Ccircle cx='17' cy='18' r='2' fill='%23374151'/%3E%3Cpath fill='%23fff' d='M6 8h4v4H6zM14 8h4v4h-4z'/%3E%3C/svg%3E"
-                  : "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%2310B981' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E",
-                scaledSize:
-                  typeof window !== "undefined" && window.google?.maps?.Size
-                    ? new window.google.maps.Size(
-                        isBus ? 24 : 20,
-                        isBus ? 24 : 20
-                      )
-                    : undefined,
-              }}
-            />
-          );
-        })}
-      </GoogleMap>
-    </LoadScript>
+  if (!isLoaded) {
+    return (
+      <div
+        className="flex items-center justify-center bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg"
+        style={mapStyles}
+      >
+        <div className="text-center">
+          <p className="text-gray-600 font-medium">Loading Map...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <GoogleMap mapContainerStyle={mapStyles} center={dynamicCenter} zoom={zoom}>
+      {/* Only show markers for actual bus/user locations from WebSocket */}
+      {latestLocations.map(location => {
+        const key =
+          location.busId || location.userId || `unknown-${location.timestamp}`;
+        const isBus = !!location.busId;
+
+        return (
+          <Marker
+            key={key}
+            position={{
+              lat: location.latitude,
+              lng: location.longitude,
+            }}
+            title={
+              isBus
+                ? `Bus ${location.busId}${location.userId ? ` (Driver: ${location.userId})` : ""}`
+                : `User: ${location.userId || "Unknown"}`
+            }
+            icon={{
+              url: isBus
+                ? "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%232563EB' stroke='%23fff' stroke-width='2' d='M4 6h16v10H4z'/%3E%3Ccircle cx='7' cy='18' r='2' fill='%23374151'/%3E%3Ccircle cx='17' cy='18' r='2' fill='%23374151'/%3E%3Cpath fill='%23fff' d='M6 8h4v4H6zM14 8h4v4h-4z'/%3E%3C/svg%3E"
+                : "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='8' fill='%2310B981' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E",
+              scaledSize:
+                typeof window !== "undefined" && window.google?.maps?.Size
+                  ? new window.google.maps.Size(
+                      isBus ? 24 : 20,
+                      isBus ? 24 : 20
+                    )
+                  : undefined,
+            }}
+          />
+        );
+      })}
+    </GoogleMap>
   );
 };
 

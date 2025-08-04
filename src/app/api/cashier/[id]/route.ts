@@ -1,0 +1,137 @@
+import { validateIdParam, parseError } from "@/lib/utils";
+import {
+  getCashier,
+  deleteCashier,
+  editCashier,
+} from "@/features/cashier/services/crud";
+import { NextResponse, NextRequest } from "next/server";
+import { blockUserRole, checkAuth, checkAuthAndRole } from "@/lib/auth-helpers";
+
+/**
+ * GET /api/cashier/[id]
+ *
+ * Fetches a single cashier by ID.
+ */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const result = await getCashier(Number(id));
+    if (result === null) {
+      return NextResponse.json(
+        { message: `Cannot find cashier with id ${id}` },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(result, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
+}
+
+/**
+ * DELETE /api/cashier/[id]
+ *
+ * Removes a cashier by ID.
+ */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const deleted = await deleteCashier(Number(id));
+    if (deleted === null) {
+      return NextResponse.json(
+        { message: "Cannot find cashier" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json(
+      { message: `Deleted cashier with id ${id}`, result: deleted },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
+}
+
+/**
+ * PATCH /api/cashier/[id]
+ *
+ * Updates an existing cashier.
+ * Expected JSON body:
+ * {
+ *   first_name: string,
+ *   last_name: string,
+ *   user_id: number,
+ *   station_id: number
+ * }
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { error: authError } = await checkAuthAndRole(["admin"]);
+  if (authError) return authError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+  try {
+    const body = await req.json();
+    const { first_name, last_name, user_id, station_id } = body;
+
+    if (!first_name && !last_name && !user_id && !station_id) {
+      return NextResponse.json(
+        {
+          message:
+            "At least one field (first_name, last_name, user_id, station_id) must be provided",
+        },
+        { status: 400 }
+      );
+    }
+    const updated = await editCashier(Number(id), body);
+    return NextResponse.json(
+      { message: `Updated cashier with id ${id}`, result: updated },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
+}

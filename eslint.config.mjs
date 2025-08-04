@@ -21,7 +21,9 @@ const eslintConfig = [
         "error",
         { singleQuote: false, jsxSingleQuote: false, endOfLine: "auto" },
       ],
+      "./src/generated": "off",
     },
+    ignores: ["src/generated/*"],
   },
 ];
 

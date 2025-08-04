@@ -1,95 +1,142 @@
-import { getAllTickets } from "@features/ticket/services/crud";
+// src/app/api/ticket/route.ts
+
 import {
-  createPassengerTicket,
-  createBaggageTicket,
-} from "@features/ticket/services/crud";
+  getAllTickets,
+  createFullPassengerTicket,
+  createFullBaggageTicket,
+} from "@/features/ticket/services/crud";
+import { blockUserRole, checkAuth } from "@/lib/auth-helpers";
+import { parseError } from "@/lib/utils";
+import { NextResponse, NextRequest } from "next/server";
 
 /**
- * GET api/ticket
+ * GET /api/ticket
  *
- * Gets all the existing tickets
+ * Retrieves all tickets.
  */
 export async function GET() {
-  return getAllTickets();
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  try {
+    const tickets = await getAllTickets();
+    return NextResponse.json({ tickets: tickets }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
+  }
 }
 
 /**
- * POST api/ticket
- * 
- * Adds a ticket with fields matching `req`'s payload
- * @param {Request} req Incoming request containing the following:
- * - `price` The price of the ticket
- * - `trip_id` The id of the bus associated with the ticket
- * - `cashier_id` The id of the bus associated with the ticket
- * - `ticket_type` The type of ticket; can be "passenger" or "baggage"
- * 
- * extra fields for passenger
- * - `passenger_name` set empty string if none
- * - `discount` senior | pwd | student | NULL
- * 
- * extra fields for baggage
- * - `sender_no`
- * - `dispatcher_no`
- * - `sender_name`
- * - `receiver_name`
- * - `item`
-
+ * POST /api/ticket
+ *
+ * Creates a passenger or baggage ticket.
  */
-export async function POST(req: Request) {
-  const payload = await req.json();
-  const { price, trip_id, cashier_id, ticket_type } = payload;
+export async function POST(req: NextRequest) {
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
 
-  if (!price || !trip_id || !cashier_id) {
-    return Response.json(
-      { message: "Invalid input: Payload field/s missing" },
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  try {
+    const payload = await req.json();
+    const { price, trip_id, cashier_id, ticket_type } = payload;
+
+    // Validate common fields
+    if (
+      !price ||
+      trip_id == null ||
+      cashier_id == null ||
+      !["passenger", "baggage"].includes(ticket_type)
+    ) {
+      return NextResponse.json(
+        { message: "Invalid or missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Additional validation for cashier_id
+    if (cashier_id === 0 || isNaN(Number(cashier_id))) {
+      return NextResponse.json(
+        { message: "Please select a valid cashier" },
+        { status: 400 }
+      );
+    }
+
+    // Passenger ticket validation
+    if (ticket_type === "passenger") {
+      const { passenger_name, discount, seat_id } = payload;
+
+      // Use placeholder value for passenger_name since it's not used for now
+      const finalPassengerName = passenger_name || "Passenger";
+
+      const created = await createFullPassengerTicket(
+        price,
+        Number(trip_id),
+        Number(cashier_id),
+        ticket_type,
+        finalPassengerName,
+        discount ?? null,
+        seat_id ? Number(seat_id) : undefined
+      );
+
+      return NextResponse.json(
+        { message: "Passenger Ticket created successfully", result: created },
+        { status: 201 }
+      );
+    }
+
+    // Baggage ticket validation
+    if (ticket_type === "baggage") {
+      const { sender_no, dispatcher_no, sender_name, receiver_name, item } =
+        payload;
+
+      if (
+        !sender_no ||
+        !dispatcher_no ||
+        !sender_name ||
+        !receiver_name ||
+        !item
+      ) {
+        return NextResponse.json(
+          { message: "Missing baggage ticket fields" },
+          { status: 400 }
+        );
+      }
+
+      const created = await createFullBaggageTicket(
+        price,
+        Number(trip_id),
+        Number(cashier_id),
+        ticket_type,
+        sender_no,
+        dispatcher_no,
+        sender_name,
+        receiver_name,
+        item
+      );
+
+      return NextResponse.json(
+        { message: "Baggage Ticket created successfully", result: created },
+        { status: 201 }
+      );
+    }
+
+    // Fallback for unexpected ticket_type
+    return NextResponse.json(
+      { message: "Invalid ticket_type provided" },
       { status: 400 }
     );
-  }
-
-  if (!["passenger", "baggage"].includes(ticket_type)) {
-    return Response.json({ message: "Invalid ticket_type" }, { status: 400 });
-  }
-  if (ticket_type === "passenger") {
-    const { passenger_name, discount } = payload;
-    if (!passenger_name) {
-      return Response.json(
-        { message: "Missing passenger_name for passenger ticket" },
-        { status: 400 }
-      );
-    }
-    return createPassengerTicket(
-      price,
-      trip_id,
-      cashier_id,
-      ticket_type,
-      passenger_name,
-      discount ?? null
-    );
-  } else if (ticket_type === "baggage") {
-    const { sender_no, dispatcher_no, sender_name, receiver_name, item } =
-      payload;
-    if (
-      !sender_no ||
-      !dispatcher_no ||
-      !sender_name ||
-      !receiver_name ||
-      !item
-    ) {
-      return Response.json(
-        { message: "Missing baggage ticket fields" },
-        { status: 400 }
-      );
-    }
-    return createBaggageTicket(
-      price,
-      trip_id,
-      cashier_id,
-      ticket_type,
-      sender_no,
-      dispatcher_no,
-      sender_name,
-      receiver_name,
-      item
-    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }

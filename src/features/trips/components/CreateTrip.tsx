@@ -16,63 +16,135 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import React, { useState } from "react";
+import { AggregatedBusType } from "@/features/bus/types/types";
+import { DriverType } from "@/features/driver/types/types";
+import { StationType } from "@/features/station/types/types";
 
-export default function CreateTripModal() {
-  const stations = [
-    "Manila",
-    "Quezon City",
-    "Makati",
-    "Taguig",
-    "Mandaluyong",
-    "Pasig",
-  ];
+import { TripType } from "../types/types";
+import { useState } from "react";
+import { toast } from "sonner";
+import TimePicker from "./timePicker";
 
-  const drivers = [
-    "Mark Reyes",
-    "Anthony Cruz",
-    "Jared Thompson",
-    "Samuel Diaz",
-    "Robert Castillo",
-    "Luis Santiago",
-    "Joseph Kim",
-    "JJ Rivera",
-  ];
+type CreateTripPayload = Omit<
+  TripType,
+  "status" | "id" | "start_time" | "end_time"
+> & {
+  start_time: string;
+  end_time: string;
+};
 
-  const [hour, setHour] = useState("00");
-  const [minute, setMinute] = useState("00");
-  const [meridiem, setMeridiem] = useState("a.m.");
+export interface CreateTripModalProps {
+  onTripCreated?: () => void;
+  stations: StationType[];
+  buses: AggregatedBusType[];
+  drivers: DriverType[];
+}
 
-  const incrementHour = () => {
-    const newHour = (parseInt(hour) + 1) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
+export function CreateTripModal({
+  onTripCreated,
+  stations,
+  buses,
+  drivers,
+}: CreateTripModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const [formData, setFormData] = useState({
+    driver: "",
+    source: "",
+    destination: "",
+    bus: "",
+  });
+
+  // Set start time to current hour, end time to one hour later
+  const getDefaultTimes = () => {
+    const now = new Date();
+    const start = new Date(now);
+    start.setMinutes(0, 0, 0);
+    const end = new Date(start);
+    end.setHours(start.getHours() + 1);
+    return { start, end };
   };
 
-  const decrementHour = () => {
-    const newHour = (parseInt(hour) - 1 + 12) % 12 || 12;
-    setHour(newHour.toString().padStart(2, "0"));
+  const { start, end } = getDefaultTimes();
+  const [startTime, setStartTime] = useState<Date>(start);
+  const [endTime, setEndTime] = useState<Date>(end);
+
+  // All data is passed as props from OverviewCard. No fetching here.
+  // TimePicker logic is now handled in the TimePicker component
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const { driver, bus, source, destination } = formData;
+
+    if (!driver || !bus || !source || !destination) {
+      toast.error("Please fill in all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (endTime <= startTime) {
+      toast.error("End time must be after start time.");
+      setIsSubmitting(false);
+      return;
+    }
+    try {
+      const payload: CreateTripPayload = {
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        bus_id: parseInt(bus),
+        src_station_id: parseInt(source),
+        dest_station_id: parseInt(destination),
+        driver_id: parseInt(driver),
+      };
+
+      const res = await fetch("/api/trip", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Failed to create trip");
+      }
+
+      // Reset form
+      setFormData({
+        driver: "",
+        source: "",
+        destination: "",
+        bus: "",
+      });
+      setStartTime(new Date());
+      setEndTime(new Date());
+      setDrawerOpen(false);
+      toast.success("Trip created successfully!");
+      if (onTripCreated) {
+        onTripCreated();
+      }
+    } catch (err) {
+      console.error("Error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to create trip");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const incrementMinute = () => {
-    const newMinute = (parseInt(minute) + 1) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
-
-  const decrementMinute = () => {
-    const newMinute = (parseInt(minute) - 1 + 60) % 60;
-    setMinute(newMinute.toString().padStart(2, "0"));
-  };
+  // No loading state here; handled by OverviewCard
 
   return (
-    <Drawer>
+    <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
       <DrawerTrigger asChild>
-        <Button className="h-max bg-[#71AC61] hover:bg-[#456A3B] font-bold text-xl rounded-lg">
+        <Button className="h-max bg-green-700 hover:bg-[#456A3B] font-bold text-xl rounded-lg">
           Create Trip
         </Button>
       </DrawerTrigger>
 
-      {/* bg-[#B1B1B1] */}
-      <DrawerContent className="p-6 max-h-[90vh] flex flex-col">
+      <DrawerContent className="p-6 max-w-4xl mx-auto flex flex-col">
         <DrawerHeader>
           <DrawerTitle className="text-center text-[#71AC61]">
             Create Trip
@@ -80,171 +152,113 @@ export default function CreateTripModal() {
           <hr className="border-t-2 mt-2 mb-4" />
         </DrawerHeader>
 
-        <form className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-4 px-4 pb-6 overflow-y-auto flex-1 w-full"
+        >
+          {/* Driver Selection */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Driver
-            </Label>
-
-            <Select>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Driver</Label>
+            <Select
+              value={formData.driver}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, driver: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Driver" />
               </SelectTrigger>
               <SelectContent>
                 {drivers.map(driver => (
-                  <SelectItem key={driver} value={driver}>
-                    {driver}
+                  <SelectItem key={driver.id} value={driver.id.toString()}>
+                    {driver.first_name} {driver.last_name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Source Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Source Station
-            </Label>
-
-            <Select>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Source Station</Label>
+            <Select
+              value={formData.source}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, source: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Source" />
               </SelectTrigger>
               <SelectContent>
                 {stations.map(station => (
-                  <SelectItem key={station} value={station}>
-                    {station}
+                  <SelectItem key={station.id} value={station.id.toString()}>
+                    {station.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Destination Station */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Destination Station
-            </Label>
-
-            <Select>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Destination Station</Label>
+            <Select
+              value={formData.destination}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, destination: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Destination" />
               </SelectTrigger>
               <SelectContent>
                 {stations.map(station => (
-                  <SelectItem key={station} value={station}>
-                    {station}
+                  <SelectItem key={station.id} value={station.id.toString()}>
+                    {station.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
+          {/* Bus Selection */}
           <div>
-            <Label className="block text-sm font-medium text-gray-700 mb-1">
-              Bus
-            </Label>
-            <Select>
-              <SelectTrigger className="w-full justify-start px-0">
+            <Label>Bus</Label>
+            <Select
+              value={formData.bus}
+              onValueChange={value =>
+                setFormData(prev => ({ ...prev, bus: value }))
+              }
+            >
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Choose Bus" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="station">Bus1</SelectItem>
+                {buses.map(bus => (
+                  <SelectItem key={bus.id} value={String(bus.id)}>
+                    {bus.plate_number}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
-            </label>
-            <div className="flex items-center gap-2">
-              {/* Hour */}
-              <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementHour}
-                  className="text-lg px-2"
-                >
-                  -
-                </button>
-                <input
-                  value={hour}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setHour(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(hour);
-                    setHour(
-                      (isNaN(n) ? 0 : Math.max(1, Math.min(12, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
-                  className="w-10 text-center outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={incrementHour}
-                  className="text-lg px-2"
-                >
-                  +
-                </button>
-              </div>
+          {/* Time Picker */}
+          <TimePicker
+            label="Start Time"
+            time={startTime}
+            setTime={setStartTime}
+          />
+          <TimePicker label="End Time" time={endTime} setTime={setEndTime} />
 
-              <span className="text-xl">:</span>
-
-              {/* Minute */}
-              <div className="flex items-center border px-2 rounded">
-                <button
-                  type="button"
-                  onClick={decrementMinute}
-                  className="text-lg px-2"
-                >
-                  -
-                </button>
-                <input
-                  value={minute}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (/^\d{0,2}$/.test(val)) setMinute(val);
-                  }}
-                  onBlur={() => {
-                    const n = parseInt(minute);
-                    setMinute(
-                      (isNaN(n) ? 0 : Math.min(59, Math.max(0, n)))
-                        .toString()
-                        .padStart(2, "0")
-                    );
-                  }}
-                  className="w-10 text-center outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={incrementMinute}
-                  className="text-lg px-2"
-                >
-                  +
-                </button>
-              </div>
-
-              {/* Meridiem */}
-              <select
-                value={meridiem}
-                onChange={e => setMeridiem(e.target.value)}
-                className="ml-2 border border-gray-300 rounded px-2 py-1 text-sm"
-              >
-                <option value="a.m.">a.m.</option>
-                <option value="p.m.">p.m.</option>
-              </select>
-            </div>
-          </div>
-
-          <button
+          <Button
             type="submit"
-            className="bg-[#71AC61] text-white py-2 rounded mt-4 hover:brightness-110 transition"
+            className="bg-[#71AC61] hover:bg-[#456A3B] mt-4"
+            disabled={isSubmitting}
           >
-            Create New Trip
-          </button>
+            {isSubmitting ? "Creating..." : "Create New Trip"}
+          </Button>
         </form>
       </DrawerContent>
     </Drawer>

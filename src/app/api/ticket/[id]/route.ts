@@ -1,44 +1,89 @@
-import { validateIdParam } from "@/lib/utils";
-import { deleteTicket, getTicket } from "@features/ticket/services/crud";
+// src/app/api/ticket/[id]/route.ts
+
+import { validateIdParam, parseError } from "@/lib/utils";
+import { getTicketById, deleteTicket } from "@/features/ticket/services/crud";
+import { NextResponse, NextRequest } from "next/server";
+import { checkAuth, blockUserRole } from "@/lib/auth-helpers";
 
 /**
  * GET /api/ticket/[id]
  *
- * Gets a ticket's information based on the dynamic `id` parameter in the URL path.
- * Example request: GET /api/ticket/123
- *
- * Route param:
- * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/123)
+ * Retrieves a ticket by ID.
  */
 export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return getTicket(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const ticket = await getTicketById(Number(id));
+    if (!ticket) {
+      return NextResponse.json(
+        { message: `Cannot find ticket with id ${id}` },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ ticket }, { status: 200 });
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
 
 /**
  * DELETE /api/ticket/[id]
  *
- * Deletes a ticket based on the dynamic `id` parameter in the URL path.
- * Example request: DELETE /api/ticket/123
- *
- * Route param:
- * - id (string): ticket ID passed as part of the URL (e.g., /api/ticket/123)
+ * Deletes a ticket by ID.
  */
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = validateIdParam((await params).id);
-  if (id instanceof Response) {
-    return id;
-  } else {
-    return deleteTicket(id);
+  // Check authentication
+  const { error: authError, session } = await checkAuth();
+  if (authError) return authError;
+
+  // Block users with "user" role
+  const roleError = blockUserRole(session);
+  if (roleError) return roleError;
+
+  const { id } = await params;
+
+  if (!validateIdParam(id)) {
+    return NextResponse.json(
+      { message: "Invalid [id] Parameter" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const deleted = await deleteTicket(Number(id));
+    return NextResponse.json(
+      {
+        message: `Ticket with id ${id} deleted successfully.`,
+        result: deleted,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    const { status, message } = parseError(error);
+    return NextResponse.json({ message }, { status });
   }
 }
